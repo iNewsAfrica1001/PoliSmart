@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { parse } from "csv-parse";
 import { parse as parseSync } from "csv-parse/sync";
 import {
+  AFROBAROMETER_COUNTRY_MAPPINGS,
   AFROBAROMETER_MAPPING_VERSION,
   AFROBAROMETER_MINIMUM_SAMPLE_SIZE,
 } from "../config/afrobarometer.js";
@@ -36,7 +37,8 @@ export async function analyzeAfrobarometer({
     .filter((row) => row.polismart_category === "Survey question — map with Round 9 codebook")
     .map((row) => ({
       questionCode: row.field_name,
-      questionText: null,
+      questionText:
+        mappings.find((mapping) => mapping.questionCode === row.field_name)?.questionText ?? null,
       dictionaryCategory: row.polismart_category,
       dictionaryNote: row.note || null,
       mappingStatus: mappings.some((mapping) => mapping.questionCode === row.field_name)
@@ -78,7 +80,8 @@ export async function analyzeAfrobarometer({
     rowsInspected += 1;
     const respondent = String(row.RESPNO ?? "").trim();
     const countryCode = String(row.COUNTRY ?? "").trim();
-    if (!respondent || !countryCode) {
+    const countryName = AFROBAROMETER_COUNTRY_MAPPINGS[countryCode];
+    if (!respondent || !countryCode || !countryName) {
       rejectedRows += 1;
       continue;
     }
@@ -86,8 +89,8 @@ export async function analyzeAfrobarometer({
     if (!countries.has(countryCode))
       countries.set(countryCode, {
         sourceCode: countryCode,
-        countryName: `Unmapped country code ${countryCode}`,
-        mappingStatus: "UNMAPPED",
+        countryName,
+        mappingStatus: "MAPPED",
       });
     const regionCode = String(row.REGION ?? "").trim();
     if (regionCode) {
@@ -167,7 +170,6 @@ export async function analyzeAfrobarometer({
     .map((question) => question.questionCode);
   const warnings = [
     `${unmapped.length} question codes are unmapped because the authoritative Round 9 codebook was not supplied.`,
-    "Country labels are unmapped because the supplied dictionary contains codes but no country code labels.",
     ...(missingWeightColumns.length
       ? [`Missing weighting fields: ${missingWeightColumns.join(", ")}.`]
       : []),
@@ -227,15 +229,113 @@ export async function persistAfrobarometer(prisma, analysis, { sourceFile, dicti
   const existing = await prisma.surveyImport.findUnique({
     where: { sourceSha256: analysis.sourceSha256 },
   });
-  if (existing)
-    return {
-      idempotent: true,
-      importId: existing.id,
-      rowsImported: existing.rowsImported,
-      aggregateCount: await prisma.surveyAggregateResult.count({
-        where: { surveyImportId: existing.id },
-      }),
-    };
+  if (existing) {
+    const aggregateCount = await prisma.surveyAggregateResult.count({
+      where: { surveyImportId: existing.id },
+    });
+    if (!(analysis.aggregateResults?.length ?? 0) || aggregateCount)
+      return {
+        idempotent: true,
+        importId: existing.id,
+        rowsImported: existing.rowsImported,
+        aggregateCount,
+      };
+
+    return prisma.$transaction(
+      async (tx) => {
+        const source = await tx.dataSource.findUnique({ where: { id: existing.dataSourceId } });
+        const countries = await tx.surveyCountry.findMany({
+          where: { surveyImportId: existing.id },
+        });
+        const countryIds = new Map(countries.map((country) => [country.sourceCode, country.id]));
+        for (const country of analysis.countries)
+          await tx.surveyCountry.update({
+            where: { id: countryIds.get(country.sourceCode) },
+            data: { countryName: country.countryName, mappingStatus: country.mappingStatus },
+          });
+        for (const mapping of analysis.mappings) {
+          await tx.surveyQuestion.update({
+            where: {
+              surveyImportId_questionCode: {
+                surveyImportId: existing.id,
+                questionCode: mapping.questionCode,
+              },
+            },
+            data: { questionText: mapping.questionText, mappingStatus: "MAPPED" },
+          });
+          await tx.surveyIndicatorDefinition.upsert({
+            where: { indicatorCode: mapping.indicatorCode },
+            update: {
+              responseMapping: mapping.responseMapping,
+              mappingVersion: AFROBAROMETER_MAPPING_VERSION,
+            },
+            create: {
+              dataSourceId: source.id,
+              indicatorCode: mapping.indicatorCode,
+              indicatorName: mapping.indicatorName,
+              category: mapping.category,
+              questionCode: mapping.questionCode,
+              surveyRound: analysis.surveyRound,
+              responseMapping: mapping.responseMapping,
+              mappingVersion: AFROBAROMETER_MAPPING_VERSION,
+            },
+          });
+        }
+        const definitions = await tx.surveyIndicatorDefinition.findMany({
+          where: { dataSourceId: source.id },
+        });
+        const definitionIds = new Map(
+          definitions.map((definition) => [definition.indicatorCode, definition.id]),
+        );
+        await tx.surveyIndicatorValue.createMany({
+          data: analysis.aggregateResults.map((item) => ({
+            surveyImportId: existing.id,
+            indicatorDefinitionId: definitionIds.get(item.indicatorCode),
+            surveyCountryId: countryIds.get(item.countryCode),
+            responseCode: item.responseCode,
+            weightedCount: item.weightedCount,
+            totalWeight: item.totalWeight,
+            unweightedCount: item.unweightedCount,
+            weightField: item.weightField,
+          })),
+        });
+        await tx.surveyAggregateResult.createMany({
+          data: analysis.aggregateResults.map((item) => ({
+            surveyImportId: existing.id,
+            indicatorDefinitionId: definitionIds.get(item.indicatorCode),
+            surveyCountryId: countryIds.get(item.countryCode),
+            responseCode: item.responseCode,
+            weightedPercentage: item.weightedPercentage,
+            unweightedSampleSize: item.unweightedSampleSize,
+            minimumSampleSize: item.minimumSampleSize,
+            isSuppressed: item.isSuppressed,
+            suppressionReason: item.suppressionReason,
+            weightField: item.weightField,
+          })),
+        });
+        await tx.surveyImport.update({
+          where: { id: existing.id },
+          data: {
+            importVersion: analysis.importVersion,
+            rowsInspected: analysis.rowsInspected,
+            rowsImported: analysis.rowsImported,
+            rejectedRows: analysis.rejectedRows,
+            warnings: analysis.warnings,
+            weightingValidation: analysis.weightingValidation,
+            transformationHistory: analysis.transformationHistory,
+          },
+        });
+        return {
+          idempotent: false,
+          enrichedExistingImport: true,
+          importId: existing.id,
+          rowsImported: analysis.rowsImported,
+          aggregateCount: analysis.aggregateResults.length,
+        };
+      },
+      { timeout: 120000 },
+    );
+  }
   return prisma.$transaction(
     async (tx) => {
       const source = await tx.dataSource.upsert({

@@ -30,7 +30,7 @@ The importer uses `Combinwt_new_hh` for aggregate preparation and separately val
 
 ## Explicit mappings only
 
-The supplied dictionary marks all 324 `Q*` variables as “map with Round 9 codebook,” but supplies no question wording, country code labels, response labels, or thematic definitions. Consequently, every question and country is imported as `UNMAPPED`, and no thematic aggregate is published.
+The supplied dictionary marks all 324 `Q*` variables as “map with Round 9 codebook,” but does not itself contain question wording, country labels, or response labels. The reviewed [official Afrobarometer merged Round 9 codebook](https://www.afrobarometer.org/wp-content/uploads/2024/10/AB_R9.MergeCodebook_25Jun24.final_.pdf) supplies the country mapping and the explicit `Q45PT1` public-priority mapping currently enabled. The other 323 questions remain `UNMAPPED` and are not published.
 
 Authoritative mappings belong in `server/config/afrobarometer.js`. Each mapping must explicitly provide:
 
@@ -68,7 +68,7 @@ Run the database import after PostgreSQL migrations:
 npm run import:afrobarometer
 ```
 
-The second database run detects the existing `source_sha256` and returns the prior import without inserting records.
+The second database run detects the existing `source_sha256` and returns the prior import without inserting records. If an earlier metadata-only import exists with no aggregates, a reviewed mapping version may enrich that import once; subsequent runs remain idempotent.
 
 ## Database model
 
@@ -90,17 +90,17 @@ Results with fewer than 100 valid unweighted responses are stored as suppressed 
 ## Current dry-run report
 
 - Rows inspected: 54,803
-- Structurally eligible rows: 54,398
-- Rejected rows: 405 (missing required country code)
+- Eligible rows with an authoritative country code: 53,444
+- Rejected rows: 1,359 (missing or invalid country code)
 - Valid positive values per weight field: 52,458
-- Missing weight values per field among accepted rows: 1,940
+- Missing weight values per field among accepted rows: 986
 - Invalid weight values: 0
 - Zero or negative weight values: 0
-- Source country codes observed: 463, all unmapped
-- Source country/region pairs observed: 1,079
-- Question codes: 324 unmapped, 0 mapped
-- Aggregate results: 0 until an authoritative Round 9 mapping/codebook is supplied
+- Authoritatively mapped countries: 39
+- Valid country/region pairs observed: 519
+- Question codes: 323 unmapped, 1 mapped
+- Prepared aggregate records: 1,083 (suppressed records retain a null percentage)
 
 ## Required follow-up
 
-Obtain and review the authoritative Afrobarometer Round 9 codebook and country/response label files. Add mappings with source citations, peer review the weighting choice and response transformations, rerun tests, then execute a new mapping-version import. Existing imports remain auditable and are never mutated into a different interpretation.
+Add further mappings only after reviewing the official Round 9 codebook and recording the source. Peer review the weighting choice and response transformations before each mapping-version release. Existing source hashes and transformation history remain auditable.

@@ -9,6 +9,7 @@ import {
   analyzeAfrobarometer,
   persistAfrobarometer,
 } from "../server/services/afrobarometerIngestion.js";
+import { AFROBAROMETER_INDICATOR_MAPPINGS } from "../server/config/afrobarometer.js";
 import { createPublicIntelligenceRouter } from "../server/routes/publicIntelligence.js";
 
 test("explicit mappings produce weighted aggregates and enforce minimum sample size", async () => {
@@ -18,7 +19,7 @@ test("explicit mappings produce weighted aggregates and enforce minimum sample s
     const dictionaryPath = path.join(directory, "dictionary.csv");
     writeFileSync(
       sourcePath,
-      "RESPNO,COUNTRY,REGION,LOCATION.LEVEL.1,Q1,withinwt_ea,withinwt_hh,Combinwt_old_ea,Combinwt_new_hh\nA1,1,10,North,1,1,1,1,1\nA2,1,10,North,2,2,2,2,2\nA3,1,10,North,1,,,,\n",
+      "RESPNO,COUNTRY,REGION,LOCATION.LEVEL.1,Q1,withinwt_ea,withinwt_hh,Combinwt_old_ea,Combinwt_new_hh\nA1,2,10,North,1,1,1,1,1\nA2,2,10,North,2,2,2,2,2\nA3,2,10,North,1,,,,\n",
     );
     writeFileSync(
       dictionaryPath,
@@ -63,12 +64,37 @@ test("supplied dataset is inspected without inventing question mappings", async 
     mappings: [],
   });
   assert.equal(analysis.rowsInspected, 54803);
-  assert.equal(analysis.rowsImported, 54398);
-  assert.equal(analysis.rejectedRows, 405);
+  assert.equal(analysis.rowsImported, 53444);
+  assert.equal(analysis.rejectedRows, 1359);
   assert.equal(analysis.unmappedQuestionCodes.length, 324);
   assert.equal(analysis.aggregateResults.length, 0);
   assert.equal(analysis.weightingValidation.Combinwt_new_hh.invalid, 0);
   assert.equal(analysis.weightingValidation.Combinwt_new_hh.zeroOrNegative, 0);
+});
+
+test("official Round 9 mapping produces safeguarded public-priority aggregates", async () => {
+  const root = process.cwd();
+  const analysis = await analyzeAfrobarometer({
+    sourcePath: path.join(root, "data/raw/polismart_afrobarometer_mvp_cleaned.csv"),
+    dictionaryPath: path.join(root, "data/raw/polismart_afrobarometer_data_dictionary.csv"),
+    mappings: AFROBAROMETER_INDICATOR_MAPPINGS,
+  });
+  assert.equal(analysis.rowsInspected, 54803);
+  assert.equal(analysis.rowsImported, 53444);
+  assert.equal(analysis.rejectedRows, 1359);
+  assert.equal(analysis.countries.length, 39);
+  assert.equal(analysis.unmappedQuestionCodes.length, 323);
+  assert.ok(analysis.aggregateResults.length > 0);
+  assert.ok(
+    analysis.aggregateResults
+      .filter((result) => !result.isSuppressed)
+      .every((result) => result.unweightedSampleSize >= 100),
+  );
+  assert.ok(
+    analysis.aggregateResults.some(
+      (result) => result.responseCode === "Management of the economy",
+    ),
+  );
 });
 
 test("repeat imports are idempotent by source hash", async () => {
