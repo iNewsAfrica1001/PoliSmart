@@ -6,11 +6,50 @@ import {
   belongsToOrganization,
   hasPermission,
   requireAuthorization,
+  canAssignRole,
+  requireRoleAssignmentAuthorization,
 } from "../server/services/authorization.js";
 
 test("unknown and missing roles fail closed", () => {
   assert.equal(hasPermission(null, PERMISSIONS.LEARNING_PARTICIPATE), false);
   assert.equal(hasPermission({ role: "candidate" }, PERMISSIONS.LEARNING_PARTICIPATE), false);
+});
+
+test("every role transition follows the server-side role hierarchy", () => {
+  const roles = [...new Set(Object.values(ROLES))];
+  for (const actorRole of roles) {
+    for (const currentRole of roles) {
+      for (const requestedRole of roles) {
+        const decision = canAssignRole({ actorRole, currentRole, requestedRole });
+        const expected =
+          actorRole === ROLES.SUPER_ADMINISTRATOR ||
+          (actorRole === ROLES.CAMPAIGN_ADMINISTRATOR &&
+            currentRole !== ROLES.SUPER_ADMINISTRATOR &&
+            requestedRole !== ROLES.SUPER_ADMINISTRATOR);
+        assert.equal(
+          decision.allowed,
+          expected,
+          `${actorRole} changing ${currentRole} to ${requestedRole}`,
+        );
+      }
+    }
+  }
+});
+
+test("campaign administrators cannot invite, promote, modify, or obtain Super Administrator", () => {
+  for (const input of [
+    { actorRole: ROLES.CAMPAIGN_ADMINISTRATOR, requestedRole: ROLES.SUPER_ADMINISTRATOR },
+    {
+      actorRole: ROLES.CAMPAIGN_ADMINISTRATOR,
+      currentRole: ROLES.SUPER_ADMINISTRATOR,
+      requestedRole: ROLES.ANALYST,
+    },
+  ]) {
+    assert.throws(
+      () => requireRoleAssignmentAuthorization(input),
+      (error) => error.status === 403 && error.code === "protected-platform-role",
+    );
+  }
 });
 
 test("learner permissions do not include privileged course management", () => {

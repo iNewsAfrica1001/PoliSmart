@@ -64,7 +64,7 @@ Set `DOCUMENT_STORAGE_PATH` to a private persistent volume. Production deploymen
 
 The immutable research files live under `data/raw`. Run `npm run import:afrobarometer -- --dry-run` to validate and profile them, or `npm run import:afrobarometer` to perform the idempotent PostgreSQL import. Dashboard APIs expose safeguarded aggregates only; no respondent-level records are persisted or served.
 
-Question mappings are intentionally empty until the authoritative Round 9 codebook and response labels are supplied. See [the pipeline documentation](docs/AFROBAROMETER_DATA_PIPELINE.md) before adding an explicit indicator mapping.
+Ten question mappings are explicitly sourced from the official Round 9 codebook; all other codes remain unmapped. See [the pipeline documentation](docs/AFROBAROMETER_DATA_PIPELINE.md) before adding another reviewed indicator mapping.
 
 ## Quality checks
 

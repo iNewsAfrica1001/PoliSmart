@@ -1,9 +1,12 @@
 import OpenAI from "openai";
 
 export class AiProviderError extends Error {
-  constructor(message = "The AI provider is temporarily unavailable.") {
+  constructor(message = "The AI provider is temporarily unavailable.", options = {}) {
     super(message);
+    this.name = "AiProviderError";
     this.status = 503;
+    this.providerCode = options.providerCode || "PROVIDER_UNAVAILABLE";
+    this.providerStatus = Number.isInteger(options.providerStatus) ? options.providerStatus : null;
   }
 }
 
@@ -50,7 +53,10 @@ export function createOpenAiProvider({ apiKey, model = "gpt-5.4", client } = {})
         return { ...parsed, providerRef: response.id, model: response.model || model };
       } catch (error) {
         if (error instanceof AiProviderError) throw error;
-        throw new AiProviderError();
+        throw new AiProviderError(undefined, {
+          providerCode: error?.code || error?.type || "OPENAI_REQUEST_FAILED",
+          providerStatus: error?.status,
+        });
       }
     },
     async generateDraft({ instructions, input }) {
@@ -67,7 +73,10 @@ export function createOpenAiProvider({ apiKey, model = "gpt-5.4", client } = {})
         return response.output_text;
       } catch (error) {
         if (error instanceof AiProviderError) throw error;
-        throw new AiProviderError();
+        throw new AiProviderError(undefined, {
+          providerCode: error?.code || error?.type || "OPENAI_REQUEST_FAILED",
+          providerStatus: error?.status,
+        });
       }
     },
   };

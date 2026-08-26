@@ -34,7 +34,7 @@ test("database migrations are ordered, non-empty, and create every production mi
   assert.match(sql, /tenant_id/);
 });
 
-test("every migration uses PostgreSQL constraints or indexes", () => {
+test("every migration contains a substantive schema change", () => {
   for (const directory of readdirSync("prisma/migrations", { withFileTypes: true }).filter((item) =>
     item.isDirectory(),
   )) {
@@ -45,8 +45,8 @@ test("every migration uses PostgreSQL constraints or indexes", () => {
     assert.ok(sql.trim().length > 100, `${directory.name} is unexpectedly empty`);
     assert.match(
       sql,
-      /(?:CONSTRAINT|CREATE (?:UNIQUE )?INDEX)/,
-      `${directory.name} lacks constraints or indexes`,
+      /(?:CONSTRAINT|CREATE (?:UNIQUE )?INDEX|CREATE TABLE|CREATE TYPE|ALTER TYPE|CREATE (?:OR REPLACE )?FUNCTION|CREATE TRIGGER)/,
+      `${directory.name} lacks a substantive schema operation`,
     );
   }
 });

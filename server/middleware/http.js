@@ -74,3 +74,35 @@ export function asyncRoute(handler) {
     }
   };
 }
+
+export function createApiErrorHandler({ isProduction = false } = {}) {
+  return (error, request, response, _next) => {
+    const malformedJson = error?.type === "entity.parse.failed";
+    const status = malformedJson ? 400 : Number(error.status || 500);
+    const payload = {
+      message: malformedJson
+        ? "Malformed JSON request."
+        : status >= 500
+          ? "Unexpected server error."
+          : error.message,
+      requestId: request.id,
+    };
+    if (status >= 500 || malformedJson)
+      console.error(
+        JSON.stringify({
+          at: new Date().toISOString(),
+          level: "error",
+          requestId: request.id,
+          status,
+          error: error.name || "Error",
+          message: malformedJson
+            ? "Malformed JSON request body"
+            : isProduction
+              ? "Unhandled API error"
+              : error.message,
+          stack: isProduction ? undefined : error.stack,
+        }),
+      );
+    response.status(status).json(payload);
+  };
+}

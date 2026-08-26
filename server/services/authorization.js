@@ -1,4 +1,4 @@
-import { ROLE_PERMISSION_POLICY } from "../config/authorization.js";
+import { ROLE_PERMISSION_POLICY, ROLES } from "../config/authorization.js";
 
 export function hasPermission(actor, permission) {
   if (!actor || typeof actor.role !== "string" || typeof permission !== "string") return false;
@@ -24,6 +24,33 @@ export function requireAuthorization(input) {
   const decision = authorize(input);
   if (!decision.allowed) {
     const error = new Error("You do not have permission to perform this action.");
+    error.status = 403;
+    error.code = decision.reason;
+    throw error;
+  }
+  return decision;
+}
+
+export function canAssignRole({ actorRole, currentRole = null, requestedRole }) {
+  if (!ROLE_PERMISSION_POLICY[actorRole] || !ROLE_PERMISSION_POLICY[requestedRole]) {
+    return { allowed: false, reason: "unknown-role" };
+  }
+  if (actorRole === ROLES.SUPER_ADMINISTRATOR) {
+    return { allowed: true, reason: null };
+  }
+  if (currentRole === ROLES.SUPER_ADMINISTRATOR || requestedRole === ROLES.SUPER_ADMINISTRATOR) {
+    return { allowed: false, reason: "protected-platform-role" };
+  }
+  if (actorRole !== ROLES.CAMPAIGN_ADMINISTRATOR) {
+    return { allowed: false, reason: "role-assignment-not-authorized" };
+  }
+  return { allowed: true, reason: null };
+}
+
+export function requireRoleAssignmentAuthorization(input) {
+  const decision = canAssignRole(input);
+  if (!decision.allowed) {
+    const error = new Error("You do not have permission to assign this role.");
     error.status = 403;
     error.code = decision.reason;
     throw error;

@@ -83,7 +83,7 @@ test("official Round 9 mapping produces safeguarded public-priority aggregates",
   assert.equal(analysis.rowsImported, 53444);
   assert.equal(analysis.rejectedRows, 1359);
   assert.equal(analysis.countries.length, 39);
-  assert.equal(analysis.unmappedQuestionCodes.length, 323);
+  assert.equal(analysis.unmappedQuestionCodes.length, 314);
   assert.ok(analysis.aggregateResults.length > 0);
   assert.ok(
     analysis.aggregateResults
@@ -91,10 +91,29 @@ test("official Round 9 mapping produces safeguarded public-priority aggregates",
       .every((result) => result.unweightedSampleSize >= 100),
   );
   assert.ok(
-    analysis.aggregateResults.some(
-      (result) => result.responseCode === "Management of the economy",
-    ),
+    analysis.aggregateResults.some((result) => result.responseCode === "Management of the economy"),
   );
+  const requiredCategories = [
+    "PUBLIC_PRIORITIES",
+    "ECONOMIC_CONDITIONS",
+    "GOVERNMENT_PERFORMANCE",
+    "INSTITUTIONAL_TRUST",
+    "DEMOCRACY",
+    "GOVERNANCE",
+    "CORRUPTION",
+    "PUBLIC_SERVICES",
+    "ELECTIONS",
+    "YOUTH",
+  ];
+  assert.deepEqual(
+    [...new Set(AFROBAROMETER_INDICATOR_MAPPINGS.map((mapping) => mapping.category))].sort(),
+    requiredCategories.sort(),
+  );
+  for (const mapping of AFROBAROMETER_INDICATOR_MAPPINGS) {
+    assert.ok(mapping.questionText);
+    assert.ok(Object.keys(mapping.responseMapping).length > 0);
+    assert.equal(analysis.unmappedQuestionCodes.includes(mapping.questionCode), false);
+  }
 });
 
 test("repeat imports are idempotent by source hash", async () => {

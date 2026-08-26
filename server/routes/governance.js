@@ -4,6 +4,7 @@ import { requireSession, requireTenantPermission } from "../middleware/authentic
 import { asyncRoute } from "../middleware/http.js";
 import { PROHIBITED_AI_CAPABILITIES } from "../services/governance.js";
 import { normalizeEmail } from "../services/authentication.js";
+import { requireRoleAssignmentAuthorization } from "../services/authorization.js";
 export function createGovernanceRouter(repository) {
   const router = Router();
   router.use(requireSession);
@@ -27,6 +28,13 @@ export function createGovernanceRouter(repository) {
       const role = String(req.body?.role || "").toUpperCase();
       if (!Object.values(ROLES).includes(role))
         throw Object.assign(new Error("Role is invalid."), { status: 400 });
+      const membership = await repository.findMembership(req.tenant.id, req.params.id);
+      if (!membership) throw Object.assign(new Error("Membership not found."), { status: 404 });
+      requireRoleAssignmentAuthorization({
+        actorRole: req.tenant.membership.role,
+        currentRole: membership.role,
+        requestedRole: role,
+      });
       const result = await repository.activateMembershipRole(req.tenant.id, req.params.id, role);
       if (!result.count) throw Object.assign(new Error("Membership not found."), { status: 404 });
       await repository.appendAudit({
@@ -50,6 +58,10 @@ export function createGovernanceRouter(repository) {
         throw Object.assign(new Error("A valid email is required."), { status: 400 });
       if (!Object.values(ROLES).includes(role))
         throw Object.assign(new Error("Role is invalid."), { status: 400 });
+      requireRoleAssignmentAuthorization({
+        actorRole: req.tenant.membership.role,
+        requestedRole: role,
+      });
       const membership = await repository.inviteMembership(req.tenant.id, email, role);
       if (!membership)
         throw Object.assign(

@@ -15,6 +15,16 @@ function parseNumber(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function mailboxAddress(value) {
+  return (
+    String(value || "")
+      .match(/<([^>]+)>|([^\s<>]+@[^\s<>]+)/)
+      ?.slice(1)
+      .find(Boolean)
+      ?.toLowerCase() || ""
+  );
+}
+
 export function loadConfig(rootDir) {
   const nodeEnv = process.env.NODE_ENV || "development";
   const isProduction = nodeEnv === "production";
@@ -48,6 +58,8 @@ export function loadConfig(rootDir) {
     productionWarnings.push("PUBLIC_APP_URL should use HTTPS in production.");
   if (isProduction && !process.env.OPENAI_API_KEY)
     productionWarnings.push("OPENAI_API_KEY is required for the AI Assistant in production.");
+  if (isProduction && !String(process.env.OPENAI_MODEL || "").trim())
+    productionWarnings.push("OPENAI_MODEL must name an explicitly approved model.");
   if (
     isProduction &&
     clientOrigins.some(
@@ -73,7 +85,7 @@ export function loadConfig(rootDir) {
     databaseUrl: process.env.DATABASE_URL || "",
     redisUrl: process.env.REDIS_URL || "",
     openAiApiKey: process.env.OPENAI_API_KEY || "",
-    openAiModel: process.env.OPENAI_MODEL || "gpt-5.4",
+    openAiModel: process.env.OPENAI_MODEL || (isProduction ? "" : "gpt-5.4"),
     aiProvider: process.env.AI_PROVIDER || "openai",
     aiRateLimitWindowMs: parseNumber(process.env.AI_RATE_LIMIT_WINDOW_MS, 60_000),
     aiRateLimitMaxRequests: parseNumber(process.env.AI_RATE_LIMIT_MAX_REQUESTS, 12),
@@ -108,6 +120,7 @@ export function validateProductionEnvironment(config) {
   const errors = [];
   if (!config.databaseUrl) errors.push("DATABASE_URL is required.");
   if (!config.openAiApiKey) errors.push("OPENAI_API_KEY is required.");
+  if (!config.openAiModel.trim()) errors.push("OPENAI_MODEL is required.");
   if (config.authSecret.length < 32) errors.push("AUTH_SECRET must be at least 32 characters.");
   if (!config.publicUrl.startsWith("https://")) errors.push("APP_URL must use HTTPS.");
   if (config.storageProvider !== "vercel-blob")
@@ -122,6 +135,12 @@ export function validateProductionEnvironment(config) {
     if (!config.smtpHost) errors.push("SMTP_HOST is required for SMTP email.");
     if (!config.smtpUser) errors.push("SMTP_USER is required for SMTP email.");
     if (!config.smtpPassword) errors.push("SMTP_PASSWORD is required for SMTP email.");
+    if (
+      config.smtpUser &&
+      config.emailFrom &&
+      mailboxAddress(config.emailFrom) !== config.smtpUser.toLowerCase()
+    )
+      errors.push("EMAIL_FROM must use the authorized SMTP_USER mailbox.");
   }
   if (!config.emailFrom) errors.push("EMAIL_FROM is required.");
   return errors;

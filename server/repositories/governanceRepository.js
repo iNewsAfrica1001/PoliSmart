@@ -71,6 +71,8 @@ export function createGovernanceRepository(db) {
       db.aiErrorReport.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 250 }),
     updateMembershipRole: (tenantId, id, role) =>
       db.membership.updateMany({ where: { id, tenantId }, data: { role } }),
+    findMembership: (tenantId, id) =>
+      db.membership.findFirst({ where: { id, tenantId }, select: { id: true, role: true } }),
     async inviteMembership(tenantId, email, role) {
       const user = await db.authUser.findUnique({ where: { email } });
       if (!user) return null;

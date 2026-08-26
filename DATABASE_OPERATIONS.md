@@ -1,6 +1,26 @@
 # PoliSmart Production Database Operations
 
-These procedures use `DATABASE_URL` without printing it. Never paste credentials into commands, logs, issues, or source control.
+The running application uses `DATABASE_URL`, while reviewed migrations use `MIGRATION_DATABASE_URL`. Never paste either credential into commands, logs, issues, or source control.
+
+## Required production roles
+
+Create two separate Neon roles in the Neon console or with an existing protected owner connection:
+
+```sql
+CREATE ROLE polismart_runtime LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS PASSWORD '<generated-runtime-password>';
+GRANT CONNECT ON DATABASE neondb TO polismart_runtime;
+GRANT USAGE ON SCHEMA public TO polismart_runtime;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO polismart_runtime;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO polismart_runtime;
+ALTER DEFAULT PRIVILEGES FOR ROLE <migration_role> IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO polismart_runtime;
+ALTER DEFAULT PRIVILEGES FOR ROLE <migration_role> IN SCHEMA public
+  GRANT USAGE, SELECT ON SEQUENCES TO polismart_runtime;
+```
+
+Replace placeholders inside a protected SQL session. Do not store generated passwords in shell history. Set `DATABASE_URL` to the pooled `polismart_runtime` connection. Set `MIGRATION_DATABASE_URL` to a protected direct connection for a separate migration role that owns or can alter application schema objects. Do not grant the runtime role `CREATE` on the schema, `CREATEDB`, `CREATEROLE`, `BYPASSRLS`, or superuser.
+
+Verify the runtime role with `npm run db:validate:production`. The validator fails if dangerous role attributes are present.
 
 ## Preflight and migration review
 
@@ -35,7 +55,7 @@ Encrypt the dump at rest, limit access, and delete it according to the retention
 After backup verification and approval:
 
 ```bash
-npm run db:migrate
+MIGRATION_DATABASE_URL=<injected-by-secret-manager> npm run db:migrate:production
 npm run db:validate:production
 ```
 
@@ -67,4 +87,4 @@ To inspect source statistics without writing:
 npm run import:afrobarometer -- --dry-run
 ```
 
-Do not import until authoritative mappings are approved. With the currently supplied dictionary, all 324 survey questions remain explicitly unmapped and the expected aggregate record count is zero.
+Import only reviewed mapping versions. Version `r9-merged-codebook-2024-06-25-v2` contains ten mappings transcribed from the official Round 9 codebook; all other survey questions remain explicitly unmapped.

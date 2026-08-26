@@ -4,8 +4,10 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import request from "supertest";
+import express from "express";
 
 import { loadConfig, validateProductionEnvironment } from "../server/config/env.js";
+import { createApiErrorHandler } from "../server/middleware/http.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -33,6 +35,7 @@ test("production environment rejects absent deployment secrets", () => {
       APP_URL: undefined,
       DATABASE_URL: undefined,
       OPENAI_API_KEY: undefined,
+      OPENAI_MODEL: undefined,
       AUTH_SECRET: undefined,
       JWT_SECRET: undefined,
       SESSION_SECRET: undefined,
@@ -48,6 +51,7 @@ test("production environment rejects absent deployment secrets", () => {
       const errors = validateProductionEnvironment(loadConfig(root));
       assert.ok(errors.some((error) => error.startsWith("DATABASE_URL")));
       assert.ok(errors.some((error) => error.startsWith("OPENAI_API_KEY")));
+      assert.ok(errors.some((error) => error.startsWith("OPENAI_MODEL")));
       assert.ok(errors.some((error) => error.startsWith("AUTH_SECRET")));
       assert.ok(errors.some((error) => error.startsWith("APP_URL")));
       assert.ok(errors.some((error) => error.startsWith("BLOB_READ_WRITE_TOKEN or")));
@@ -63,6 +67,7 @@ test("production accepts complete SMTP configuration", () => {
       APP_URL: "https://polismartafrica.ai",
       DATABASE_URL: "postgresql://example.invalid/db?sslmode=require",
       OPENAI_API_KEY: "test-only-key",
+      OPENAI_MODEL: "test-model",
       AUTH_SECRET: "a".repeat(48),
       STORAGE_PROVIDER: "vercel-blob",
       BLOB_READ_WRITE_TOKEN: "test-only-blob-token",
@@ -86,6 +91,7 @@ test("production environment accepts complete Vercel configuration", () => {
       APP_URL: "https://polismartafrica.ai",
       DATABASE_URL: "postgresql://example.invalid/db?sslmode=require",
       OPENAI_API_KEY: "test-only-key",
+      OPENAI_MODEL: "test-model",
       AUTH_SECRET: "a".repeat(48),
       STORAGE_PROVIDER: "vercel-blob",
       BLOB_READ_WRITE_TOKEN: "test-only-blob-token",
@@ -103,6 +109,7 @@ test("production environment accepts Vercel Blob OIDC configuration", () => {
       NODE_ENV: "production",
       DATABASE_URL: "postgresql://demo:demo@localhost:5432/polismart",
       OPENAI_API_KEY: "test-only-openai-key",
+      OPENAI_MODEL: "test-model",
       AUTH_SECRET: "test-only-auth-secret-that-is-long-enough",
       APP_URL: "https://polismartafrica.ai",
       STORAGE_PROVIDER: "vercel-blob",
@@ -137,9 +144,48 @@ test("production data import is explicit and absent from deployment builds", () 
     "node scripts/import-afrobarometer-production.mjs",
   );
   assert.doesNotMatch(packageJson.scripts.build, /afrobarometer|migrate/i);
-  assert.match(packageJson.scripts["vercel-build"], /prisma migrate deploy/);
+  assert.doesNotMatch(packageJson.scripts["vercel-build"], /prisma migrate deploy/);
+  assert.equal(packageJson.scripts["db:migrate:production"], "node scripts/migrate-production.mjs");
   assert.doesNotMatch(packageJson.scripts["vercel-build"], /afrobarometer/i);
   assert.doesNotMatch(packageJson.scripts["db:migrate"], /afrobarometer/i);
+});
+
+test("malformed JSON returns a stable client message", async () => {
+  const app = express();
+  app.use(express.json());
+  app.post("/api/test", (_request, response) => response.json({ ok: true }));
+  app.use("/api", createApiErrorHandler({ isProduction: true }));
+  const response = await request(app)
+    .post("/api/test")
+    .set("Content-Type", "application/json")
+    .send("{bad")
+    .expect(400);
+  assert.equal(response.body.message, "Malformed JSON request.");
+  assert.doesNotMatch(response.body.message, /position|expected|syntax/i);
+});
+
+test("production SMTP sender must match the authorized mailbox", () => {
+  withEnvironment(
+    {
+      NODE_ENV: "production",
+      APP_URL: "https://polismartafrica.ai",
+      DATABASE_URL: "postgresql://example.invalid/db?sslmode=require",
+      OPENAI_API_KEY: "test-only-key",
+      OPENAI_MODEL: "test-model",
+      AUTH_SECRET: "a".repeat(48),
+      STORAGE_PROVIDER: "vercel-blob",
+      BLOB_READ_WRITE_TOKEN: "test-only-blob-token",
+      EMAIL_PROVIDER: "smtp",
+      SMTP_HOST: "smtp.zoho.com",
+      SMTP_USER: "authorized@example.invalid",
+      SMTP_PASSWORD: "test-only-app-password",
+      EMAIL_FROM: "PoliSmart <different@example.invalid>",
+    },
+    () => {
+      const errors = validateProductionEnvironment(loadConfig(root));
+      assert.ok(errors.includes("EMAIL_FROM must use the authorized SMTP_USER mailbox."));
+    },
+  );
 });
 
 test("public readiness is minimal and operational metrics require authentication", async () => {

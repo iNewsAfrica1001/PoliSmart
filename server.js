@@ -11,6 +11,7 @@ import {
   assignRequestId,
   logRequest,
   rateLimit,
+  createApiErrorHandler,
 } from "./server/middleware/http.js";
 import { createAiRouter } from "./server/routes/ai.js";
 import { createAuthRouter } from "./server/routes/auth.js";
@@ -205,26 +206,7 @@ app.use("/api", (request, response) => {
   });
 });
 
-app.use("/api", (error, request, response, _next) => {
-  const status = Number(error.status || 500);
-  const payload = {
-    message: status >= 500 ? "Unexpected server error." : error.message,
-    requestId: request.id,
-  };
-  if (status >= 500)
-    console.error(
-      JSON.stringify({
-        at: new Date().toISOString(),
-        level: "error",
-        requestId: request.id,
-        status,
-        error: error.name || "Error",
-        message: config.isProduction ? "Unhandled API error" : error.message,
-        stack: config.isProduction ? undefined : error.stack,
-      }),
-    );
-  response.status(status).json(payload);
-});
+app.use("/api", createApiErrorHandler({ isProduction: config.isProduction }));
 
 registerClassroomSockets(io);
 

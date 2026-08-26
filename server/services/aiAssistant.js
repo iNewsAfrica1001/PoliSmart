@@ -28,6 +28,8 @@ const CATEGORY_TERMS = {
   CIVIC_PARTICIPATION: ["civic"],
   GOVERNMENT_PERFORMANCE: ["government performance"],
   PUBLIC_PRIORITIES: ["priorities", "priority"],
+  ELECTIONS: ["election", "elections", "electoral"],
+  YOUTH: ["youth", "young people", "young respondents"],
 };
 export function detectIntent(question) {
   const value = question.toLowerCase();
@@ -70,6 +72,10 @@ export function createAiAssistantService({
           weightedPercentage: row.weightedPercentage,
           unweightedSampleSize: row.unweightedSampleSize,
           surveyRound: row.surveyRound,
+          weightField: row.weightField,
+          importVersion: row.importVersion,
+          attribution: row.attribution,
+          surveySource: row.surveySource,
           url: row.sourceUrl || null,
         },
       }));
@@ -159,14 +165,47 @@ export function createAiAssistantService({
           tenantId,
           errorCode: "AI_PROVIDER_FAILURE",
           safeMessage: "The AI provider was unavailable.",
-          metadata: { feature: "AI_ASSISTANT", campaignId },
+          metadata: {
+            feature: "AI_ASSISTANT",
+            campaignId,
+            provider: provider.name,
+            providerCode: error?.providerCode || "PROVIDER_FAILURE",
+            providerStatus: error?.providerStatus || null,
+          },
         });
         throw error;
       }
       const allowed = new Set(sources.map((source) => source.id));
       const used = [...new Set(result.sourceIds)].filter((id) => allowed.has(id));
       const chosen = sources.filter((source) => used.includes(source.id));
-      const citations = (chosen.length ? chosen : sources).map((source) => source.citation);
+      if (!chosen.length) {
+        const observedData =
+          "The model did not identify valid supporting evidence for this answer.";
+        const interpretation =
+          "I cannot provide a grounded interpretation without a valid citation to the supplied evidence.";
+        const content = `Observed Data\n${observedData}\n\nAI Interpretation\n${interpretation}`;
+        const saved = await repository.createMessage({
+          tenantId,
+          conversationId: conversation.id,
+          role: "ASSISTANT",
+          content,
+          intent,
+          grounded: false,
+          citations: [],
+          structuredData: { observedData, interpretation, reason: "INVALID_SOURCE_REFERENCES" },
+        });
+        return {
+          conversationId: conversation.id,
+          messageId: saved.id,
+          intent,
+          grounded: false,
+          observedData,
+          interpretation,
+          content,
+          citations: [],
+        };
+      }
+      const citations = chosen.map((source) => source.citation);
       const content = `Observed Data\n${result.observedData}\n\nAI Interpretation\n${result.interpretation}`;
       const saved = await repository.createMessage({
         tenantId,

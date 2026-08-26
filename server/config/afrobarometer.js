@@ -10,6 +10,8 @@ export const AFROBAROMETER_INTELLIGENCE_CATEGORIES = Object.freeze([
   "PUBLIC_SERVICES",
   "SECURITY",
   "CIVIC_PARTICIPATION",
+  "ELECTIONS",
+  "YOUTH",
 ]);
 // Source: Afrobarometer, Merged Round 9 codebook (39 countries), 25 June 2024.
 // https://www.afrobarometer.org/wp-content/uploads/2024/10/AB_R9.MergeCodebook_25Jun24.final_.pdf
@@ -107,5 +109,130 @@ export const AFROBAROMETER_INDICATOR_MAPPINGS = Object.freeze([
     category: "PUBLIC_PRIORITIES",
     responseMapping: MOST_IMPORTANT_PROBLEM_RESPONSES,
   }),
+  Object.freeze({
+    questionCode: "Q4A",
+    questionText:
+      "In general, how would you describe the present economic condition of this country?",
+    indicatorCode: "PRESENT_COUNTRY_ECONOMIC_CONDITION",
+    indicatorName: "Present country economic condition",
+    category: "ECONOMIC_CONDITIONS",
+    responseMapping: Object.freeze({
+      1: "Very bad",
+      2: "Fairly bad",
+      3: "Neither good nor bad",
+      4: "Fairly good",
+      5: "Very good",
+    }),
+  }),
+  Object.freeze({
+    questionCode: "Q46A",
+    questionText: "How well or badly is the current government handling managing the economy?",
+    indicatorCode: "GOVERNMENT_HANDLING_ECONOMY",
+    indicatorName: "Government performance managing the economy",
+    category: "GOVERNMENT_PERFORMANCE",
+    responseMapping: Object.freeze({
+      1: "Very badly",
+      2: "Fairly badly",
+      3: "Fairly well",
+      4: "Very well",
+    }),
+  }),
+  Object.freeze({
+    questionCode: "Q37A",
+    questionText: "How much do you trust the president?",
+    indicatorCode: "TRUST_PRESIDENT",
+    indicatorName: "Trust in the president",
+    category: "INSTITUTIONAL_TRUST",
+    responseMapping: Object.freeze({
+      0: "Not at all",
+      1: "Just a little",
+      2: "Somewhat",
+      3: "A lot",
+    }),
+  }),
+  Object.freeze({
+    questionCode: "Q23",
+    questionText:
+      "Which statement is closest to your opinion about democracy as a form of government?",
+    indicatorCode: "SUPPORT_FOR_DEMOCRACY",
+    indicatorName: "Support for democracy",
+    category: "DEMOCRACY",
+    responseMapping: Object.freeze({
+      1: "Does not matter what kind of government",
+      2: "Sometimes non-democratic government preferable",
+      3: "Democracy preferable",
+    }),
+  }),
+  Object.freeze({
+    questionCode: "Q12A",
+    questionText: "How well do elections ensure representatives reflect the views of voters?",
+    indicatorCode: "ELECTIONS_REFLECT_VOTER_VIEWS",
+    indicatorName: "Elections reflect voter views",
+    category: "ELECTIONS",
+    responseMapping: Object.freeze({
+      0: "Not at all well",
+      1: "Not very well",
+      2: "Fairly well",
+      3: "Very well",
+    }),
+  }),
+  Object.freeze({
+    questionCode: "Q39A",
+    questionText:
+      "Over the past year, has the level of corruption in this country increased, decreased, or stayed the same?",
+    indicatorCode: "CHANGE_IN_CORRUPTION_LEVEL",
+    indicatorName: "Perceived change in corruption",
+    category: "CORRUPTION",
+    responseMapping: Object.freeze({
+      1: "Increased a lot",
+      2: "Increased somewhat",
+      3: "Stayed the same",
+      4: "Decreased somewhat",
+      5: "Decreased a lot",
+    }),
+  }),
+  Object.freeze({
+    questionCode: "Q40B",
+    questionText:
+      "How easy or difficult was it to obtain services from teachers or school officials?",
+    indicatorCode: "ACCESS_PUBLIC_SCHOOL_SERVICES",
+    indicatorName: "Ease of obtaining public school services",
+    category: "PUBLIC_SERVICES",
+    responseMapping: Object.freeze({
+      1: "Very easy",
+      2: "Easy",
+      3: "Difficult",
+      4: "Very difficult",
+    }),
+  }),
+  Object.freeze({
+    questionCode: "Q31",
+    questionText: "Overall, how satisfied are you with the way democracy works in this country?",
+    indicatorCode: "SATISFACTION_WITH_DEMOCRACY",
+    indicatorName: "Satisfaction with democratic governance",
+    category: "GOVERNANCE",
+    responseMapping: Object.freeze({
+      0: "Country is not a democracy",
+      1: "Not at all satisfied",
+      2: "Not very satisfied",
+      3: "Fairly satisfied",
+      4: "Very satisfied",
+    }),
+  }),
+  Object.freeze({
+    questionCode: "Q1",
+    questionText: "How old are you?",
+    indicatorCode: "YOUTH_AGE_DISTRIBUTION_18_35",
+    indicatorName: "Age distribution among respondents aged 18-35",
+    category: "YOUTH",
+    responseMapping: Object.freeze(
+      Object.fromEntries(
+        Array.from({ length: 18 }, (_, index) => {
+          const age = index + 18;
+          return [age, `Age ${age}`];
+        }),
+      ),
+    ),
+  }),
 ]);
-export const AFROBAROMETER_MAPPING_VERSION = "r9-merged-codebook-2024-06-25-v1";
+export const AFROBAROMETER_MAPPING_VERSION = "r9-merged-codebook-2024-06-25-v2";

@@ -1,5 +1,13 @@
 # Security Policy
 
+## Privileged roles
+
+`SUPER_ADMINISTRATOR` is a protected platform role. Only an authenticated Super Administrator may invite, assign, promote, demote, or otherwise modify a membership involving that role. Campaign Administrators may manage organization memberships only when both the current and requested roles are non-platform roles. Every decision is enforced server-side and unknown roles fail closed.
+
+## Database credentials
+
+The runtime and migration roles are separate. `DATABASE_URL` must identify a runtime role with no superuser, `CREATEDB`, `CREATEROLE`, schema-creation, or `BYPASSRLS` capability. `MIGRATION_DATABASE_URL` is restricted to the approved release process. See `DATABASE_OPERATIONS.md` for grants and validation.
+
 ## Reporting
 
 Report suspected vulnerabilities privately to Sentinel LLC. Do not include credentials, real campaign data, or respondent-level survey records in reports.

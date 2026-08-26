@@ -1,0 +1,2 @@
+ALTER TYPE "IntelligenceCategory" ADD VALUE IF NOT EXISTS 'ELECTIONS';
+ALTER TYPE "IntelligenceCategory" ADD VALUE IF NOT EXISTS 'YOUTH';

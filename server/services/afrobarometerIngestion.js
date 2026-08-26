@@ -169,7 +169,7 @@ export async function analyzeAfrobarometer({
     .filter((question) => question.mappingStatus === "UNMAPPED")
     .map((question) => question.questionCode);
   const warnings = [
-    `${unmapped.length} question codes are unmapped because the authoritative Round 9 codebook was not supplied.`,
+    `${unmapped.length} question codes remain unmapped pending reviewed explicit mappings from the authoritative Round 9 codebook.`,
     ...(missingWeightColumns.length
       ? [`Missing weighting fields: ${missingWeightColumns.join(", ")}.`]
       : []),
@@ -233,7 +233,7 @@ export async function persistAfrobarometer(prisma, analysis, { sourceFile, dicti
     const aggregateCount = await prisma.surveyAggregateResult.count({
       where: { surveyImportId: existing.id },
     });
-    if (!(analysis.aggregateResults?.length ?? 0) || aggregateCount)
+    if (!(analysis.aggregateResults?.length ?? 0))
       return {
         idempotent: true,
         importId: existing.id,
@@ -287,7 +287,7 @@ export async function persistAfrobarometer(prisma, analysis, { sourceFile, dicti
         const definitionIds = new Map(
           definitions.map((definition) => [definition.indicatorCode, definition.id]),
         );
-        await tx.surveyIndicatorValue.createMany({
+        const createdValues = await tx.surveyIndicatorValue.createMany({
           data: analysis.aggregateResults.map((item) => ({
             surveyImportId: existing.id,
             indicatorDefinitionId: definitionIds.get(item.indicatorCode),
@@ -298,8 +298,9 @@ export async function persistAfrobarometer(prisma, analysis, { sourceFile, dicti
             unweightedCount: item.unweightedCount,
             weightField: item.weightField,
           })),
+          skipDuplicates: true,
         });
-        await tx.surveyAggregateResult.createMany({
+        const createdAggregates = await tx.surveyAggregateResult.createMany({
           data: analysis.aggregateResults.map((item) => ({
             surveyImportId: existing.id,
             indicatorDefinitionId: definitionIds.get(item.indicatorCode),
@@ -312,6 +313,7 @@ export async function persistAfrobarometer(prisma, analysis, { sourceFile, dicti
             suppressionReason: item.suppressionReason,
             weightField: item.weightField,
           })),
+          skipDuplicates: true,
         });
         await tx.surveyImport.update({
           where: { id: existing.id },
@@ -326,11 +328,12 @@ export async function persistAfrobarometer(prisma, analysis, { sourceFile, dicti
           },
         });
         return {
-          idempotent: false,
-          enrichedExistingImport: true,
+          idempotent: createdValues.count === 0 && createdAggregates.count === 0,
+          enrichedExistingImport: createdAggregates.count > 0,
           importId: existing.id,
           rowsImported: analysis.rowsImported,
-          aggregateCount: analysis.aggregateResults.length,
+          aggregateCount: aggregateCount + createdAggregates.count,
+          aggregateRecordsAdded: createdAggregates.count,
         };
       },
       { timeout: 120000 },

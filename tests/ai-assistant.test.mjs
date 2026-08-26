@@ -4,7 +4,12 @@ import { createAiAssistantService, createAiRateLimiter } from "../server/service
 import { AiProviderError } from "../server/services/aiProvider.js";
 import { createAiRepository } from "../server/repositories/aiRepository.js";
 
-function harness({ chunks = [], aggregates = [], providerFailure = false } = {}) {
+function harness({
+  chunks = [],
+  aggregates = [],
+  providerFailure = false,
+  sourceIds = ["S1", "FAKE"],
+} = {}) {
   const messages = [];
   const repository = {
     findCampaign: async () => ({ id: "campaign" }),
@@ -26,7 +31,7 @@ function harness({ chunks = [], aggregates = [], providerFailure = false } = {})
       return {
         observedData: "Approved evidence reports 42%.",
         interpretation: "This may warrant further review.",
-        sourceIds: ["S1", "FAKE"],
+        sourceIds,
         providerRef: "response",
         model: "test-model",
       };
@@ -153,6 +158,8 @@ test("public intelligence sends aggregates rather than respondent rows", async (
     question: "Q1",
     surveyRound: "9",
     sourceUrl: "https://example.test",
+    importVersion: "r9-test",
+    attribution: "Afrobarometer public research data",
   };
   const { service } = harness({ aggregates: [row] });
   const answer = await service.answer({
@@ -164,4 +171,26 @@ test("public intelligence sends aggregates rather than respondent rows", async (
   assert.equal(answer.intent, "PUBLIC_INTELLIGENCE");
   assert.equal(answer.citations[0].weightedPercentage, 51.2);
   assert.equal(answer.citations[0].unweightedSampleSize, 500);
+  assert.equal(answer.citations[0].question, "Q1");
+  assert.equal(answer.citations[0].surveyRound, "9");
+  assert.equal(answer.citations[0].weightField, "COMBINWT");
+  assert.equal(answer.citations[0].url, "https://example.test");
+});
+
+test("invalid provider source references produce an insufficient-evidence response", async () => {
+  const chunk = {
+    content: "Approved evidence.",
+    chunkIndex: 0,
+    document: { id: "doc", title: "Approved document", source: "Campaign" },
+  };
+  const { service } = harness({ chunks: [chunk], sourceIds: ["FAKE"] });
+  const answer = await service.answer({
+    tenantId: "tenant",
+    campaignId: "campaign",
+    userId: "user",
+    question: "Explain approved evidence",
+  });
+  assert.equal(answer.grounded, false);
+  assert.deepEqual(answer.citations, []);
+  assert.match(answer.observedData, /did not identify valid supporting evidence/);
 });

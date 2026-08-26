@@ -40,7 +40,7 @@ npm run db:migrate
 npm run db:seed
 ```
 
-The Vercel release build runs `prisma migrate deploy` once per deployment before compiling the application. Only reviewed, committed migrations are applied; the command is idempotent and does not seed or import Afrobarometer data. Retain the deployment output as the migration record.
+The Vercel build generates Prisma Client and compiles the application; it does not apply migrations. Apply reviewed migrations from the approved release environment with the protected migration credential before promoting the deployment. Retain that output as the migration record.
 
 For previews, use a separate Neon branch and a preview-only `DATABASE_URL`.
 
@@ -58,34 +58,51 @@ Campaign documents must not use a public Blob store. The server uploads with `ac
 
 ## 4. Required Vercel environment variables
 
+### P1 credential remediation
+
+Replace or verify these Vercel Production variables manually, then redeploy. Never copy their values into source control or support logs:
+
+- `DATABASE_URL`: pooled connection for the least-privilege runtime role.
+- `MIGRATION_DATABASE_URL`: protected direct connection used only by the approved release environment; omit it from application runtime when the release runner is separate from Vercel.
+- `AI_PROVIDER=openai`.
+- `OPENAI_API_KEY`: newly issued server-side project key. Revoke any key previously shared outside the secret manager.
+- `OPENAI_MODEL`: an enabled model name approved for the OpenAI project.
+- `EMAIL_PROVIDER=smtp`, `SMTP_HOST=smtp.zoho.com`, `SMTP_PORT=465`, and `SMTP_SECURE=true`.
+- `SMTP_USER`: complete authorized Zoho mailbox.
+- `SMTP_PASSWORD`: Zoho application-specific password.
+- `EMAIL_FROM`: the same authorized mailbox, optionally with a display name.
+
+After redeployment, inspect only safe provider error codes and HTTP statuses. Do not log provider response bodies, authorization headers, API keys, SMTP passwords, or connection strings.
+
 Configure variables in **Settings → Environment Variables**. Use separate values for Production and Preview.
 
-| Variable                     | Required    | Production value guidance                          |
-| ---------------------------- | ----------- | -------------------------------------------------- |
-| `NODE_ENV`                   | Yes         | `production`                                       |
-| `APP_URL`                    | Yes         | `https://polismartafrica.ai`                       |
-| `CLIENT_ORIGIN`              | Yes         | `https://polismartafrica.ai`                       |
-| `AUTH_SECRET`                | Yes         | Random value of at least 32 characters             |
-| `DATABASE_URL`               | Yes         | Neon pooled TLS connection string                  |
-| `OPENAI_API_KEY`             | Yes         | Restricted server-side OpenAI project key          |
-| `OPENAI_MODEL`               | Yes         | `gpt-5.4` or an explicitly approved model          |
-| `AI_PROVIDER`                | Yes         | `openai`                                           |
-| `STORAGE_PROVIDER`           | Yes         | `vercel-blob`                                      |
-| `BLOB_STORE_ID`              | Recommended | Added by an OIDC-connected private Blob store      |
-| `BLOB_READ_WRITE_TOKEN`      | Legacy only | Long-lived token for stores not upgraded to OIDC   |
-| `EMAIL_PROVIDER`             | Yes         | `resend` or `smtp`                                 |
-| `EMAIL_API_KEY`              | Resend only | Restricted Resend API key                          |
-| `EMAIL_FROM`                 | Yes         | `PoliSmart Africa AI <noreply@polismartafrica.ai>` |
-| `SMTP_HOST`                  | SMTP only   | `smtp.zoho.com`                                    |
-| `SMTP_PORT`                  | SMTP only   | `465`                                              |
-| `SMTP_SECURE`                | SMTP only   | `true`                                             |
-| `SMTP_USER`                  | SMTP only   | Verified Zoho mailbox                              |
-| `SMTP_PASSWORD`              | SMTP only   | Zoho app password                                  |
-| `REDIS_URL`                  | Scaling     | Managed Redis TLS URL                              |
-| `AI_RATE_LIMIT_WINDOW_MS`    | Recommended | `60000`                                            |
-| `AI_RATE_LIMIT_MAX_REQUESTS` | Recommended | `12`                                               |
-| `RATE_LIMIT_WINDOW_MS`       | Recommended | `60000`                                            |
-| `RATE_LIMIT_MAX_REQUESTS`    | Recommended | `180`                                              |
+| Variable                     | Required     | Production value guidance                                                          |
+| ---------------------------- | ------------ | ---------------------------------------------------------------------------------- |
+| `NODE_ENV`                   | Yes          | `production`                                                                       |
+| `APP_URL`                    | Yes          | `https://polismartafrica.ai`                                                       |
+| `CLIENT_ORIGIN`              | Yes          | `https://polismartafrica.ai`                                                       |
+| `AUTH_SECRET`                | Yes          | Random value of at least 32 characters                                             |
+| `DATABASE_URL`               | Yes          | Neon pooled TLS connection string                                                  |
+| `MIGRATION_DATABASE_URL`     | Release only | Protected Neon direct connection for reviewed migrations; do not expose to runtime |
+| `OPENAI_API_KEY`             | Yes          | Restricted server-side OpenAI project key                                          |
+| `OPENAI_MODEL`               | Yes          | `gpt-5.4` or an explicitly approved model                                          |
+| `AI_PROVIDER`                | Yes          | `openai`                                                                           |
+| `STORAGE_PROVIDER`           | Yes          | `vercel-blob`                                                                      |
+| `BLOB_STORE_ID`              | Recommended  | Added by an OIDC-connected private Blob store                                      |
+| `BLOB_READ_WRITE_TOKEN`      | Legacy only  | Long-lived token for stores not upgraded to OIDC                                   |
+| `EMAIL_PROVIDER`             | Yes          | `resend` or `smtp`                                                                 |
+| `EMAIL_API_KEY`              | Resend only  | Restricted Resend API key                                                          |
+| `EMAIL_FROM`                 | Yes          | `PoliSmart Africa AI <noreply@polismartafrica.ai>`                                 |
+| `SMTP_HOST`                  | SMTP only    | `smtp.zoho.com`                                                                    |
+| `SMTP_PORT`                  | SMTP only    | `465`                                                                              |
+| `SMTP_SECURE`                | SMTP only    | `true`                                                                             |
+| `SMTP_USER`                  | SMTP only    | Verified Zoho mailbox                                                              |
+| `SMTP_PASSWORD`              | SMTP only    | Zoho app password                                                                  |
+| `REDIS_URL`                  | Scaling      | Managed Redis TLS URL                                                              |
+| `AI_RATE_LIMIT_WINDOW_MS`    | Recommended  | `60000`                                                                            |
+| `AI_RATE_LIMIT_MAX_REQUESTS` | Recommended  | `12`                                                                               |
+| `RATE_LIMIT_WINDOW_MS`       | Recommended  | `60000`                                                                            |
+| `RATE_LIMIT_MAX_REQUESTS`    | Recommended  | `180`                                                                              |
 
 Generate `AUTH_SECRET` locally, never in source control:
 
@@ -104,6 +121,10 @@ Create a dedicated OpenAI project for PoliSmart production. Apply project-level 
 Verify the `polismartafrica.ai` domain with Resend, including SPF and DKIM. Configure `EMAIL_FROM` with a verified sender. Test verification and password-reset links on a preview deployment before production promotion.
 
 For Zoho Mail instead, configure `EMAIL_PROVIDER=smtp`, `SMTP_HOST=smtp.zoho.com`, `SMTP_PORT=465`, `SMTP_SECURE=true`, and add the verified mailbox plus a Zoho app password as `SMTP_USER` and `SMTP_PASSWORD`. Keep credentials server-only. Publish the SPF, DKIM, and DMARC records shown by the Zoho admin console and test mail delivery in Preview before Production.
+
+`SMTP_USER` must be the complete authorized Zoho mailbox. `EMAIL_FROM` must use that same mailbox (a display name is allowed). Supply `SMTP_PASSWORD` only as a Zoho application-specific password. After replacing Vercel variables, redeploy and verify both registration verification and password-reset messages in a controlled mailbox.
+
+Vercel builds generate Prisma Client but do not apply migrations. Before promotion, create a Neon restore point and run `npm run db:migrate:production` from the approved release environment with `MIGRATION_DATABASE_URL` injected by its secret manager.
 
 ## 7. GitHub → Vercel preview configuration
 

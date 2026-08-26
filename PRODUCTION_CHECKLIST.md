@@ -36,20 +36,20 @@ Release status: **NOT READY FOR DEPLOYMENT — environment verification blockers
 
 ## Requested journey coverage
 
-| Journey step                         | Evidence                                                                     | Status                                                      |
-| ------------------------------------ | ---------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Register/Login                       | Authentication service tests; browser login and accessible error-state check | Partial: real DB E2E blocked                                |
-| Create Organization                  | Registration transaction test coverage and schema constraints                | Automated service coverage                                  |
-| Create Campaign                      | Tenant-scoped campaign repository/integration tests                          | Passed                                                      |
-| Invite User                          | Tenant-scoped invited-membership test added during audit                     | Passed at repository level                                  |
-| Assign Role                          | Server-side permission test and audited activation path                      | Passed                                                      |
-| Upload/Process Document              | Upload permission, validation, extraction/chunking, failure tests            | Passed                                                      |
-| Ask AI / cited answer                | Grounding, authorization, citations, failure, rate-limit tests               | Passed with mocked provider                                 |
-| Afrobarometer Intelligence           | Aggregate-only API, weighting, sample safeguard, idempotency tests           | Passed; source question mappings remain intentionally empty |
-| Policy project / AI draft / approval | Ordered workflow, evidence gate, AI disclaimer, approval tests               | Passed with mocked provider                                 |
-| Event / volunteer assignment         | Tenant/reference validation and API integration tests                        | Passed                                                      |
-| Executive brief                      | Deterministic brief and bounded aggregate query-plan tests                   | Passed                                                      |
-| Audit-log review                     | Tenant scope and append-only trigger tests                                   | Passed statically; DB trigger execution blocked             |
+| Journey step                         | Evidence                                                                     | Status                                                                  |
+| ------------------------------------ | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Register/Login                       | Authentication service tests; browser login and accessible error-state check | Partial: real DB E2E blocked                                            |
+| Create Organization                  | Registration transaction test coverage and schema constraints                | Automated service coverage                                              |
+| Create Campaign                      | Tenant-scoped campaign repository/integration tests                          | Passed                                                                  |
+| Invite User                          | Tenant-scoped invited-membership test added during audit                     | Passed at repository level                                              |
+| Assign Role                          | Server-side permission test and audited activation path                      | Passed                                                                  |
+| Upload/Process Document              | Upload permission, validation, extraction/chunking, failure tests            | Passed                                                                  |
+| Ask AI / cited answer                | Grounding, authorization, citations, failure, rate-limit tests               | Passed with mocked provider                                             |
+| Afrobarometer Intelligence           | Aggregate-only API, weighting, sample safeguard, idempotency tests           | Ten reviewed mappings; production enrichment import and retest required |
+| Policy project / AI draft / approval | Ordered workflow, evidence gate, AI disclaimer, approval tests               | Passed with mocked provider                                             |
+| Event / volunteer assignment         | Tenant/reference validation and API integration tests                        | Passed                                                                  |
+| Executive brief                      | Deterministic brief and bounded aggregate query-plan tests                   | Passed                                                                  |
+| Audit-log review                     | Tenant scope and append-only trigger tests                                   | Passed statically; DB trigger execution blocked                         |
 
 ## Security findings
 
@@ -76,7 +76,7 @@ Release status: **NOT READY FOR DEPLOYMENT — environment verification blockers
 2. `OPENAI_API_KEY` is unset. Live provider compatibility, latency, quota, and structured-output behavior remain unverified.
 3. Authenticated browser E2E cannot proceed until the database is migrated and seeded.
 4. A shared Redis-backed rate limiter is required before running more than one application instance.
-5. Afrobarometer question mappings are intentionally empty pending an authoritative Round 9 codebook; public-intelligence screens correctly return no invented indicators.
+5. Ten mappings are reviewed against the authoritative Round 9 codebook; production still requires the explicit idempotent enrichment import and validation.
 
 ## Required release rehearsal
 

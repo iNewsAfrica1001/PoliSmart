@@ -6,6 +6,14 @@ PoliSmart treats Afrobarometer as a public research source for aggregate analysi
 
 Normal application APIs expose `survey_aggregate_results` only. They do not expose the raw CSV or respondent-level values.
 
+## Approved Round 9 mapping set
+
+Mapping version `r9-merged-codebook-2024-06-25-v2` is transcribed from the official Afrobarometer Merged Round 9 codebook dated 25 June 2024. Mappings are source-controlled in `server/config/afrobarometer.js`; each entry includes the source question code, reviewed question wording, substantive response labels, indicator, and category. Refused, don't-know, missing, and inapplicable values are excluded rather than relabeled.
+
+The approved set covers Public Priorities (`Q45PT1`), Economic Conditions (`Q4A`), Government Performance (`Q46A`), Institutional Trust (`Q37A`), Democracy (`Q23`), Elections (`Q12A`), Corruption (`Q39A`), Public Services (`Q40B`), Governance (`Q31`), and aggregate Youth age distribution (`Q1`, ages 18-35 only). All other codes remain explicitly `UNMAPPED` until reviewed against an authoritative codebook.
+
+The enrichment process never persists or changes respondent-level observations. It recomputes weighted aggregate records from the immutable raw file, preserves `Combinwt_new_hh`, applies the minimum sample-size safeguard, and records the mapping version in transformation history. Re-running the production import adds missing aggregates without duplicating existing unique aggregate keys.
+
 ## Immutable inputs
 
 - `data/raw/polismart_afrobarometer_mvp_cleaned.csv`
@@ -30,7 +38,7 @@ The importer uses `Combinwt_new_hh` for aggregate preparation and separately val
 
 ## Explicit mappings only
 
-The supplied dictionary marks all 324 `Q*` variables as “map with Round 9 codebook,” but does not itself contain question wording, country labels, or response labels. The reviewed [official Afrobarometer merged Round 9 codebook](https://www.afrobarometer.org/wp-content/uploads/2024/10/AB_R9.MergeCodebook_25Jun24.final_.pdf) supplies the country mapping and the explicit `Q45PT1` public-priority mapping currently enabled. The other 323 questions remain `UNMAPPED` and are not published.
+The supplied dictionary marks all 324 `Q*` variables as “map with Round 9 codebook,” but does not itself contain question wording, country labels, or response labels. The reviewed [official Afrobarometer merged Round 9 codebook](https://www.afrobarometer.org/wp-content/uploads/2024/10/AB_R9.MergeCodebook_25Jun24.final_.pdf) supplies the country mapping and the ten explicit mappings currently enabled. The other 314 questions remain `UNMAPPED` and are not published.
 
 Authoritative mappings belong in `server/config/afrobarometer.js`. Each mapping must explicitly provide:
 
@@ -68,7 +76,7 @@ Run the database import after PostgreSQL migrations:
 npm run import:afrobarometer
 ```
 
-The second database run detects the existing `source_sha256` and returns the prior import without inserting records. If an earlier metadata-only import exists with no aggregates, a reviewed mapping version may enrich that import once; subsequent runs remain idempotent.
+The second database run detects the existing `source_sha256` and uses unique aggregate keys plus `skipDuplicates` to avoid duplicate records. A later reviewed mapping version can enrich the existing immutable source import with missing aggregates; subsequent runs remain idempotent.
 
 ## Database model
 
@@ -98,7 +106,7 @@ Results with fewer than 100 valid unweighted responses are stored as suppressed 
 - Zero or negative weight values: 0
 - Authoritatively mapped countries: 39
 - Valid country/region pairs observed: 519
-- Question codes: 323 unmapped, 1 mapped
+- Question codes: 314 unmapped, 10 mapped
 - Prepared aggregate records: 1,083 (suppressed records retain a null percentage)
 
 ## Required follow-up
