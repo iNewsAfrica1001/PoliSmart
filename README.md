@@ -107,6 +107,6 @@ src/
 
 ## Security status
 
-Passwords use bcrypt with cost 12. Session, reset, and verification secrets are random opaque values stored only as SHA-256 hashes. Session cookies are `HttpOnly`, `SameSite=Strict`, and `Secure` in production. Legacy protected routes now require an authenticated session. Production transactional email uses the server-side Microsoft 365 STARTTLS profile documented in `DEPLOYMENT.md`; credentials remain external.
+Passwords use bcrypt with cost 12. Session, reset, and verification secrets are random opaque values stored only as SHA-256 hashes. Session cookies are `HttpOnly`, `SameSite=Strict`, and `Secure` in production. Legacy protected routes now require an authenticated session. Production transactional email uses server-side Microsoft Graph OAuth client credentials as documented in `DEPLOYMENT.md`; credentials and access tokens remain server-only.
 
 Production deployment is intentionally out of scope for this milestone.

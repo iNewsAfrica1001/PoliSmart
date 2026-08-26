@@ -103,6 +103,9 @@ export function loadConfig(rootDir) {
     smtpSecure: String(process.env.SMTP_SECURE || "true").toLowerCase() === "true",
     smtpUser: process.env.SMTP_USER || "",
     smtpPassword: process.env.SMTP_PASSWORD || "",
+    microsoftTenantId: process.env.MICROSOFT_TENANT_ID || "",
+    microsoftClientId: process.env.MICROSOFT_CLIENT_ID || "",
+    microsoftClientSecret: process.env.MICROSOFT_CLIENT_SECRET || "",
     jsonLimit: process.env.JSON_LIMIT || "1mb",
     rateLimitWindowMs: parseNumber(process.env.RATE_LIMIT_WINDOW_MS, 60_000),
     rateLimitMaxRequests: parseNumber(
@@ -127,8 +130,10 @@ export function validateProductionEnvironment(config) {
     errors.push("STORAGE_PROVIDER must be vercel-blob on Vercel.");
   if (!config.blobReadWriteToken && !config.blobStoreId)
     errors.push("BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID is required.");
-  if (!["resend", "smtp", "microsoft365"].includes(config.emailProvider))
-    errors.push("EMAIL_PROVIDER must be resend, smtp, or microsoft365 in production.");
+  if (!["resend", "smtp", "microsoft365", "microsoft_graph"].includes(config.emailProvider))
+    errors.push(
+      "EMAIL_PROVIDER must be resend, smtp, microsoft365, or microsoft_graph in production.",
+    );
   if (config.emailProvider === "resend" && !config.emailApiKey)
     errors.push("EMAIL_API_KEY or RESEND_API_KEY is required for Resend.");
   if (["smtp", "microsoft365"].includes(config.emailProvider)) {
@@ -147,6 +152,14 @@ export function validateProductionEnvironment(config) {
       errors.push("SMTP_HOST must be smtp.office365.com for Microsoft 365.");
     if (config.smtpPort !== 587) errors.push("SMTP_PORT must be 587 for Microsoft 365.");
     if (config.smtpSecure) errors.push("SMTP_SECURE must be false for Microsoft 365 STARTTLS.");
+  }
+  if (config.emailProvider === "microsoft_graph") {
+    if (!config.microsoftTenantId) errors.push("MICROSOFT_TENANT_ID is required for Microsoft Graph.");
+    if (!config.microsoftClientId) errors.push("MICROSOFT_CLIENT_ID is required for Microsoft Graph.");
+    if (!config.microsoftClientSecret)
+      errors.push("MICROSOFT_CLIENT_SECRET is required for Microsoft Graph.");
+    if (mailboxAddress(config.emailFrom) !== "no-reply@polismartafrica.ai")
+      errors.push("EMAIL_FROM must be no-reply@polismartafrica.ai for Microsoft Graph.");
   }
   if (!config.emailFrom) errors.push("EMAIL_FROM is required.");
   return errors;

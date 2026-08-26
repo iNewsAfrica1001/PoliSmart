@@ -9,6 +9,7 @@ import {
 } from "../server/services/aiTutor.js";
 import {
   AccountNotificationError,
+  classifyGraphError,
   classifySmtpError,
   createAccountNotificationService,
 } from "../server/services/accountNotifications.js";
@@ -180,4 +181,115 @@ test("Microsoft 365 delivery has an application deadline below the serverless ti
     service.sendPasswordReset({ email: "recipient@example.invalid", token: "test-token" }),
     (error) => error instanceof AccountNotificationError && error.code === "SMTP_TIMEOUT",
   );
+});
+
+function graphConfig(overrides = {}) {
+  return {
+    emailProvider: "microsoft_graph",
+    emailFrom: "PoliSmart <no-reply@polismartafrica.ai>",
+    publicUrl: "https://polismartafrica.ai",
+    microsoftTenantId: "test-tenant",
+    microsoftClientId: "test-client",
+    microsoftClientSecret: "test-client-secret",
+    ...overrides,
+  };
+}
+
+test("Microsoft Graph sends verification and reset email with one cached app token", async () => {
+  const requests = [];
+  let tokenRequests = 0;
+  const service = createAccountNotificationService(graphConfig(), {
+    graphClient: {
+      acquireTokenByClientCredential: async (request) => {
+        tokenRequests += 1;
+        assert.deepEqual(request.scopes, ["https://graph.microsoft.com/.default"]);
+        return { accessToken: "test-access-token", expiresOn: new Date(Date.now() + 300_000) };
+      },
+    },
+    graphFetch: async (url, options) => {
+      requests.push({ url, options });
+      return new Response(null, { status: 202 });
+    },
+  });
+  await service.sendEmailVerification({ email: "user@example.invalid", token: "verify token" });
+  await service.sendPasswordReset({ email: "user@example.invalid", token: "reset token" });
+  assert.equal(tokenRequests, 1);
+  assert.equal(requests.length, 2);
+  assert.ok(
+    requests.every(
+      ({ url }) =>
+        url ===
+        "https://graph.microsoft.com/v1.0/users/no-reply%40polismartafrica.ai/sendMail",
+    ),
+  );
+  assert.ok(requests.every(({ options }) => options.headers.Authorization === "Bearer test-access-token"));
+  assert.match(requests[0].options.body, /verify-email\?token=verify%20token/);
+  assert.match(requests[1].options.body, /reset-password\?token=reset%20token/);
+  assert.doesNotMatch(requests[0].options.body, /test-client-secret|test-access-token/);
+});
+
+test("Microsoft Graph token failures are classified without exposing credentials", async () => {
+  assert.equal(classifyGraphError({ errorCode: "invalid_client" }), "GRAPH_INVALID_CLIENT");
+  assert.equal(
+    classifyGraphError({ errorCode: "AADSTS7000215" }),
+    "GRAPH_INVALID_CLIENT_SECRET",
+  );
+  assert.equal(classifyGraphError({ errorCode: "invalid_tenant" }), "GRAPH_INVALID_TENANT");
+  const service = createAccountNotificationService(graphConfig(), {
+    graphClient: {
+      acquireTokenByClientCredential: async () => {
+        throw Object.assign(new Error("test-client-secret"), { errorCode: "invalid_client" });
+      },
+    },
+  });
+  await assert.rejects(
+    service.sendPasswordReset({ email: "user@example.invalid", token: "token" }),
+    (error) =>
+      error instanceof AccountNotificationError &&
+      error.code === "GRAPH_INVALID_CLIENT" &&
+      !error.message.includes("test-client-secret"),
+  );
+});
+
+for (const [status, code] of [
+  [401, "GRAPH_TOKEN_REJECTED"],
+  [403, "GRAPH_ACCESS_DENIED"],
+  [404, "GRAPH_SENDER_NOT_FOUND"],
+  [429, "GRAPH_RATE_LIMITED"],
+  [500, "GRAPH_SERVICE_FAILURE"],
+]) {
+  test(`Microsoft Graph ${status} is safely classified`, async () => {
+    const service = createAccountNotificationService(graphConfig(), {
+      graphClient: {
+        acquireTokenByClientCredential: async () => ({
+          accessToken: "test-access-token",
+          expiresOn: new Date(Date.now() + 300_000),
+        }),
+      },
+      graphFetch: async () => new Response(null, { status }),
+    });
+    await assert.rejects(
+      service.sendPasswordReset({ email: "user@example.invalid", token: "token" }),
+      (error) => error instanceof AccountNotificationError && error.code === code,
+    );
+  });
+}
+
+test("Microsoft Graph rejects arbitrary sender configuration before requesting a token", async () => {
+  let tokenRequested = false;
+  const service = createAccountNotificationService(
+    graphConfig({ emailFrom: "attacker@example.invalid" }),
+    {
+      graphClient: {
+        acquireTokenByClientCredential: async () => {
+          tokenRequested = true;
+        },
+      },
+    },
+  );
+  await assert.rejects(
+    service.sendPasswordReset({ email: "user@example.invalid", token: "token" }),
+    (error) => error.code === "GRAPH_CONFIGURATION_INVALID",
+  );
+  assert.equal(tokenRequested, false);
 });

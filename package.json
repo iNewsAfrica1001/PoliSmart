@@ -36,6 +36,7 @@
     "import:afrobarometer:production": "node scripts/import-afrobarometer-production.mjs"
   },
   "dependencies": {
+    "@azure/msal-node": "^5.6.0",
     "@capacitor/core": "^8.4.1",
     "@prisma/client": "^6.12.0",
     "@tailwindcss/vite": "^4.3.0",

@@ -84,6 +84,59 @@ test("production accepts complete Microsoft 365 SMTP configuration", () => {
   );
 });
 
+test("production accepts Microsoft Graph without SMTP variables", () => {
+  withEnvironment(
+    {
+      NODE_ENV: "production",
+      APP_URL: "https://polismartafrica.ai",
+      DATABASE_URL: "postgresql://example.invalid/db?sslmode=require",
+      OPENAI_API_KEY: "test-only-key",
+      OPENAI_MODEL: "test-model",
+      AUTH_SECRET: "a".repeat(48),
+      STORAGE_PROVIDER: "vercel-blob",
+      BLOB_READ_WRITE_TOKEN: "test-only-blob-token",
+      EMAIL_PROVIDER: "microsoft_graph",
+      EMAIL_FROM: "PoliSmart <no-reply@polismartafrica.ai>",
+      MICROSOFT_TENANT_ID: "test-tenant",
+      MICROSOFT_CLIENT_ID: "test-client",
+      MICROSOFT_CLIENT_SECRET: "test-client-secret",
+      SMTP_HOST: undefined,
+      SMTP_USER: undefined,
+      SMTP_PASSWORD: undefined,
+    },
+    () => assert.deepEqual(validateProductionEnvironment(loadConfig(root)), []),
+  );
+});
+
+test("Microsoft Graph requires credentials and the fixed sender", () => {
+  withEnvironment(
+    {
+      NODE_ENV: "production",
+      APP_URL: "https://polismartafrica.ai",
+      DATABASE_URL: "postgresql://example.invalid/db?sslmode=require",
+      OPENAI_API_KEY: "test-only-key",
+      OPENAI_MODEL: "test-model",
+      AUTH_SECRET: "a".repeat(48),
+      STORAGE_PROVIDER: "vercel-blob",
+      BLOB_READ_WRITE_TOKEN: "test-only-blob-token",
+      EMAIL_PROVIDER: "microsoft_graph",
+      EMAIL_FROM: "attacker@example.invalid",
+      MICROSOFT_TENANT_ID: undefined,
+      MICROSOFT_CLIENT_ID: undefined,
+      MICROSOFT_CLIENT_SECRET: undefined,
+    },
+    () => {
+      const errors = validateProductionEnvironment(loadConfig(root));
+      assert.ok(errors.includes("MICROSOFT_TENANT_ID is required for Microsoft Graph."));
+      assert.ok(errors.includes("MICROSOFT_CLIENT_ID is required for Microsoft Graph."));
+      assert.ok(errors.includes("MICROSOFT_CLIENT_SECRET is required for Microsoft Graph."));
+      assert.ok(
+        errors.includes("EMAIL_FROM must be no-reply@polismartafrica.ai for Microsoft Graph."),
+      );
+    },
+  );
+});
+
 test("production environment accepts complete Vercel configuration", () => {
   withEnvironment(
     {
