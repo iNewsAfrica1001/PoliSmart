@@ -37,6 +37,7 @@ test("production environment rejects absent deployment secrets", () => {
       JWT_SECRET: undefined,
       SESSION_SECRET: undefined,
       BLOB_READ_WRITE_TOKEN: undefined,
+      BLOB_STORE_ID: undefined,
       EMAIL_API_KEY: undefined,
       SMTP_HOST: undefined,
       SMTP_USER: undefined,
@@ -49,7 +50,7 @@ test("production environment rejects absent deployment secrets", () => {
       assert.ok(errors.some((error) => error.startsWith("OPENAI_API_KEY")));
       assert.ok(errors.some((error) => error.startsWith("AUTH_SECRET")));
       assert.ok(errors.some((error) => error.startsWith("APP_URL")));
-      assert.ok(errors.some((error) => error.startsWith("BLOB_READ_WRITE_TOKEN")));
+      assert.ok(errors.some((error) => error.startsWith("BLOB_READ_WRITE_TOKEN or")));
       assert.ok(errors.some((error) => error.startsWith("EMAIL_API_KEY")));
     },
   );
@@ -93,6 +94,28 @@ test("production environment accepts complete Vercel configuration", () => {
       EMAIL_FROM: "PoliSmart <noreply@polismartafrica.ai>",
     },
     () => assert.deepEqual(validateProductionEnvironment(loadConfig(root)), []),
+  );
+});
+
+test("production environment accepts Vercel Blob OIDC configuration", () => {
+  withEnvironment(
+    {
+      NODE_ENV: "production",
+      DATABASE_URL: "postgresql://demo:demo@localhost:5432/polismart",
+      OPENAI_API_KEY: "test-only-openai-key",
+      AUTH_SECRET: "test-only-auth-secret-that-is-long-enough",
+      APP_URL: "https://polismartafrica.ai",
+      STORAGE_PROVIDER: "vercel-blob",
+      BLOB_READ_WRITE_TOKEN: undefined,
+      BLOB_STORE_ID: "store_test_only",
+      EMAIL_PROVIDER: "resend",
+      EMAIL_API_KEY: "test-only-email-key",
+      EMAIL_FROM: "PoliSmart Demo <demo@example.test>",
+    },
+    () => {
+      const config = loadConfig(process.cwd());
+      assert.deepEqual(validateProductionEnvironment(config), []);
+    },
   );
 });
 

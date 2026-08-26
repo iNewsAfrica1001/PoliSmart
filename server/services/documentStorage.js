@@ -26,13 +26,17 @@ export function createLocalDocumentStorage(rootDirectory) {
 }
 
 export function createVercelBlobDocumentStorage(token) {
-  if (!token) throw new Error("BLOB_READ_WRITE_TOKEN is required for Vercel Blob storage.");
+  const authentication = token ? { token } : {};
   return {
     async put(key, buffer) {
-      await put(key, buffer, { access: "private", addRandomSuffix: false, token });
+      await put(key, buffer, {
+        access: "private",
+        addRandomSuffix: false,
+        ...authentication,
+      });
     },
     async remove(key) {
-      await del(key, { token });
+      await del(key, authentication);
     },
   };
 }

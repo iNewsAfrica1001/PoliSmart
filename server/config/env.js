@@ -82,6 +82,7 @@ export function loadConfig(rootDir) {
       process.env.DOCUMENT_STORAGE_PATH || path.join(rootDir, "storage", "documents"),
     storageProvider: process.env.STORAGE_PROVIDER || (isProduction ? "vercel-blob" : "local"),
     blobReadWriteToken: process.env.BLOB_READ_WRITE_TOKEN || "",
+    blobStoreId: process.env.BLOB_STORE_ID || "",
     emailProvider: process.env.EMAIL_PROVIDER || (isProduction ? "resend" : "console"),
     emailApiKey: process.env.EMAIL_API_KEY || process.env.RESEND_API_KEY || "",
     emailFrom: process.env.EMAIL_FROM || "",
@@ -111,7 +112,8 @@ export function validateProductionEnvironment(config) {
   if (!config.publicUrl.startsWith("https://")) errors.push("APP_URL must use HTTPS.");
   if (config.storageProvider !== "vercel-blob")
     errors.push("STORAGE_PROVIDER must be vercel-blob on Vercel.");
-  if (!config.blobReadWriteToken) errors.push("BLOB_READ_WRITE_TOKEN is required.");
+  if (!config.blobReadWriteToken && !config.blobStoreId)
+    errors.push("BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID is required.");
   if (!["resend", "smtp"].includes(config.emailProvider))
     errors.push("EMAIL_PROVIDER must be resend or smtp in production.");
   if (config.emailProvider === "resend" && !config.emailApiKey)

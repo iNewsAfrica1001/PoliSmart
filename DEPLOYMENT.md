@@ -51,7 +51,7 @@ In Vercel:
 1. Open the project’s Storage tab.
 2. Create or connect a Blob store.
 3. Select **Private** access.
-4. Confirm Vercel adds `BLOB_READ_WRITE_TOKEN` to the project.
+4. Confirm Vercel adds `BLOB_STORE_ID` for OIDC authentication. Existing legacy stores may instead add `BLOB_READ_WRITE_TOKEN`.
 5. Set `STORAGE_PROVIDER=vercel-blob`.
 
 Campaign documents must not use a public Blob store. The server uploads with `access: private`; no browser receives the storage token.
@@ -71,7 +71,8 @@ Configure variables in **Settings → Environment Variables**. Use separate valu
 | `OPENAI_MODEL`               | Yes         | `gpt-5.4` or an explicitly approved model          |
 | `AI_PROVIDER`                | Yes         | `openai`                                           |
 | `STORAGE_PROVIDER`           | Yes         | `vercel-blob`                                      |
-| `BLOB_READ_WRITE_TOKEN`      | Yes         | Added by the connected private Blob store          |
+| `BLOB_STORE_ID`              | Recommended | Added by an OIDC-connected private Blob store      |
+| `BLOB_READ_WRITE_TOKEN`      | Legacy only | Long-lived token for stores not upgraded to OIDC   |
 | `EMAIL_PROVIDER`             | Yes         | `resend` or `smtp`                                 |
 | `EMAIL_API_KEY`              | Resend only | Restricted Resend API key                          |
 | `EMAIL_FROM`                 | Yes         | `PoliSmart Africa AI <noreply@polismartafrica.ai>` |
