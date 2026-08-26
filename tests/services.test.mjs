@@ -246,17 +246,17 @@ test("Microsoft Graph token failures are classified without exposing credentials
     service.sendPasswordReset({ email: "user@example.invalid", token: "token" }),
     (error) =>
       error instanceof AccountNotificationError &&
-      error.code === "GRAPH_INVALID_CLIENT" &&
+      error.code === "TOKEN_ACQUISITION_FAILED" &&
       !error.message.includes("test-client-secret"),
   );
 });
 
 for (const [status, code] of [
-  [401, "GRAPH_TOKEN_REJECTED"],
-  [403, "GRAPH_ACCESS_DENIED"],
-  [404, "GRAPH_SENDER_NOT_FOUND"],
-  [429, "GRAPH_RATE_LIMITED"],
-  [500, "GRAPH_SERVICE_FAILURE"],
+  [401, "GRAPH_UNAUTHORIZED"],
+  [403, "GRAPH_FORBIDDEN"],
+  [404, "MAILBOX_NOT_FOUND"],
+  [429, "GRAPH_RATE_LIMIT"],
+  [500, "GRAPH_SERVICE_ERROR"],
 ]) {
   test(`Microsoft Graph ${status} is safely classified`, async () => {
     const service = createAccountNotificationService(graphConfig(), {
@@ -289,7 +289,104 @@ test("Microsoft Graph rejects arbitrary sender configuration before requesting a
   );
   await assert.rejects(
     service.sendPasswordReset({ email: "user@example.invalid", token: "token" }),
-    (error) => error.code === "GRAPH_CONFIGURATION_INVALID",
+    (error) => error.code === "CONFIGURATION_ERROR",
   );
   assert.equal(tokenRequested, false);
+});
+
+test("Microsoft Graph payload is provider-native and 202 with an empty body succeeds", async () => {
+  let captured;
+  const service = createAccountNotificationService(graphConfig(), {
+    graphClient: {
+      acquireTokenByClientCredential: async () => ({
+        accessToken: "test-access-token",
+        expiresOn: new Date(Date.now() + 300_000),
+      }),
+    },
+    graphFetch: async (url, options) => {
+      captured = { url, options };
+      return new Response(null, { status: 202 });
+    },
+  });
+  await service.sendPasswordReset({ email: "recipient@example.invalid", token: "opaque-token" });
+  const payload = JSON.parse(captured.options.body);
+  assert.equal(captured.options.method, "POST");
+  assert.equal(captured.options.headers["Content-Type"], "application/json");
+  assert.equal(payload.message.subject, "Reset your PoliSmart password");
+  assert.equal(payload.message.body.contentType, "HTML");
+  assert.equal(payload.message.toRecipients[0].emailAddress.address, "recipient@example.invalid");
+  assert.equal(payload.saveToSentItems, true);
+  assert.equal(payload.message.from, undefined);
+  assert.equal(payload.smtp, undefined);
+});
+
+test("Microsoft Graph honors a bounded Retry-After before accepting delivery", async () => {
+  let attempts = 0;
+  const sleeps = [];
+  const service = createAccountNotificationService(graphConfig(), {
+    graphClient: {
+      acquireTokenByClientCredential: async () => ({
+        accessToken: "test-access-token",
+        expiresOn: new Date(Date.now() + 300_000),
+      }),
+    },
+    graphFetch: async () => {
+      attempts += 1;
+      return attempts === 1
+        ? new Response(null, { status: 429, headers: { "Retry-After": "1" } })
+        : new Response(null, { status: 202 });
+    },
+    sleep: async (milliseconds) => sleeps.push(milliseconds),
+  });
+  await service.sendPasswordReset({ email: "recipient@example.invalid", token: "token" });
+  assert.equal(attempts, 2);
+  assert.deepEqual(sleeps, [1000]);
+});
+
+test("Microsoft Graph timeout fails safely", async () => {
+  const service = createAccountNotificationService(graphConfig(), {
+    graphTimeoutMs: 5,
+    graphClient: {
+      acquireTokenByClientCredential: async () => ({
+        accessToken: "test-access-token",
+        expiresOn: new Date(Date.now() + 300_000),
+      }),
+    },
+    graphFetch: async (_url, options) =>
+      new Promise((_resolve, reject) => {
+        options.signal.addEventListener("abort", () =>
+          reject(Object.assign(new Error("aborted"), { name: "AbortError" })),
+        );
+      }),
+  });
+  await assert.rejects(
+    service.sendPasswordReset({ email: "recipient@example.invalid", token: "secret-reset-token" }),
+    (error) =>
+      error instanceof AccountNotificationError &&
+      error.code === "NETWORK_TIMEOUT" &&
+      !error.message.includes("secret-reset-token"),
+  );
+});
+
+test("Microsoft Graph error diagnostics never enter the public error", async () => {
+  const service = createAccountNotificationService(graphConfig(), {
+    graphClient: {
+      acquireTokenByClientCredential: async () => ({
+        accessToken: "test-access-token",
+        expiresOn: new Date(Date.now() + 300_000),
+      }),
+    },
+    graphFetch: async () =>
+      new Response(JSON.stringify({ error: { code: "ErrorAccessDenied", message: "sensitive detail" } }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", "request-id": "safe-request-id" },
+      }),
+  });
+  await assert.rejects(
+    service.sendPasswordReset({ email: "recipient@example.invalid", token: "secret-reset-token" }),
+    (error) =>
+      error.code === "GRAPH_FORBIDDEN" &&
+      !error.message.includes("sensitive detail") &&
+      !error.message.includes("secret-reset-token"),
+  );
 });

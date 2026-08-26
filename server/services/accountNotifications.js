@@ -34,13 +34,35 @@ export function classifyGraphError(error) {
 }
 
 function graphResponseCode(status) {
-  if (status === 401) return "GRAPH_TOKEN_REJECTED";
-  if (status === 403) return "GRAPH_ACCESS_DENIED";
-  if (status === 404) return "GRAPH_SENDER_NOT_FOUND";
-  if (status === 429) return "GRAPH_RATE_LIMITED";
-  if (status >= 500) return "GRAPH_SERVICE_FAILURE";
-  if (status >= 400 && status < 500) return "GRAPH_RECIPIENT_REJECTED";
-  return "GRAPH_PROVIDER_FAILURE";
+  if (status === 401) return "GRAPH_UNAUTHORIZED";
+  if (status === 403) return "GRAPH_FORBIDDEN";
+  if (status === 404) return "MAILBOX_NOT_FOUND";
+  if (status === 429) return "GRAPH_RATE_LIMIT";
+  if (status >= 500) return "GRAPH_SERVICE_ERROR";
+  if (status >= 400 && status < 500) return "INVALID_RECIPIENT";
+  return "GRAPH_SERVICE_ERROR";
+}
+
+function safeHeader(response, name) {
+  const value = response?.headers?.get?.(name);
+  return value ? String(value).slice(0, 200) : undefined;
+}
+
+async function graphFailureMetadata(response) {
+  let microsoftErrorCode;
+  try {
+    const body = await response.clone().json();
+    microsoftErrorCode = String(body?.error?.code || "").slice(0, 100) || undefined;
+  } catch {
+    // Graph may return an empty or non-JSON error response. Never log its raw body.
+  }
+  return {
+    status: response.status,
+    microsoftErrorCode,
+    microsoftRequestId: safeHeader(response, "request-id"),
+    microsoftClientRequestId: safeHeader(response, "client-request-id"),
+    retryAfter: safeHeader(response, "retry-after"),
+  };
 }
 
 function mailboxAddress(value) {
@@ -137,7 +159,7 @@ export function createAccountNotificationService(config = {}, options = {}) {
         !config.microsoftClientId ||
         !config.microsoftClientSecret
       )
-        throw new AccountNotificationError("GRAPH_CONFIGURATION_INVALID");
+        throw new AccountNotificationError("CONFIGURATION_ERROR");
       try {
         if (!cachedGraphToken || cachedGraphToken.expiresAt <= Date.now() + 60_000) {
           const token = await graphClient.acquireTokenByClientCredential({ scopes: [GRAPH_SCOPE] });
@@ -148,9 +170,19 @@ export function createAccountNotificationService(config = {}, options = {}) {
           };
         }
       } catch (error) {
-        const code = classifyGraphError(error);
-        console.error(JSON.stringify({ at: new Date().toISOString(), level: "error", event: "transactional-email-failed", provider: "microsoft_graph", code }));
-        throw new AccountNotificationError(code);
+        const diagnosticCode = classifyGraphError(error);
+        console.error(
+          JSON.stringify({
+            at: new Date().toISOString(),
+            level: "error",
+            event: "transactional-email-failed",
+            provider: "microsoft_graph",
+            code: "TOKEN_ACQUISITION_FAILED",
+            diagnosticCode,
+            correlationId: String(error?.correlationId || "").slice(0, 200) || undefined,
+          }),
+        );
+        throw new AccountNotificationError("TOKEN_ACQUISITION_FAILED");
       }
 
       const requestBody = JSON.stringify({
@@ -179,7 +211,7 @@ export function createAccountNotificationService(config = {}, options = {}) {
             signal: controller.signal,
           });
         } catch (error) {
-          const code = error?.name === "AbortError" ? "GRAPH_TIMEOUT" : "GRAPH_NETWORK_FAILURE";
+          const code = error?.name === "AbortError" ? "NETWORK_TIMEOUT" : "GRAPH_SERVICE_ERROR";
           console.error(JSON.stringify({ at: new Date().toISOString(), level: "error", event: "transactional-email-failed", provider: "microsoft_graph", code }));
           throw new AccountNotificationError(code);
         } finally {
@@ -194,7 +226,17 @@ export function createAccountNotificationService(config = {}, options = {}) {
       }
       if (response.status !== 202) {
         const code = graphResponseCode(response.status);
-        console.error(JSON.stringify({ at: new Date().toISOString(), level: "error", event: "transactional-email-failed", provider: "microsoft_graph", code, status: response.status }));
+        const metadata = await graphFailureMetadata(response);
+        console.error(
+          JSON.stringify({
+            at: new Date().toISOString(),
+            level: "error",
+            event: "transactional-email-failed",
+            provider: "microsoft_graph",
+            code,
+            ...metadata,
+          }),
+        );
         throw new AccountNotificationError(code);
       }
       return;
