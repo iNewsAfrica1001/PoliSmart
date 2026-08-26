@@ -112,6 +112,9 @@ test("Microsoft 365 transport requires STARTTLS on port 587", () => {
   assert.equal(transportConfig.port, 587);
   assert.equal(transportConfig.secure, false);
   assert.equal(transportConfig.requireTLS, true);
+  assert.equal(transportConfig.connectionTimeout, 10_000);
+  assert.equal(transportConfig.greetingTimeout, 10_000);
+  assert.equal(transportConfig.socketTimeout, 15_000);
   assert.equal(transportConfig.tls.minVersion, "TLSv1.2");
 });
 

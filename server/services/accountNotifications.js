@@ -31,6 +31,9 @@ export function createAccountNotificationService(config = {}, options = {}) {
         secure: config.smtpSecure,
         auth: { user: config.smtpUser, pass: config.smtpPassword },
         requireTLS: !config.smtpSecure,
+        connectionTimeout: 10_000,
+        greetingTimeout: 10_000,
+        socketTimeout: 15_000,
         tls: { minVersion: "TLSv1.2", servername: config.smtpHost },
       })
     : null;
