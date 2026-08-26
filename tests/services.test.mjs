@@ -157,3 +157,27 @@ test("SMTP failures are classified without exposing provider details or secrets"
       !error.message.includes(secret),
   );
 });
+
+test("Microsoft 365 delivery has an application deadline below the serverless timeout", async () => {
+  const service = createAccountNotificationService(
+    {
+      emailProvider: "microsoft365",
+      emailFrom: "noreply@example.invalid",
+      publicUrl: "https://polismartafrica.ai",
+      smtpHost: "smtp.office365.com",
+      smtpPort: 587,
+      smtpSecure: false,
+      smtpUser: "noreply@example.invalid",
+      smtpPassword: "test-only-password",
+    },
+    {
+      smtpDeliveryTimeoutMs: 5,
+      smtpTransport: { sendMail: () => new Promise(() => undefined) },
+    },
+  );
+
+  await assert.rejects(
+    service.sendPasswordReset({ email: "recipient@example.invalid", token: "test-token" }),
+    (error) => error instanceof AccountNotificationError && error.code === "SMTP_TIMEOUT",
+  );
+});

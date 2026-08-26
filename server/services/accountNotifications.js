@@ -23,6 +23,7 @@ export function classifySmtpError(error) {
 export function createAccountNotificationService(config = {}, options = {}) {
   const usesSmtp = ["smtp", "microsoft365"].includes(config.emailProvider);
   const createTransport = options.createTransport || nodemailer.createTransport;
+  const smtpDeliveryTimeoutMs = options.smtpDeliveryTimeoutMs ?? 12_000;
   const smtpTransport = usesSmtp
     ? options.smtpTransport ||
       createTransport({
@@ -46,13 +47,22 @@ export function createAccountNotificationService(config = {}, options = {}) {
     if (usesSmtp) {
       if (!config.smtpHost || !config.smtpUser || !config.smtpPassword || !config.emailFrom)
         throw new Error("Production SMTP delivery is not configured.");
+      let timeoutHandle;
       try {
-        await smtpTransport.sendMail({
-          from: config.emailFrom,
-          to: email,
-          subject,
-          html: `<p>${subject}</p><p><a href="${config.publicUrl}${path}">Continue securely</a></p>`,
-        });
+        await Promise.race([
+          smtpTransport.sendMail({
+            from: config.emailFrom,
+            to: email,
+            subject,
+            html: `<p>${subject}</p><p><a href="${config.publicUrl}${path}">Continue securely</a></p>`,
+          }),
+          new Promise((_, reject) => {
+            timeoutHandle = setTimeout(
+              () => reject(Object.assign(new Error("SMTP delivery deadline exceeded."), { code: "ETIMEDOUT" })),
+              smtpDeliveryTimeoutMs,
+            );
+          }),
+        ]);
       } catch (error) {
         const code = classifySmtpError(error);
         console.error(
@@ -65,6 +75,8 @@ export function createAccountNotificationService(config = {}, options = {}) {
           }),
         );
         throw new AccountNotificationError(code);
+      } finally {
+        clearTimeout(timeoutHandle);
       }
       return;
     }
