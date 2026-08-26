@@ -67,9 +67,9 @@ Replace or verify these Vercel Production variables manually, then redeploy. Nev
 - `AI_PROVIDER=openai`.
 - `OPENAI_API_KEY`: newly issued server-side project key. Revoke any key previously shared outside the secret manager.
 - `OPENAI_MODEL`: an enabled model name approved for the OpenAI project.
-- `EMAIL_PROVIDER=smtp`, `SMTP_HOST=smtp.zoho.com`, `SMTP_PORT=465`, and `SMTP_SECURE=true`.
-- `SMTP_USER`: complete authorized Zoho mailbox.
-- `SMTP_PASSWORD`: Zoho application-specific password.
+- `EMAIL_PROVIDER=microsoft365`, `SMTP_HOST=smtp.office365.com`, `SMTP_PORT=587`, and `SMTP_SECURE=false`.
+- `SMTP_USER`: complete authenticated Microsoft 365 mailbox.
+- `SMTP_PASSWORD`: Microsoft 365 credential supplied only through Vercel's sensitive environment-variable storage.
 - `EMAIL_FROM`: the same authorized mailbox, optionally with a display name.
 
 After redeployment, inspect only safe provider error codes and HTTP statuses. Do not log provider response bodies, authorization headers, API keys, SMTP passwords, or connection strings.
@@ -90,14 +90,14 @@ Configure variables in **Settings → Environment Variables**. Use separate valu
 | `STORAGE_PROVIDER`           | Yes          | `vercel-blob`                                                                      |
 | `BLOB_STORE_ID`              | Recommended  | Added by an OIDC-connected private Blob store                                      |
 | `BLOB_READ_WRITE_TOKEN`      | Legacy only  | Long-lived token for stores not upgraded to OIDC                                   |
-| `EMAIL_PROVIDER`             | Yes          | `resend` or `smtp`                                                                 |
+| `EMAIL_PROVIDER`             | Yes          | `microsoft365` for the production Microsoft 365 SMTP profile                       |
 | `EMAIL_API_KEY`              | Resend only  | Restricted Resend API key                                                          |
 | `EMAIL_FROM`                 | Yes          | `PoliSmart Africa AI <noreply@polismartafrica.ai>`                                 |
-| `SMTP_HOST`                  | SMTP only    | `smtp.zoho.com`                                                                    |
-| `SMTP_PORT`                  | SMTP only    | `465`                                                                              |
-| `SMTP_SECURE`                | SMTP only    | `true`                                                                             |
-| `SMTP_USER`                  | SMTP only    | Verified Zoho mailbox                                                              |
-| `SMTP_PASSWORD`              | SMTP only    | Zoho app password                                                                  |
+| `SMTP_HOST`                  | SMTP only    | `smtp.office365.com`                                                               |
+| `SMTP_PORT`                  | SMTP only    | `587`                                                                              |
+| `SMTP_SECURE`                | SMTP only    | `false` (STARTTLS remains mandatory)                                               |
+| `SMTP_USER`                  | SMTP only    | Authenticated Microsoft 365 mailbox                                                |
+| `SMTP_PASSWORD`              | SMTP only    | Sensitive Microsoft 365 credential configured manually                             |
 | `REDIS_URL`                  | Scaling      | Managed Redis TLS URL                                                              |
 | `AI_RATE_LIMIT_WINDOW_MS`    | Recommended  | `60000`                                                                            |
 | `AI_RATE_LIMIT_MAX_REQUESTS` | Recommended  | `12`                                                                               |
@@ -120,9 +120,11 @@ Create a dedicated OpenAI project for PoliSmart production. Apply project-level 
 
 Verify the `polismartafrica.ai` domain with Resend, including SPF and DKIM. Configure `EMAIL_FROM` with a verified sender. Test verification and password-reset links on a preview deployment before production promotion.
 
-For Zoho Mail instead, configure `EMAIL_PROVIDER=smtp`, `SMTP_HOST=smtp.zoho.com`, `SMTP_PORT=465`, `SMTP_SECURE=true`, and add the verified mailbox plus a Zoho app password as `SMTP_USER` and `SMTP_PASSWORD`. Keep credentials server-only. Publish the SPF, DKIM, and DMARC records shown by the Zoho admin console and test mail delivery in Preview before Production.
+For Microsoft 365, configure `EMAIL_PROVIDER=microsoft365`, `SMTP_HOST=smtp.office365.com`, `SMTP_PORT=587`, and `SMTP_SECURE=false`. The transport requires STARTTLS with TLS 1.2 or newer. `SMTP_USER` must be the complete authenticated mailbox, and `EMAIL_FROM` must use the same address unless Microsoft 365 has explicitly authorized Send As permission. Supply `SMTP_PASSWORD` only through Vercel's sensitive environment-variable storage.
 
-`SMTP_USER` must be the complete authorized Zoho mailbox. `EMAIL_FROM` must use that same mailbox (a display name is allowed). Supply `SMTP_PASSWORD` only as a Zoho application-specific password. After replacing Vercel variables, redeploy and verify both registration verification and password-reset messages in a controlled mailbox.
+In Microsoft 365, enable Authenticated SMTP for the mailbox if tenant policy permits it. Confirm SMTP AUTH is not disabled organization-wide, enforce MFA/Conditional Access according to organizational policy, and use the credential mechanism approved by the tenant administrator. Configure SPF, DKIM, and DMARC for the sending domain. Test verification and password-reset delivery to a controlled external inbox after deployment.
+
+Microsoft's January 2026 Exchange Team timeline says SMTP AUTH Basic Authentication remains unchanged through December 2026, then becomes disabled by default while administrators can temporarily re-enable it. Plan an OAuth-based replacement before that default changes. See [Microsoft's SMTP AUTH configuration guidance](https://learn.microsoft.com/en-us/exchange/clients-and-mobile-in-exchange-online/authenticated-client-smtp-submission) and [the updated retirement timeline](https://techcommunity.microsoft.com/blog/exchange/updated-exchange-online-smtp-auth-basic-authentication-deprecation-timeline/4489835).
 
 Vercel builds generate Prisma Client but do not apply migrations. Before promotion, create a Neon restore point and run `npm run db:migrate:production` from the approved release environment with `MIGRATION_DATABASE_URL` injected by its secret manager.
 

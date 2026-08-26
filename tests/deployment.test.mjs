@@ -60,7 +60,7 @@ test("production environment rejects absent deployment secrets", () => {
   );
 });
 
-test("production accepts complete SMTP configuration", () => {
+test("production accepts complete Microsoft 365 SMTP configuration", () => {
   withEnvironment(
     {
       NODE_ENV: "production",
@@ -71,11 +71,11 @@ test("production accepts complete SMTP configuration", () => {
       AUTH_SECRET: "a".repeat(48),
       STORAGE_PROVIDER: "vercel-blob",
       BLOB_READ_WRITE_TOKEN: "test-only-blob-token",
-      EMAIL_PROVIDER: "smtp",
+      EMAIL_PROVIDER: "microsoft365",
       EMAIL_API_KEY: undefined,
-      SMTP_HOST: "smtp.zoho.com",
-      SMTP_PORT: "465",
-      SMTP_SECURE: "true",
+      SMTP_HOST: "smtp.office365.com",
+      SMTP_PORT: "587",
+      SMTP_SECURE: "false",
       SMTP_USER: "noreply@example.invalid",
       SMTP_PASSWORD: "test-only-app-password",
       EMAIL_FROM: "PoliSmart <noreply@example.invalid>",
@@ -164,7 +164,7 @@ test("malformed JSON returns a stable client message", async () => {
   assert.doesNotMatch(response.body.message, /position|expected|syntax/i);
 });
 
-test("production SMTP sender must match the authorized mailbox", () => {
+test("production Microsoft 365 sender must match the authorized mailbox", () => {
   withEnvironment(
     {
       NODE_ENV: "production",
@@ -175,8 +175,10 @@ test("production SMTP sender must match the authorized mailbox", () => {
       AUTH_SECRET: "a".repeat(48),
       STORAGE_PROVIDER: "vercel-blob",
       BLOB_READ_WRITE_TOKEN: "test-only-blob-token",
-      EMAIL_PROVIDER: "smtp",
-      SMTP_HOST: "smtp.zoho.com",
+      EMAIL_PROVIDER: "microsoft365",
+      SMTP_HOST: "smtp.office365.com",
+      SMTP_PORT: "587",
+      SMTP_SECURE: "false",
       SMTP_USER: "authorized@example.invalid",
       SMTP_PASSWORD: "test-only-app-password",
       EMAIL_FROM: "PoliSmart <different@example.invalid>",
@@ -184,6 +186,36 @@ test("production SMTP sender must match the authorized mailbox", () => {
     () => {
       const errors = validateProductionEnvironment(loadConfig(root));
       assert.ok(errors.includes("EMAIL_FROM must use the authorized SMTP_USER mailbox."));
+    },
+  );
+});
+
+test("Microsoft 365 rejects missing credentials and non-STARTTLS configuration", () => {
+  withEnvironment(
+    {
+      NODE_ENV: "production",
+      APP_URL: "https://polismartafrica.ai",
+      DATABASE_URL: "postgresql://example.invalid/db?sslmode=require",
+      OPENAI_API_KEY: "test-only-key",
+      OPENAI_MODEL: "test-model",
+      AUTH_SECRET: "a".repeat(48),
+      STORAGE_PROVIDER: "vercel-blob",
+      BLOB_READ_WRITE_TOKEN: "test-only-blob-token",
+      EMAIL_PROVIDER: "microsoft365",
+      SMTP_HOST: "mail.example.invalid",
+      SMTP_PORT: "465",
+      SMTP_SECURE: "true",
+      SMTP_USER: undefined,
+      SMTP_PASSWORD: undefined,
+      EMAIL_FROM: "noreply@example.invalid",
+    },
+    () => {
+      const errors = validateProductionEnvironment(loadConfig(root));
+      assert.ok(errors.includes("SMTP_USER is required for SMTP email."));
+      assert.ok(errors.includes("SMTP_PASSWORD is required for SMTP email."));
+      assert.ok(errors.includes("SMTP_HOST must be smtp.office365.com for Microsoft 365."));
+      assert.ok(errors.includes("SMTP_PORT must be 587 for Microsoft 365."));
+      assert.ok(errors.includes("SMTP_SECURE must be false for Microsoft 365 STARTTLS."));
     },
   );
 });

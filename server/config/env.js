@@ -127,11 +127,11 @@ export function validateProductionEnvironment(config) {
     errors.push("STORAGE_PROVIDER must be vercel-blob on Vercel.");
   if (!config.blobReadWriteToken && !config.blobStoreId)
     errors.push("BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID is required.");
-  if (!["resend", "smtp"].includes(config.emailProvider))
-    errors.push("EMAIL_PROVIDER must be resend or smtp in production.");
+  if (!["resend", "smtp", "microsoft365"].includes(config.emailProvider))
+    errors.push("EMAIL_PROVIDER must be resend, smtp, or microsoft365 in production.");
   if (config.emailProvider === "resend" && !config.emailApiKey)
     errors.push("EMAIL_API_KEY or RESEND_API_KEY is required for Resend.");
-  if (config.emailProvider === "smtp") {
+  if (["smtp", "microsoft365"].includes(config.emailProvider)) {
     if (!config.smtpHost) errors.push("SMTP_HOST is required for SMTP email.");
     if (!config.smtpUser) errors.push("SMTP_USER is required for SMTP email.");
     if (!config.smtpPassword) errors.push("SMTP_PASSWORD is required for SMTP email.");
@@ -141,6 +141,12 @@ export function validateProductionEnvironment(config) {
       mailboxAddress(config.emailFrom) !== config.smtpUser.toLowerCase()
     )
       errors.push("EMAIL_FROM must use the authorized SMTP_USER mailbox.");
+  }
+  if (config.emailProvider === "microsoft365") {
+    if (config.smtpHost !== "smtp.office365.com")
+      errors.push("SMTP_HOST must be smtp.office365.com for Microsoft 365.");
+    if (config.smtpPort !== 587) errors.push("SMTP_PORT must be 587 for Microsoft 365.");
+    if (config.smtpSecure) errors.push("SMTP_SECURE must be false for Microsoft 365 STARTTLS.");
   }
   if (!config.emailFrom) errors.push("EMAIL_FROM is required.");
   return errors;

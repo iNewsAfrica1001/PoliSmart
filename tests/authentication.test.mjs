@@ -72,3 +72,63 @@ test("notification provider failure does not invalidate a completed registration
   assert.equal(result.notificationDelivered, false);
   assert.equal(created.length, 1);
 });
+
+test("registration delivers the verification token through the configured provider", async () => {
+  let delivered;
+  const database = {
+    $transaction: async (callback) =>
+      callback({
+        authUser: { create: async ({ data }) => ({ id: "user-1", ...data }) },
+        organization: { create: async ({ data }) => ({ id: "tenant-1", ...data }) },
+        membership: { create: async ({ data }) => ({ id: "membership-1", ...data }) },
+      }),
+    emailVerificationToken: { create: async ({ data }) => data },
+  };
+  const service = createAuthenticationService(database, {
+    tokenSecret: "test-only-token-secret-that-is-long-enough",
+    notifications: {
+      sendEmailVerification: async (payload) => {
+        delivered = payload;
+      },
+    },
+  });
+  const result = await service.register({
+    email: "verification@example.test",
+    password: "VerificationPass2026",
+    displayName: "Verification Tester",
+    organizationName: "Verification Organization",
+    country: "Kisiwa",
+  });
+  assert.equal(result.notificationDelivered, true);
+  assert.equal(delivered.email, "verification@example.test");
+  assert.equal(typeof delivered.token, "string");
+  assert.ok(delivered.token.length > 32);
+});
+
+test("password reset delivers a newly generated secure token", async () => {
+  let delivered;
+  const created = [];
+  const database = {
+    authUser: { findUnique: async () => ({ id: "user-1", email: "reset@example.test" }) },
+    passwordResetToken: {
+      deleteMany: async () => ({ count: 0 }),
+      create: async ({ data }) => {
+        created.push(data);
+        return data;
+      },
+    },
+  };
+  const service = createAuthenticationService(database, {
+    tokenSecret: "test-only-token-secret-that-is-long-enough",
+    notifications: {
+      sendPasswordReset: async (payload) => {
+        delivered = payload;
+      },
+    },
+  });
+  const token = await service.requestPasswordReset("reset@example.test");
+  assert.equal(created.length, 1);
+  assert.equal(delivered.email, "reset@example.test");
+  assert.equal(delivered.token, token);
+  assert.notEqual(created[0].tokenHash, token);
+});
