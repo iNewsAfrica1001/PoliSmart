@@ -154,6 +154,12 @@ test("public readiness is minimal and operational metrics require authentication
     const metrics = await request(app).get("/api/metrics");
     assert.equal(metrics.status, 401);
     assert.equal(metrics.body.message, "Authentication required.");
+
+    const unknownApiRoute = await request(app).get("/api/not-a-route");
+    assert.equal(unknownApiRoute.status, 404);
+    assert.match(unknownApiRoute.headers["content-type"], /^application\/json/);
+    assert.equal(unknownApiRoute.body.message, "API route not found.");
+    assert.equal(typeof unknownApiRoute.body.requestId, "string");
   } finally {
     if (previousVercel === undefined) Reflect.deleteProperty(process.env, "VERCEL");
     else process.env.VERCEL = previousVercel;

@@ -198,6 +198,13 @@ app.use("/api/assessments", requireSession, createAssessmentRouter());
 app.use("/api/classrooms", requireSession, createClassroomRouter(io));
 app.use("/api/training", requireSession, createTrainingRouter());
 
+app.use("/api", (request, response) => {
+  response.status(404).json({
+    message: "API route not found.",
+    requestId: request.id,
+  });
+});
+
 app.use("/api", (error, request, response, _next) => {
   const status = Number(error.status || 500);
   const payload = {
