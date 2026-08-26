@@ -40,7 +40,7 @@ npm run db:migrate
 npm run db:seed
 ```
 
-Do not run migrations automatically in every Vercel function build. Run them once per release before production promotion and retain the migration output.
+The Vercel release build runs `prisma migrate deploy` once per deployment before compiling the application. Only reviewed, committed migrations are applied; the command is idempotent and does not seed or import Afrobarometer data. Retain the deployment output as the migration record.
 
 For previews, use a separate Neon branch and a preview-only `DATABASE_URL`.
 

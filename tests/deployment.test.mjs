@@ -121,7 +121,7 @@ test("production environment accepts Vercel Blob OIDC configuration", () => {
 
 test("Vercel routes APIs before the SPA and excludes raw survey data", () => {
   const config = JSON.parse(fs.readFileSync(path.join(root, "vercel.json"), "utf8"));
-  assert.equal(config.buildCommand, "npm run build");
+  assert.equal(config.buildCommand, "npm run vercel-build");
   assert.equal(config.rewrites[0].source, "/api/:path*");
   assert.equal(config.rewrites.at(-1).destination, "/index.html");
 
@@ -137,6 +137,8 @@ test("production data import is explicit and absent from deployment builds", () 
     "node scripts/import-afrobarometer-production.mjs",
   );
   assert.doesNotMatch(packageJson.scripts.build, /afrobarometer|migrate/i);
+  assert.match(packageJson.scripts["vercel-build"], /prisma migrate deploy/);
+  assert.doesNotMatch(packageJson.scripts["vercel-build"], /afrobarometer/i);
   assert.doesNotMatch(packageJson.scripts["db:migrate"], /afrobarometer/i);
 });
 
