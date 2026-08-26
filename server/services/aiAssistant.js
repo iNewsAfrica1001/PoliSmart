@@ -59,10 +59,18 @@ export function createAiAssistantService({
         category: categoryFor(question),
         minimumSampleSize: AFROBAROMETER_MINIMUM_SAMPLE_SIZE,
       });
-      const normalizedQuestion = question.toLocaleLowerCase("en");
-      const countryRows = rows.filter((row) =>
-        normalizedQuestion.includes(String(row.country || "").toLocaleLowerCase("en")),
-      );
+      const normalizeGeography = (value) =>
+        String(value || "")
+          .normalize("NFKD")
+          .replace(/\p{Mark}/gu, "")
+          .toLocaleLowerCase("en")
+          .replace(/[^\p{Letter}]+/gu, " ")
+          .trim();
+      const normalizedQuestion = ` ${normalizeGeography(question)} `;
+      const countryRows = rows.filter((row) => {
+        const country = normalizeGeography(row.country);
+        return country && normalizedQuestion.includes(` ${country} `);
+      });
       const relevantRows = countryRows.length ? countryRows : rows;
       return relevantRows.slice(0, 8).map((row, index) => ({
         id: `S${index + 1}`,

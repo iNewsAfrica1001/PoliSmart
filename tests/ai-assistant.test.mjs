@@ -211,6 +211,7 @@ test("country-specific public intelligence never cites a different country", asy
   const { service } = harness({
     aggregates: [
       { ...base, country: "Angola" },
+      { ...base, country: "Niger", weightedPercentage: 48 },
       { ...base, country: "Nigeria", weightedPercentage: 52 },
     ],
   });
