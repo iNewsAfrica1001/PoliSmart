@@ -30,4 +30,9 @@ export const authApi = {
       body: JSON.stringify({ email, password }),
     }),
   logout: () => request<undefined>("/api/auth/logout", { method: "POST" }),
+  resetPassword: (token: string, password: string) =>
+    request<undefined>("/api/auth/password-reset/confirm", {
+      method: "POST",
+      body: JSON.stringify({ token, password }),
+    }),
 };

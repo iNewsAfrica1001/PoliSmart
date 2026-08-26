@@ -192,6 +192,20 @@ test("Vercel routes APIs before the SPA and excludes raw survey data", () => {
   assert.match(ignored, /^storage\/$/m);
 });
 
+test("password-reset frontend preserves the email token and submits the backend contract", () => {
+  const appSource = fs.readFileSync(path.join(root, "src", "App.tsx"), "utf8");
+  const pageSource = fs.readFileSync(
+    path.join(root, "src", "pages", "ResetPasswordPage.tsx"),
+    "utf8",
+  );
+  const authSource = fs.readFileSync(path.join(root, "src", "lib", "auth.ts"), "utf8");
+  assert.match(appSource, /pathname === "\/reset-password"/);
+  assert.match(appSource, /searchParams\.get\("token"\)/);
+  assert.match(pageSource, /authApi\.resetPassword\(token, password\)/);
+  assert.match(authSource, /\/api\/auth\/password-reset\/confirm/);
+  assert.match(authSource, /JSON\.stringify\(\{ token, password \}\)/);
+});
+
 test("production data import is explicit and absent from deployment builds", () => {
   const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
   assert.equal(

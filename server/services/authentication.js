@@ -40,6 +40,22 @@ export async function verifyPassword(password, passwordHash) {
   return bcrypt.compare(String(password ?? ""), passwordHash);
 }
 
+function recordResetFailure(code) {
+  console.warn(
+    JSON.stringify({
+      at: new Date().toISOString(),
+      level: "warn",
+      event: "password-reset-completion-failed",
+      code,
+    }),
+  );
+}
+
+function invalidResetToken(code) {
+  recordResetFailure(code);
+  return Object.assign(new Error("Reset token is invalid or expired."), { status: 400 });
+}
+
 export function createAuthenticationService(
   database,
   { tokenSecret, now = () => new Date(), notifications = null },
@@ -164,16 +180,30 @@ export function createAuthenticationService(
       return token;
     },
     async resetPassword(token, password) {
+      if (!/^[A-Za-z0-9_-]{43}$/.test(String(token ?? "")))
+        throw invalidResetToken("RESET_TOKEN_FORMAT_INVALID");
       const tokenHash = hashToken(token, tokenSecret);
       const reset = await database.passwordResetToken.findUnique({ where: { tokenHash } });
-      if (!reset || reset.usedAt || reset.expiresAt <= now())
-        throw Object.assign(new Error("Reset token is invalid or expired."), { status: 400 });
-      const passwordHash = await hashPassword(password);
-      await database.$transaction([
-        database.authUser.update({ where: { id: reset.userId }, data: { passwordHash } }),
-        database.passwordResetToken.update({ where: { id: reset.id }, data: { usedAt: now() } }),
-        database.authSession.deleteMany({ where: { userId: reset.userId } }),
-      ]);
+      if (!reset) throw invalidResetToken("RESET_TOKEN_NOT_FOUND");
+      if (reset.usedAt) throw invalidResetToken("RESET_TOKEN_ALREADY_USED");
+      if (reset.expiresAt <= now()) throw invalidResetToken("RESET_TOKEN_EXPIRED");
+      let passwordHash;
+      try {
+        passwordHash = await hashPassword(password);
+      } catch (error) {
+        recordResetFailure("PASSWORD_VALIDATION_FAILED");
+        throw error;
+      }
+      try {
+        await database.$transaction([
+          database.authUser.update({ where: { id: reset.userId }, data: { passwordHash } }),
+          database.passwordResetToken.update({ where: { id: reset.id }, data: { usedAt: now() } }),
+          database.authSession.deleteMany({ where: { userId: reset.userId } }),
+        ]);
+      } catch (error) {
+        recordResetFailure(error?.code === "P2025" ? "RESET_USER_NOT_FOUND" : "PASSWORD_UPDATE_FAILED");
+        throw Object.assign(new Error("Password reset could not be completed."), { status: 500 });
+      }
     },
     async verifyEmail(token) {
       const verification = await database.emailVerificationToken.findUnique({

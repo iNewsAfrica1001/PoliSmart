@@ -8,8 +8,16 @@ import { KnowledgePage } from "./pages/KnowledgePage";
 import { AssistantPage } from "./pages/AssistantPage";
 import { IntelligenceWorkflowsPage } from "./pages/IntelligenceWorkflowsPage";
 import { GovernancePage } from "./pages/GovernancePage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 
 export default function App() {
+  const currentUrl = new URL(window.location.href);
+  if (currentUrl.pathname === "/reset-password")
+    return <ResetPasswordPage token={currentUrl.searchParams.get("token") ?? ""} />;
+  return <WorkspaceApp />;
+}
+
+function WorkspaceApp() {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState("dashboard");

@@ -1050,6 +1050,17 @@ input:focus-visible {
   color: #778581;
   margin-top: 28px;
 }
+.reset-success {
+  width: min(420px, 100%);
+}
+.reset-success > p {
+  color: var(--muted);
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+.reset-success .sign-in-button {
+  text-decoration: none;
+}
 .form-error {
   color: #a32d2d;
   background: #fff0f0;

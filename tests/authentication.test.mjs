@@ -132,3 +132,67 @@ test("password reset delivers a newly generated secure token", async () => {
   assert.equal(delivered.token, token);
   assert.notEqual(created[0].tokenHash, token);
 });
+
+test("password reset updates the hash, revokes sessions, and consumes the token once", async () => {
+  const secret = "test-only-token-secret-that-is-long-enough";
+  const rawToken = newOpaqueToken();
+  const oldPassword = "OldPassword2026";
+  const newPassword = "NewPassword2026";
+  const state = {
+    user: { id: "user-1", passwordHash: await hashPassword(oldPassword) },
+    reset: {
+      id: "reset-1",
+      userId: "user-1",
+      tokenHash: hashToken(rawToken, secret),
+      expiresAt: new Date(Date.now() + 10 * 60_000),
+      usedAt: null,
+    },
+    sessionsDeleted: false,
+  };
+  const database = {
+    passwordResetToken: {
+      findUnique: async ({ where }) =>
+        where.tokenHash === state.reset.tokenHash ? { ...state.reset } : null,
+      update: ({ data }) => async () => Object.assign(state.reset, data),
+    },
+    authUser: {
+      update: ({ data }) => async () => Object.assign(state.user, data),
+    },
+    authSession: {
+      deleteMany: () => async () => {
+        state.sessionsDeleted = true;
+      },
+    },
+    $transaction: async (operations) => Promise.all(operations.map((operation) => operation())),
+  };
+  const service = createAuthenticationService(database, { tokenSecret: secret });
+
+  await service.resetPassword(rawToken, newPassword);
+  assert.equal(await verifyPassword(oldPassword, state.user.passwordHash), false);
+  assert.equal(await verifyPassword(newPassword, state.user.passwordHash), true);
+  assert.ok(state.reset.usedAt instanceof Date);
+  assert.equal(state.sessionsDeleted, true);
+  await assert.rejects(service.resetPassword(rawToken, "AnotherPassword2026"), /invalid or expired/);
+});
+
+test("password reset rejects malformed, unknown, expired, and weak-password attempts", async () => {
+  const secret = "test-only-token-secret-that-is-long-enough";
+  const expiredToken = newOpaqueToken();
+  const database = {
+    passwordResetToken: {
+      findUnique: async ({ where }) =>
+        where.tokenHash === hashToken(expiredToken, secret)
+          ? {
+              id: "expired",
+              userId: "user-1",
+              expiresAt: new Date(Date.now() - 1_000),
+              usedAt: null,
+            }
+          : null,
+    },
+  };
+  const service = createAuthenticationService(database, { tokenSecret: secret });
+  await assert.rejects(service.resetPassword("invalid", "ValidPassword2026"), /invalid or expired/);
+  await assert.rejects(service.resetPassword(newOpaqueToken(), "ValidPassword2026"), /invalid or expired/);
+  await assert.rejects(service.resetPassword(expiredToken, "ValidPassword2026"), /invalid or expired/);
+});
