@@ -59,7 +59,12 @@ export function createAiAssistantService({
         category: categoryFor(question),
         minimumSampleSize: AFROBAROMETER_MINIMUM_SAMPLE_SIZE,
       });
-      return rows.slice(0, 8).map((row, index) => ({
+      const normalizedQuestion = question.toLocaleLowerCase("en");
+      const countryRows = rows.filter((row) =>
+        normalizedQuestion.includes(String(row.country || "").toLocaleLowerCase("en")),
+      );
+      const relevantRows = countryRows.length ? countryRows : rows;
+      return relevantRows.slice(0, 8).map((row, index) => ({
         id: `S${index + 1}`,
         text: `${row.country}: ${row.indicator}, response ${row.responseCode}: ${row.weightedPercentage}% (unweighted n=${row.unweightedSampleSize}, ${row.weightField}).`,
         citation: {

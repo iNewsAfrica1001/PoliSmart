@@ -194,3 +194,33 @@ test("invalid provider source references produce an insufficient-evidence respon
   assert.deepEqual(answer.citations, []);
   assert.match(answer.observedData, /did not identify valid supporting evidence/);
 });
+
+test("country-specific public intelligence never cites a different country", async () => {
+  const base = {
+    indicator: "Public priority",
+    responseCode: "Unemployment",
+    weightedPercentage: 40,
+    unweightedSampleSize: 1000,
+    weightField: "Combinwt_new_hh",
+    surveySource: "Afrobarometer",
+    question: "Q45PT1",
+    surveyRound: "9",
+    importVersion: "r9-test",
+    sourceUrl: "https://example.test",
+  };
+  const { service } = harness({
+    aggregates: [
+      { ...base, country: "Angola" },
+      { ...base, country: "Nigeria", weightedPercentage: 52 },
+    ],
+  });
+  const answer = await service.answer({
+    tenantId: "tenant",
+    campaignId: "campaign",
+    userId: "user",
+    question: "What are the leading public priorities in Nigeria according to Afrobarometer?",
+  });
+  assert.equal(answer.grounded, true);
+  assert.ok(answer.citations.length > 0);
+  assert.ok(answer.citations.every((citation) => citation.country === "Nigeria"));
+});
