@@ -48,6 +48,16 @@ export function createAuthenticationService(
     throw new Error("Authentication token secret must be at least 32 characters.");
   const expiresFromNow = (milliseconds) => new Date(now().getTime() + milliseconds);
 
+  async function deliverNotification(method, payload) {
+    if (!notifications?.[method]) return false;
+    try {
+      await notifications[method](payload);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async function issueToken(model, userId, lifetimeMs) {
     const token = newOpaqueToken();
     await model.create({
@@ -96,11 +106,11 @@ export function createAuthenticationService(
         result.user.id,
         VERIFY_HOURS * 60 * 60 * 1000,
       );
-      await notifications?.sendEmailVerification({
+      const notificationDelivered = await deliverNotification("sendEmailVerification", {
         email: result.user.email,
         token: verificationToken,
       });
-      return { ...result, verificationToken };
+      return { ...result, verificationToken, notificationDelivered };
     },
     async login({ email, password, userAgent, ipHash }) {
       const user = await database.authUser.findUnique({
@@ -150,7 +160,7 @@ export function createAuthenticationService(
       if (!user) return null;
       await database.passwordResetToken.deleteMany({ where: { userId: user.id, usedAt: null } });
       const token = await issueToken(database.passwordResetToken, user.id, RESET_MINUTES * 60000);
-      await notifications?.sendPasswordReset({ email: user.email, token });
+      await deliverNotification("sendPasswordReset", { email: user.email, token });
       return token;
     },
     async resetPassword(token, password) {

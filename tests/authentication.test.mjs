@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  createAuthenticationService,
   hashPassword,
   hashToken,
   newOpaqueToken,
@@ -33,4 +34,41 @@ test("session cookies are httpOnly, same-site, scoped, and secure in production"
   assert.match(cookie, /Secure/);
   assert.match(cookie, /Path=\//);
   assert.match(expiredSessionCookie(true), /Max-Age=0/);
+});
+
+test("notification provider failure does not invalidate a completed registration", async () => {
+  const created = [];
+  const database = {
+    $transaction: async (callback) =>
+      callback({
+        authUser: { create: async ({ data }) => ({ id: "user-1", ...data }) },
+        organization: { create: async ({ data }) => ({ id: "tenant-1", ...data }) },
+        membership: { create: async ({ data }) => ({ id: "membership-1", ...data }) },
+      }),
+    emailVerificationToken: {
+      create: async ({ data }) => {
+        created.push(data);
+        return data;
+      },
+    },
+  };
+  const service = createAuthenticationService(database, {
+    tokenSecret: "test-only-token-secret-that-is-long-enough",
+    notifications: {
+      sendEmailVerification: async () => {
+        throw new Error("provider unavailable");
+      },
+    },
+  });
+
+  const result = await service.register({
+    email: "acceptance@example.test",
+    password: "AcceptancePass2026",
+    displayName: "Acceptance Tester",
+    organizationName: "Acceptance Organization",
+    country: "Kisiwa",
+  });
+
+  assert.equal(result.notificationDelivered, false);
+  assert.equal(created.length, 1);
 });
