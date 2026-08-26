@@ -204,18 +204,42 @@ function unsignedTestToken(claims) {
 test("Microsoft Graph token diagnostics expose only permission and identity matches", () => {
   const config = graphConfig();
   const summary = inspectGraphAccessToken(
-    unsignedTestToken({ roles: ["Mail.Send"], tid: "test-tenant", appid: "test-client" }),
+    unsignedTestToken({
+      aud: "https://graph.microsoft.com",
+      roles: ["Mail.Send"],
+      tid: "test-tenant",
+      appid: "test-client",
+    }),
     config,
   );
   assert.deepEqual(summary, {
     claimsReadable: true,
+    graphAudience: true,
+    applicationToken: true,
     mailSendGranted: true,
+    delegatedScopePresent: false,
     tenantMatches: true,
     clientMatches: true,
   });
   assert.equal(JSON.stringify(summary).includes("test-tenant"), false);
   assert.equal(JSON.stringify(summary).includes("test-client"), false);
   assert.deepEqual(inspectGraphAccessToken("opaque-token", config), { claimsReadable: false });
+});
+
+test("Microsoft Graph diagnostics reject delegated scope as an application role", () => {
+  const summary = inspectGraphAccessToken(
+    unsignedTestToken({
+      aud: "https://graph.microsoft.com",
+      scp: "Mail.Send",
+      tid: "test-tenant",
+      azp: "test-client",
+    }),
+    graphConfig(),
+  );
+  assert.equal(summary.graphAudience, true);
+  assert.equal(summary.applicationToken, false);
+  assert.equal(summary.mailSendGranted, false);
+  assert.equal(summary.delegatedScopePresent, true);
 });
 
 test("Microsoft Graph sends verification and reset email with one cached app token", async () => {

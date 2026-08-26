@@ -125,6 +125,14 @@ Verify the `polismartafrica.ai` domain with Resend, including SPF and DKIM. Conf
 
 For Microsoft 365, configure `EMAIL_PROVIDER=microsoft_graph`. Register a confidential Microsoft Entra application, create a client secret, add only the Microsoft Graph **Application** permission `Mail.Send`, grant administrator consent, and confirm `no-reply@polismartafrica.ai` exists. Store the tenant ID, client ID, and client secret only in Vercel; mark the client secret Sensitive. The server uses MSAL's client-credentials flow with `https://graph.microsoft.com/.default` and sends through `/users/no-reply@polismartafrica.ai/sendMail`.
 
+To test Microsoft Graph independently from authentication workflows, run the private CLI from a trusted server-side environment containing the Graph variables:
+
+```bash
+npm run diagnose:email:graph -- controlled-recipient@example.com
+```
+
+The command reports only safe token-claim booleans, response status, Graph error code, and Microsoft request identifiers. It never prints credentials or tokens and is not exposed as an HTTP endpoint. `EMAIL_FROM` must be exactly `no-reply@polismartafrica.ai`.
+
 SMTP remains available as an optional alternate provider, but the Microsoft Graph production path does not read or require SMTP variables. Configure SPF, DKIM, and DMARC for the sending domain and test verification and password-reset delivery to a controlled external inbox after deployment.
 
 Vercel builds generate Prisma Client but do not apply migrations. Before promotion, create a Neon restore point and run `npm run db:migrate:production` from the approved release environment with `MIGRATION_DATABASE_URL` injected by its secret manager.

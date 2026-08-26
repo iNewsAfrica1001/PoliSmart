@@ -50,19 +50,31 @@ function safeHeader(response, name) {
 
 async function graphFailureMetadata(response) {
   let microsoftErrorCode;
+  let microsoftErrorMessage;
   try {
     const body = await response.clone().json();
     microsoftErrorCode = String(body?.error?.code || "").slice(0, 100) || undefined;
+    microsoftErrorMessage = sanitizeGraphMessage(body?.error?.message);
   } catch {
     // Graph may return an empty or non-JSON error response. Never log its raw body.
   }
   return {
     status: response.status,
     microsoftErrorCode,
+    microsoftErrorMessage,
     microsoftRequestId: safeHeader(response, "request-id"),
     microsoftClientRequestId: safeHeader(response, "client-request-id"),
     retryAfter: safeHeader(response, "retry-after"),
   };
+}
+
+function sanitizeGraphMessage(value) {
+  const message = String(value || "").slice(0, 500);
+  if (!message) return undefined;
+  return message
+    .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, "[mailbox]")
+    .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi, "[id]")
+    .replace(/bearer\s+\S+/gi, "Bearer [redacted]");
 }
 
 export function inspectGraphAccessToken(accessToken, config) {
@@ -73,7 +85,12 @@ export function inspectGraphAccessToken(accessToken, config) {
     const roles = Array.isArray(claims.roles) ? claims.roles : [];
     return {
       claimsReadable: true,
+      graphAudience:
+        claims.aud === "https://graph.microsoft.com" ||
+        claims.aud === "00000003-0000-0000-c000-000000000000",
+      applicationToken: roles.length > 0 && !claims.scp,
       mailSendGranted: roles.includes("Mail.Send"),
+      delegatedScopePresent: Boolean(claims.scp),
       tenantMatches: String(claims.tid || "").toLowerCase() === String(config.microsoftTenantId).toLowerCase(),
       clientMatches:
         String(claims.appid || claims.azp || "").toLowerCase() ===

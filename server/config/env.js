@@ -158,8 +158,10 @@ export function validateProductionEnvironment(config) {
     if (!config.microsoftClientId) errors.push("MICROSOFT_CLIENT_ID is required for Microsoft Graph.");
     if (!config.microsoftClientSecret)
       errors.push("MICROSOFT_CLIENT_SECRET is required for Microsoft Graph.");
-    if (mailboxAddress(config.emailFrom) !== "no-reply@polismartafrica.ai")
-      errors.push("EMAIL_FROM must be no-reply@polismartafrica.ai for Microsoft Graph.");
+    if (config.emailFrom.trim().toLowerCase() !== "no-reply@polismartafrica.ai")
+      errors.push(
+        "EMAIL_FROM must be exactly no-reply@polismartafrica.ai for Microsoft Graph.",
+      );
   }
   if (!config.emailFrom) errors.push("EMAIL_FROM is required.");
   return errors;

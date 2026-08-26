@@ -96,7 +96,7 @@ test("production accepts Microsoft Graph without SMTP variables", () => {
       STORAGE_PROVIDER: "vercel-blob",
       BLOB_READ_WRITE_TOKEN: "test-only-blob-token",
       EMAIL_PROVIDER: "microsoft_graph",
-      EMAIL_FROM: "PoliSmart <no-reply@polismartafrica.ai>",
+      EMAIL_FROM: "no-reply@polismartafrica.ai",
       MICROSOFT_TENANT_ID: "test-tenant",
       MICROSOFT_CLIENT_ID: "test-client",
       MICROSOFT_CLIENT_SECRET: "test-client-secret",
@@ -131,7 +131,9 @@ test("Microsoft Graph requires credentials and the fixed sender", () => {
       assert.ok(errors.includes("MICROSOFT_CLIENT_ID is required for Microsoft Graph."));
       assert.ok(errors.includes("MICROSOFT_CLIENT_SECRET is required for Microsoft Graph."));
       assert.ok(
-        errors.includes("EMAIL_FROM must be no-reply@polismartafrica.ai for Microsoft Graph."),
+        errors.includes(
+          "EMAIL_FROM must be exactly no-reply@polismartafrica.ai for Microsoft Graph.",
+        ),
       );
     },
   );
