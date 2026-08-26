@@ -65,6 +65,25 @@ async function graphFailureMetadata(response) {
   };
 }
 
+export function inspectGraphAccessToken(accessToken, config) {
+  try {
+    const parts = String(accessToken || "").split(".");
+    if (parts.length !== 3) return { claimsReadable: false };
+    const claims = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
+    const roles = Array.isArray(claims.roles) ? claims.roles : [];
+    return {
+      claimsReadable: true,
+      mailSendGranted: roles.includes("Mail.Send"),
+      tenantMatches: String(claims.tid || "").toLowerCase() === String(config.microsoftTenantId).toLowerCase(),
+      clientMatches:
+        String(claims.appid || claims.azp || "").toLowerCase() ===
+        String(config.microsoftClientId).toLowerCase(),
+    };
+  } catch {
+    return { claimsReadable: false };
+  }
+}
+
 function mailboxAddress(value) {
   return (
     String(value || "")
@@ -167,6 +186,7 @@ export function createAccountNotificationService(config = {}, options = {}) {
           cachedGraphToken = {
             accessToken: token.accessToken,
             expiresAt: token.expiresOn?.getTime?.() || Date.now() + 5 * 60_000,
+            diagnostics: inspectGraphAccessToken(token.accessToken, config),
           };
         }
       } catch (error) {
@@ -235,6 +255,7 @@ export function createAccountNotificationService(config = {}, options = {}) {
             provider: "microsoft_graph",
             code,
             ...metadata,
+            tokenClaims: cachedGraphToken.diagnostics,
           }),
         );
         throw new AccountNotificationError(code);

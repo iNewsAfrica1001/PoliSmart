@@ -12,6 +12,7 @@ import {
   classifyGraphError,
   classifySmtpError,
   createAccountNotificationService,
+  inspectGraphAccessToken,
 } from "../server/services/accountNotifications.js";
 import { gradeMultipleChoice } from "../server/services/grading.js";
 
@@ -194,6 +195,28 @@ function graphConfig(overrides = {}) {
     ...overrides,
   };
 }
+
+function unsignedTestToken(claims) {
+  const encode = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
+  return `${encode({ alg: "none" })}.${encode(claims)}.`;
+}
+
+test("Microsoft Graph token diagnostics expose only permission and identity matches", () => {
+  const config = graphConfig();
+  const summary = inspectGraphAccessToken(
+    unsignedTestToken({ roles: ["Mail.Send"], tid: "test-tenant", appid: "test-client" }),
+    config,
+  );
+  assert.deepEqual(summary, {
+    claimsReadable: true,
+    mailSendGranted: true,
+    tenantMatches: true,
+    clientMatches: true,
+  });
+  assert.equal(JSON.stringify(summary).includes("test-tenant"), false);
+  assert.equal(JSON.stringify(summary).includes("test-client"), false);
+  assert.deepEqual(inspectGraphAccessToken("opaque-token", config), { claimsReadable: false });
+});
 
 test("Microsoft Graph sends verification and reset email with one cached app token", async () => {
   const requests = [];
