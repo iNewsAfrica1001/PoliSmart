@@ -1,0 +1,56 @@
+services:
+  app:
+    build: .
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 4000
+      PUBLIC_APP_URL: http://127.0.0.1:4000
+      JWT_SECRET: change-this-production-secret-to-at-least-32-characters
+      CLIENT_ORIGIN: http://127.0.0.1:4000
+      PERSISTENCE_MODE: memory
+      DATABASE_URL: postgresql://africacampaign:africacampaign@postgres:5432/africa_campaign_ai?schema=public
+      REDIS_URL: redis://redis:6379
+      LLM_API_KEY: ""
+      RATE_LIMIT_MAX_REQUESTS: 180
+      JSON_LIMIT: 1mb
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/api/ready || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: africa_campaign_ai
+      POSTGRES_USER: africacampaign
+      POSTGRES_PASSWORD: africacampaign
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U africacampaign -d africa_campaign_ai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+
+volumes:
+  postgres-data:
+  redis-data:

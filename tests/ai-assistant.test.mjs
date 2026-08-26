@@ -1,0 +1,167 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { createAiAssistantService, createAiRateLimiter } from "../server/services/aiAssistant.js";
+import { AiProviderError } from "../server/services/aiProvider.js";
+import { createAiRepository } from "../server/repositories/aiRepository.js";
+
+function harness({ chunks = [], aggregates = [], providerFailure = false } = {}) {
+  const messages = [];
+  const repository = {
+    findCampaign: async () => ({ id: "campaign" }),
+    createConversation: async (data) => ({ id: "conversation", messages: [], ...data }),
+    findConversation: async () => ({ id: "conversation", messages: [] }),
+    createMessage: async (data) => {
+      const value = { id: `message-${messages.length}`, ...data };
+      messages.push(value);
+      return value;
+    },
+    retrieveKnowledge: async () => chunks,
+    findAssistantMessage: async () => ({ id: "answer" }),
+    saveFeedback: async (data) => data,
+  };
+  const provider = {
+    name: "openai",
+    generate: async () => {
+      if (providerFailure) throw new AiProviderError();
+      return {
+        observedData: "Approved evidence reports 42%.",
+        interpretation: "This may warrant further review.",
+        sourceIds: ["S1", "FAKE"],
+        providerRef: "response",
+        model: "test-model",
+      };
+    },
+  };
+  return {
+    service: createAiAssistantService({
+      repository,
+      intelligenceRepository: { listAggregates: async () => aggregates },
+      provider,
+    }),
+    messages,
+  };
+}
+
+test("grounded campaign answers include server-controlled citations", async () => {
+  const chunk = {
+    content: "Approved evidence reports 42%.",
+    chunkIndex: 0,
+    document: { id: "doc", title: "Approved manifesto", source: "Campaign", author: "Team" },
+  };
+  const { service } = harness({ chunks: [chunk] });
+  const answer = await service.answer({
+    tenantId: "tenant-a",
+    campaignId: "campaign",
+    userId: "user",
+    question: "What does the manifesto report?",
+  });
+  assert.equal(answer.grounded, true);
+  assert.equal(answer.citations.length, 1);
+  assert.equal(answer.citations[0].documentId, "doc");
+  assert.match(answer.content, /Observed Data[\s\S]+AI Interpretation/);
+});
+
+test("missing data returns a transparent response without a provider claim", async () => {
+  const { service } = harness();
+  const answer = await service.answer({
+    tenantId: "tenant",
+    campaignId: "campaign",
+    userId: "user",
+    question: "What does approved material say?",
+  });
+  assert.equal(answer.grounded, false);
+  assert.deepEqual(answer.citations, []);
+  assert.match(answer.observedData, /No approved supporting data/);
+});
+
+test("provider failures are safely surfaced", async () => {
+  const { service } = harness({
+    chunks: [{ content: "evidence", chunkIndex: 0, document: { id: "doc", title: "Doc" } }],
+    providerFailure: true,
+  });
+  await assert.rejects(
+    () =>
+      service.answer({
+        tenantId: "tenant",
+        campaignId: "campaign",
+        userId: "user",
+        question: "Explain campaign evidence",
+      }),
+    (error) => error.status === 503,
+  );
+});
+
+test("knowledge retrieval always enforces tenant, campaign, approval, readiness and visibility", async () => {
+  let where;
+  const repo = createAiRepository({
+    knowledgeChunk: {
+      findMany: async (query) => {
+        where = query.where;
+        return [];
+      },
+    },
+  });
+  await repo.retrieveKnowledge({
+    tenantId: "tenant-a",
+    campaignId: "campaign-a",
+    userId: "user-a",
+    terms: ["policy"],
+  });
+  assert.equal(where.tenantId, "tenant-a");
+  assert.equal(where.document.tenantId, "tenant-a");
+  assert.equal(where.document.campaignId, "campaign-a");
+  assert.equal(where.document.approvalStatus, "APPROVED");
+  assert.equal(where.document.processingStatus, "READY");
+});
+
+test("AI rate limiter rejects requests beyond the configured user limit", () => {
+  const middleware = createAiRateLimiter({ maxRequests: 1, windowMs: 1000, now: () => 0 });
+  const headers = {};
+  let status;
+  const request = { tenant: { id: "tenant" }, auth: { user: { id: "user" } } };
+  const response = {
+    setHeader: (key, value) => {
+      headers[key] = value;
+    },
+    status: (value) => {
+      status = value;
+      return response;
+    },
+    json: () => response,
+  };
+  let passed = 0;
+  middleware(request, response, () => {
+    passed += 1;
+  });
+  middleware(request, response, () => {
+    passed += 1;
+  });
+  assert.equal(passed, 1);
+  assert.equal(status, 429);
+  assert.equal(headers["Retry-After"], "1");
+});
+
+test("public intelligence sends aggregates rather than respondent rows", async () => {
+  const row = {
+    country: "Kisiwa",
+    indicator: "Institutional trust",
+    responseCode: "1",
+    weightedPercentage: 51.2,
+    unweightedSampleSize: 500,
+    weightField: "COMBINWT",
+    surveySource: "Afrobarometer",
+    question: "Q1",
+    surveyRound: "9",
+    sourceUrl: "https://example.test",
+  };
+  const { service } = harness({ aggregates: [row] });
+  const answer = await service.answer({
+    tenantId: "tenant",
+    campaignId: "campaign",
+    userId: "user",
+    question: "What does Afrobarometer say about trust?",
+  });
+  assert.equal(answer.intent, "PUBLIC_INTELLIGENCE");
+  assert.equal(answer.citations[0].weightedPercentage, 51.2);
+  assert.equal(answer.citations[0].unweightedSampleSize, 500);
+});

@@ -1,0 +1,36 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {
+  hashPassword,
+  hashToken,
+  newOpaqueToken,
+  validatePassword,
+  verifyPassword,
+} from "../server/services/authentication.js";
+import { expiredSessionCookie, sessionCookie } from "../server/middleware/authentication.js";
+
+test("passwords use a slow one-way hash and reject weak values", async () => {
+  assert.throws(() => validatePassword("short"), /12-128/);
+  const password = "Fictional-Test-2026";
+  const hash = await hashPassword(password);
+  assert.notEqual(hash, password);
+  assert.match(hash, /^\$2[aby]\$12\$/);
+  assert.equal(await verifyPassword(password, hash), true);
+  assert.equal(await verifyPassword("Incorrect-Test-2026", hash), false);
+});
+
+test("opaque credentials are random and stored as deterministic hashes", () => {
+  const first = newOpaqueToken();
+  const second = newOpaqueToken();
+  assert.notEqual(first, second);
+  assert.notEqual(hashToken(first, "a-secure-test-secret-that-is-long-enough"), first);
+});
+
+test("session cookies are httpOnly, same-site, scoped, and secure in production", () => {
+  const cookie = sessionCookie("secret", true);
+  assert.match(cookie, /HttpOnly/);
+  assert.match(cookie, /SameSite=Strict/);
+  assert.match(cookie, /Secure/);
+  assert.match(cookie, /Path=\//);
+  assert.match(expiredSessionCookie(true), /Max-Age=0/);
+});

@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+*.log
+android/
+ios/
+data/raw/
+storage/
+tests/
+coverage/

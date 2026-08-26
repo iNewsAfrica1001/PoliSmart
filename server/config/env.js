@@ -1,0 +1,126 @@
+import fs from "node:fs";
+import path from "node:path";
+
+function parseList(value, fallback = []) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .concat(fallback)
+    .filter((item, index, all) => all.indexOf(item) === index);
+}
+
+function parseNumber(value, fallback) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+export function loadConfig(rootDir) {
+  const nodeEnv = process.env.NODE_ENV || "development";
+  const isProduction = nodeEnv === "production";
+  const publicUrl = process.env.APP_URL || process.env.PUBLIC_APP_URL || "http://127.0.0.1:4000";
+  const mobileOrigins = ["capacitor://localhost", "ionic://localhost", "https://localhost"];
+  const defaultOrigins = isProduction
+    ? [publicUrl, ...mobileOrigins]
+    : [
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+        "http://127.0.0.1:4000",
+        "http://localhost:4000",
+        ...mobileOrigins,
+      ];
+  const distPath = path.join(rootDir, "dist");
+  const authSecret = process.env.AUTH_SECRET || "";
+  const jwtSecret = process.env.JWT_SECRET || authSecret;
+  const sessionSecret =
+    process.env.SESSION_SECRET ||
+    authSecret ||
+    jwtSecret ||
+    (isProduction ? "" : "development-only-session-secret-change-me");
+  const clientOrigins = parseList(process.env.CLIENT_ORIGIN, defaultOrigins);
+  const productionWarnings = [];
+
+  if (isProduction && jwtSecret.length < 32)
+    productionWarnings.push("JWT_SECRET must be at least 32 characters.");
+  if (isProduction && sessionSecret.length < 32)
+    productionWarnings.push("SESSION_SECRET must be at least 32 characters.");
+  if (isProduction && publicUrl.startsWith("http://"))
+    productionWarnings.push("PUBLIC_APP_URL should use HTTPS in production.");
+  if (isProduction && !process.env.OPENAI_API_KEY)
+    productionWarnings.push("OPENAI_API_KEY is required for the AI Assistant in production.");
+  if (
+    isProduction &&
+    clientOrigins.some(
+      (origin) =>
+        origin.startsWith("http://") &&
+        !origin.includes("127.0.0.1") &&
+        !origin.includes("localhost"),
+    )
+  ) {
+    productionWarnings.push("CLIENT_ORIGIN should use HTTPS for public production origins.");
+  }
+
+  return {
+    env: nodeEnv,
+    isProduction,
+    host: process.env.HOST || (isProduction ? "0.0.0.0" : "127.0.0.1"),
+    port: parseNumber(process.env.PORT, 4000),
+    publicUrl,
+    clientOrigins,
+    jwtSecret,
+    authSecret: authSecret || sessionSecret,
+    sessionSecret,
+    databaseUrl: process.env.DATABASE_URL || "",
+    redisUrl: process.env.REDIS_URL || "",
+    openAiApiKey: process.env.OPENAI_API_KEY || "",
+    openAiModel: process.env.OPENAI_MODEL || "gpt-5.4",
+    aiProvider: process.env.AI_PROVIDER || "openai",
+    aiRateLimitWindowMs: parseNumber(process.env.AI_RATE_LIMIT_WINDOW_MS, 60_000),
+    aiRateLimitMaxRequests: parseNumber(process.env.AI_RATE_LIMIT_MAX_REQUESTS, 12),
+    persistenceMode: process.env.PERSISTENCE_MODE || "memory",
+    documentStoragePath:
+      process.env.DOCUMENT_STORAGE_PATH || path.join(rootDir, "storage", "documents"),
+    storageProvider: process.env.STORAGE_PROVIDER || (isProduction ? "vercel-blob" : "local"),
+    blobReadWriteToken: process.env.BLOB_READ_WRITE_TOKEN || "",
+    emailProvider: process.env.EMAIL_PROVIDER || (isProduction ? "resend" : "console"),
+    emailApiKey: process.env.EMAIL_API_KEY || process.env.RESEND_API_KEY || "",
+    emailFrom: process.env.EMAIL_FROM || "",
+    smtpHost: process.env.SMTP_HOST || "",
+    smtpPort: parseNumber(process.env.SMTP_PORT, 465),
+    smtpSecure: String(process.env.SMTP_SECURE || "true").toLowerCase() === "true",
+    smtpUser: process.env.SMTP_USER || "",
+    smtpPassword: process.env.SMTP_PASSWORD || "",
+    jsonLimit: process.env.JSON_LIMIT || "1mb",
+    rateLimitWindowMs: parseNumber(process.env.RATE_LIMIT_WINDOW_MS, 60_000),
+    rateLimitMaxRequests: parseNumber(
+      process.env.RATE_LIMIT_MAX_REQUESTS,
+      isProduction ? 180 : 300,
+    ),
+    productionWarnings,
+    distPath,
+    isDistReady: () => fs.existsSync(path.join(distPath, "index.html")),
+  };
+}
+
+export function validateProductionEnvironment(config) {
+  if (!config.isProduction) return [];
+  const errors = [];
+  if (!config.databaseUrl) errors.push("DATABASE_URL is required.");
+  if (!config.openAiApiKey) errors.push("OPENAI_API_KEY is required.");
+  if (config.authSecret.length < 32) errors.push("AUTH_SECRET must be at least 32 characters.");
+  if (!config.publicUrl.startsWith("https://")) errors.push("APP_URL must use HTTPS.");
+  if (config.storageProvider !== "vercel-blob")
+    errors.push("STORAGE_PROVIDER must be vercel-blob on Vercel.");
+  if (!config.blobReadWriteToken) errors.push("BLOB_READ_WRITE_TOKEN is required.");
+  if (!["resend", "smtp"].includes(config.emailProvider))
+    errors.push("EMAIL_PROVIDER must be resend or smtp in production.");
+  if (config.emailProvider === "resend" && !config.emailApiKey)
+    errors.push("EMAIL_API_KEY or RESEND_API_KEY is required for Resend.");
+  if (config.emailProvider === "smtp") {
+    if (!config.smtpHost) errors.push("SMTP_HOST is required for SMTP email.");
+    if (!config.smtpUser) errors.push("SMTP_USER is required for SMTP email.");
+    if (!config.smtpPassword) errors.push("SMTP_PASSWORD is required for SMTP email.");
+  }
+  if (!config.emailFrom) errors.push("EMAIL_FROM is required.");
+  return errors;
+}

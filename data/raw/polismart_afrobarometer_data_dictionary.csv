@@ -1,0 +1,363 @@
+field_name,polismart_category,non_null_rows,unique_values,note
+RESPNO,Survey metadata,54803,54738,"Preserved from source for identification, geography, metadata, or weighting."
+COUNTRY,Geography / enumeration area,54398,463,"Preserved from source for identification, geography, metadata, or weighting."
+COUNTRY.old.spelling,Geography / enumeration area,54173,492,"Preserved from source for identification, geography, metadata, or weighting."
+COUNTRY_R7List,Geography / enumeration area,54432,560,"Preserved from source for identification, geography, metadata, or weighting."
+COUNTRY_R6List,Geography / enumeration area,54432,673,"Preserved from source for identification, geography, metadata, or weighting."
+COUNTRY_R5List,Geography / enumeration area,54432,360,"Preserved from source for identification, geography, metadata, or weighting."
+COUNTRY.BY.REGION,Geography / enumeration area,54156,348,"Preserved from source for identification, geography, metadata, or weighting."
+URBRUR,Geography / enumeration area,54430,30,"Preserved from source for identification, geography, metadata, or weighting."
+URBRUR_COND,Geography / enumeration area,54154,5,"Preserved from source for identification, geography, metadata, or weighting."
+REGION,Geography / enumeration area,54425,543,"Preserved from source for identification, geography, metadata, or weighting."
+LOCATION.LEVEL.1,Geography / enumeration area,54427,2329,"Preserved from source for identification, geography, metadata, or weighting."
+EA_SVC_A,Geography / enumeration area,54429,8,"Preserved from source for identification, geography, metadata, or weighting."
+EA_SVC_B,Geography / enumeration area,54430,7,"Preserved from source for identification, geography, metadata, or weighting."
+EA_SVC_C,Geography / enumeration area,54432,8,"Preserved from source for identification, geography, metadata, or weighting."
+EA_SVC_D,Geography / enumeration area,54432,7,"Preserved from source for identification, geography, metadata, or weighting."
+EA_SVC_E,Geography / enumeration area,54432,8,"Preserved from source for identification, geography, metadata, or weighting."
+EA_FAC_A,Geography / enumeration area,54432,7,"Preserved from source for identification, geography, metadata, or weighting."
+EA_FAC_B,Geography / enumeration area,54432,6,"Preserved from source for identification, geography, metadata, or weighting."
+EA_FAC_C,Geography / enumeration area,54432,7,"Preserved from source for identification, geography, metadata, or weighting."
+EA_FAC_D,Geography / enumeration area,54432,6,"Preserved from source for identification, geography, metadata, or weighting."
+EA_FAC_E,Geography / enumeration area,54432,5,"Preserved from source for identification, geography, metadata, or weighting."
+EA_FAC_F,Geography / enumeration area,54432,5,"Preserved from source for identification, geography, metadata, or weighting."
+EA_FAC_F2,Geography / enumeration area,54432,5,"Preserved from source for identification, geography, metadata, or weighting."
+EA_FAC_G,Geography / enumeration area,54432,4,"Preserved from source for identification, geography, metadata, or weighting."
+EA_SEC_A,Geography / enumeration area,54432,49,"Preserved from source for identification, geography, metadata, or weighting."
+EA_SEC_B,Geography / enumeration area,54432,25,"Preserved from source for identification, geography, metadata, or weighting."
+EA_SEC_C,Geography / enumeration area,54432,4,"Preserved from source for identification, geography, metadata, or weighting."
+EA_SEC_D,Geography / enumeration area,54076,4,"Preserved from source for identification, geography, metadata, or weighting."
+EA_SEC_E,Geography / enumeration area,54076,14,"Preserved from source for identification, geography, metadata, or weighting."
+EA_ROAD_A,Geography / enumeration area,53444,7,"Preserved from source for identification, geography, metadata, or weighting."
+EA_ROAD_B,Geography / enumeration area,53720,29,"Preserved from source for identification, geography, metadata, or weighting."
+EA_ROAD_C,Geography / enumeration area,53444,7,"Preserved from source for identification, geography, metadata, or weighting."
+DATEINTR,Survey metadata,53718,438,"Preserved from source for identification, geography, metadata, or weighting."
+STRTIME,Survey metadata,53718,11054,"Preserved from source for identification, geography, metadata, or weighting."
+Q1,Survey question — map with Round 9 codebook,53718,90,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q2,Survey question — map with Round 9 codebook,53718,453,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q2OTHER,Survey question — map with Round 9 codebook,1036,268,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q3,Survey question — map with Round 9 codebook,53718,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q4A,Survey question — map with Round 9 codebook,53718,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q4B,Survey question — map with Round 9 codebook,53718,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q5A,Survey question — map with Round 9 codebook,53718,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q5B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q6A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q6B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q6C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q6D,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q6E,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q7A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q7B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q8,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q9A,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q9B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q9C,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q10A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q10B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q10C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q11A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q11B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q11C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q11D,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q11E,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q12A,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q12B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q13,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q14A,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q14B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q14C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q15,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q16,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q17,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q18,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q19A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q19B,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q20,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q21A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q21B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q22A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q22B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q22C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q23,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q24,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q25,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q26,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q27A,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q27B,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q27C,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q28,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q29A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q29B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q30,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q31,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q32A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q32B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q33A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q33B,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q33C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q33D,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q33E,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q33F,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q33G,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q33H,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q33I,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q34A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q34B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q35A,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q35B,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q35C,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q36A,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q36B,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q36C,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q37A,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q37B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q37C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q37D,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q37E,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q37F,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q37G,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q37H,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q37I,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q37J,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q37K,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q38A,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q38B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q38C,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q38D,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q38E,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q38F,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q38G,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q38H,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q38I,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q38J,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q38K,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q39A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q39B,Survey question — map with Round 9 codebook,53444,4,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q40A,Survey question — map with Round 9 codebook,53444,4,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q40B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q40C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q40D,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q41A,Survey question — map with Round 9 codebook,53444,4,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q41B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q41C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q41D,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q41E,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q41F,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q41G,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q41H,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q42A,Survey question — map with Round 9 codebook,53444,4,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q42B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q42C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q42D,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q43A,Survey question — map with Round 9 codebook,53444,4,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q43B,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q43C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q43D,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q43E,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q44A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q44B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q44C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q44D,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q44E,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q45PT1,Survey question — map with Round 9 codebook,53444,41,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q45PT1OTHER,Survey question — map with Round 9 codebook,7672,3165,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q45PT2,Survey question — map with Round 9 codebook,53444,39,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q45PT2OTHER,Survey question — map with Round 9 codebook,7258,3235,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q45PT3,Survey question — map with Round 9 codebook,53444,38,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q45PT3OTHER,Survey question — map with Round 9 codebook,6575,3119,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46A,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46B,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46C,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46D,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46E,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46F,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46G,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46H,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46I,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46J,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46K,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46L,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46M,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46N,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46O,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46P,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q46Q,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q47A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q47B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q47C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q48A,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q48B,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q49A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q49B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q50A,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q50B,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q50C,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q51A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q51B,Survey question — map with Round 9 codebook,53444,9,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q52A,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q52B,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q53A,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q53B,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q53C,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q54,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q55A,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q55B,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q55C,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q56A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q56B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q56C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q57A,Survey question — map with Round 9 codebook,53444,4,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q57B,Survey question — map with Round 9 codebook,53444,4,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q58A,Survey question — map with Round 9 codebook,53444,4,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q58B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q58C,Survey question — map with Round 9 codebook,53444,30,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q59,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q60,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q61A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q61B,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q61C,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q62,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q63A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q63B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q63C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q64A,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q64B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q65A,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q65B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q66A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q66B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q67A,Survey question — map with Round 9 codebook,53444,4,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q67B,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q68A,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q68B,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q69,Survey question — map with Round 9 codebook,53444,11,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q70A,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q70B,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q70C,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q70D,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q71,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q72A,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q72B,Survey question — map with Round 9 codebook,53444,9,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q72C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q72D,Survey question — map with Round 9 codebook,53444,10,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q72E,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q73A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q73B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q73C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q73D,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q74A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q74B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q74C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q74D,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q74E,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q75,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q76A,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q76B,Survey question — map with Round 9 codebook,53444,4,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q76C,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q77,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q78A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q78B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q78C,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q78C1,Survey question — map with Round 9 codebook,53441,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q78D,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q78E,Survey question — map with Round 9 codebook,53444,9,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q78F,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q84A,Survey question — map with Round 9 codebook,53444,576,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q84AOTHER,Survey question — map with Round 9 codebook,1031,462,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q84B,Survey question — map with Round 9 codebook,53444,9,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q84C,Survey question — map with Round 9 codebook,53444,10,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q84D,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q84E,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q85A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q85B,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q86A,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q86B,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q86C,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q86D,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q86E,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q86F,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q87A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q87B,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q87C,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q87D,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q87E,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q88A,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q88B,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q89A,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q89B,Survey question — map with Round 9 codebook,53444,351,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q89BOTHER,Survey question — map with Round 9 codebook,257,162,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q90A,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q90B,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q90C,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q90D,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q90E,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q90F,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q90G,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q90H,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q90I,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q91A,Survey question — map with Round 9 codebook,53444,16,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q91B,Survey question — map with Round 9 codebook,53444,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q91C,Survey question — map with Round 9 codebook,53444,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q92A,Survey question — map with Round 9 codebook,53444,4,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q92B,Survey question — map with Round 9 codebook,53444,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q93A,Survey question — map with Round 9 codebook,53444,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q93B,Survey question — map with Round 9 codebook,53444,17,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q93BOTHER,Survey question — map with Round 9 codebook,242,112,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q93C,Survey question — map with Round 9 codebook,53444,9,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q94,Survey question — map with Round 9 codebook,53444,12,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q95,Survey question — map with Round 9 codebook,53444,48,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q95OTHER,Survey question — map with Round 9 codebook,260,165,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q96,Survey question — map with Round 9 codebook,53444,371,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q96OTHER,Survey question — map with Round 9 codebook,398,231,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q97,Survey question — map with Round 9 codebook,53444,14,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q98A,Survey question — map with Round 9 codebook,53444,4,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q99,Survey question — map with Round 9 codebook,34249,30010,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q100,Survey question — map with Round 9 codebook,53168,2,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q101,Survey question — map with Round 9 codebook,53168,8,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q101OTHER,Survey question — map with Round 9 codebook,7,6,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q102,Survey question — map with Round 9 codebook,53168,125,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q102OTHER,Survey question — map with Round 9 codebook,57,14,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q103,Survey question — map with Round 9 codebook,53168,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q104,Survey question — map with Round 9 codebook,53168,10,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q105,Survey question — map with Round 9 codebook,53168,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q106A,Survey question — map with Round 9 codebook,53168,2,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q106B,Survey question — map with Round 9 codebook,53168,2,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q106C,Survey question — map with Round 9 codebook,53168,2,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q106D,Survey question — map with Round 9 codebook,53168,2,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q106E,Survey question — map with Round 9 codebook,53168,2,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q107,Survey question — map with Round 9 codebook,53168,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q109A,Survey question — map with Round 9 codebook,53168,3,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q109B,Survey question — map with Round 9 codebook,53168,3,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q109C,Survey question — map with Round 9 codebook,53168,3,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q109D,Survey question — map with Round 9 codebook,53168,3,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q109E,Survey question — map with Round 9 codebook,53168,3,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q109F,Survey question — map with Round 9 codebook,53168,3,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q111,Survey question — map with Round 9 codebook,53168,1364,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q112,Survey question — map with Round 9 codebook,53168,45,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q113,Survey question — map with Round 9 codebook,53168,2,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q114,Survey question — map with Round 9 codebook,53168,3,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q115,Survey question — map with Round 9 codebook,53168,206,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q115OTHER,Survey question — map with Round 9 codebook,357,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q116,Survey question — map with Round 9 codebook,53168,305,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q116OTHER,Survey question — map with Round 9 codebook,401,11,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q117,Survey question — map with Round 9 codebook,53168,7,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q118_1,Survey question — map with Round 9 codebook,53168,54,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q118_2,Survey question — map with Round 9 codebook,53168,137,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q118_3,Survey question — map with Round 9 codebook,53168,172,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q118_4,Survey question — map with Round 9 codebook,53168,97,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q118_5,Survey question — map with Round 9 codebook,51968,47,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q118_6,Survey question — map with Round 9 codebook,49568,26,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q118_7,Survey question — map with Round 9 codebook,49568,13,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q118_8,Survey question — map with Round 9 codebook,48448,5,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q118_9,Survey question — map with Round 9 codebook,48448,3,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q118_10,Survey question — map with Round 9 codebook,48448,1,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q118_11,Survey question — map with Round 9 codebook,48448,1,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q118OTHER,Survey question — map with Round 9 codebook,2116,45,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q119,Survey question — map with Round 9 codebook,53168,2,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q119v,Survey question — map with Round 9 codebook,10266,9727,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q120,Survey question — map with Round 9 codebook,51647,2,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+Q120v,Survey question — map with Round 9 codebook,5786,4600,Interpret question wording and response codes using the official Afrobarometer Round 9 merged codebook.
+withinwt_ea,Survey weighting,52458,6688,"Preserved from source for identification, geography, metadata, or weighting."
+withinwt_hh,Survey weighting,52458,28110,"Preserved from source for identification, geography, metadata, or weighting."
+Combinwt_old_ea,Survey weighting,52458,6687,"Preserved from source for identification, geography, metadata, or weighting."
+Combinwt_new_hh,Survey weighting,52458,28091,"Preserved from source for identification, geography, metadata, or weighting."
