@@ -32,7 +32,13 @@ const date = (value?: string) =>
       }).format(new Date(value))
     : "No date";
 
-export function DashboardPage({ user }: { user: SessionUser }) {
+export function DashboardPage({
+  user,
+  onCreateCampaign,
+}: {
+  user: SessionUser;
+  onCreateCampaign: () => void;
+}) {
   const tenantId = user.memberships[0]?.tenantId || "";
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [campaignId, setCampaignId] = useState("");
@@ -51,8 +57,12 @@ export function DashboardPage({ user }: { user: SessionUser }) {
         setCampaigns(list);
         setCampaignId(list[0]?.id || "");
         setCountry(list[0]?.country || "");
+        if (list.length === 0) setLoading(false);
       })
-      .catch(() => setError("Unable to load campaigns."));
+      .catch(() => {
+        setError("Unable to load campaigns.");
+        setLoading(false);
+      });
   }, [tenantId]);
   const load = useCallback(async () => {
     if (!campaignId) return;
@@ -128,6 +138,15 @@ export function DashboardPage({ user }: { user: SessionUser }) {
         </p>
       )}
       {loading && !data && <p role="status">Loading approved campaign intelligence…</p>}
+      {!loading && !error && campaigns.length === 0 && !data && (
+        <section className="ops-empty" aria-labelledby="dashboard-empty-title">
+          <h2 id="dashboard-empty-title">No campaigns are assigned to this account yet</h2>
+          <p>Create a campaign to activate the command center and grounded intelligence tools.</p>
+          <button type="button" className="primary-button" onClick={onCreateCampaign}>
+            Create campaign
+          </button>
+        </section>
+      )}
       {data && (
         <>
           <section className="brief-card">

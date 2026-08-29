@@ -225,6 +225,38 @@ test("email-verification frontend confirms once and exposes safe verification st
   assert.match(authSource, /\/api\/auth\/email-verification\/request/);
 });
 
+test("dashboard and assistant terminate loading safely when no campaign is assigned", () => {
+  const appSource = fs.readFileSync(path.join(root, "src", "App.tsx"), "utf8");
+  const dashboardSource = fs.readFileSync(
+    path.join(root, "src", "pages", "DashboardPage.tsx"),
+    "utf8",
+  );
+  const assistantSource = fs.readFileSync(
+    path.join(root, "src", "pages", "AssistantPage.tsx"),
+    "utf8",
+  );
+  assert.match(dashboardSource, /if \(list\.length === 0\) setLoading\(false\)/);
+  assert.match(dashboardSource, /Unable to load campaigns[\s\S]*setLoading\(false\)/);
+  assert.match(dashboardSource, /No campaigns are assigned to this account yet/);
+  assert.match(dashboardSource, /onClick=\{onCreateCampaign\}/);
+  assert.match(appSource, /onCreateCampaign=\{\(\) => setPage\("campaigns"\)\}/);
+  assert.match(assistantSource, /AI Assistant is campaign-scoped/);
+  assert.match(assistantSource, /campaignsLoaded && !campaignId && !error/);
+});
+
+test("Version 1 scope formally defers Reports and documents campaign-scoped intelligence", () => {
+  const checklist = fs.readFileSync(path.join(root, "PRODUCTION_CHECKLIST.md"), "utf8");
+  const assistantDocs = fs.readFileSync(path.join(root, "docs", "AI_ASSISTANT.md"), "utf8");
+  const navigationSource = fs.readFileSync(
+    path.join(root, "src", "config", "navigation.ts"),
+    "utf8",
+  );
+  assert.match(checklist, /Reports is intentionally deferred/);
+  assert.match(checklist, /out of scope for Version 1 launch acceptance/);
+  assert.match(assistantDocs, /Version 1 AI Assistant is intentionally campaign-scoped/);
+  assert.match(navigationSource, /label: "Reports"[\s\S]*page: "reports"[\s\S]*enabled: false/);
+});
+
 test("login exposes safe password-reset requests and public registration", () => {
   const pageSource = fs.readFileSync(path.join(root, "src", "pages", "LoginPage.tsx"), "utf8");
   const authSource = fs.readFileSync(path.join(root, "src", "lib", "auth.ts"), "utf8");

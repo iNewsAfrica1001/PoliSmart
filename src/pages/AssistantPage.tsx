@@ -11,12 +11,14 @@ export function AssistantPage({ user }: { user: SessionUser }) {
   const [answer, setAnswer] = useState<AssistantAnswer | null>(null);
   const [conversationId, setConversationId] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const [campaignsLoaded, setCampaignsLoaded] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
     operationsApi
       .campaigns(tenantId)
       .then(({ campaigns }) => setCampaignId(campaigns[0]?.id || ""))
-      .catch(() => setError("Unable to load campaigns."));
+      .catch(() => setError("Unable to load campaigns."))
+      .finally(() => setCampaignsLoaded(true));
   }, [tenantId]);
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -49,6 +51,12 @@ export function AssistantPage({ user }: { user: SessionUser }) {
         <strong>Data boundary:</strong> Respondent-level survey records are never sent to the model.
         Verify critical campaign decisions with the cited source.
       </div>
+      {campaignsLoaded && !campaignId && !error && (
+        <p className="ops-empty" role="status">
+          AI Assistant is campaign-scoped. Create or request access to a campaign before asking a
+          grounded intelligence question.
+        </p>
+      )}
       {answer && (
         <article className="assistant-answer" aria-live="polite">
           <div className="answer-badge">

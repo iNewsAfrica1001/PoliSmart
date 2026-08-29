@@ -55,7 +55,7 @@ function WorkspaceApp() {
       }}
     >
       {page === "dashboard" ? (
-        <DashboardPage user={user} />
+        <DashboardPage user={user} onCreateCampaign={() => setPage("campaigns")} />
       ) : page === "ai" ? (
         <AssistantPage user={user} />
       ) : page === "policy" || page === "media" || page === "communications" ? (

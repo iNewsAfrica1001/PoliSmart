@@ -1,5 +1,12 @@
 # PoliSmart Africa AI Production Checklist
 
+## Version 1 launch scope
+
+- Reports is intentionally deferred and is **out of scope for Version 1 launch acceptance**.
+- The disabled “Reports — Soon” navigation item is a roadmap indicator, not an active workflow.
+- Report generation must not be represented as available until its authorization, data contracts,
+  tests, and production acceptance criteria are implemented in a later release.
+
 Audit date: 2026-08-23  
 Release status: **NOT READY FOR DEPLOYMENT — environment verification blockers remain**
 

@@ -1,5 +1,14 @@
 # PoliSmart AI Assistant
 
+## Campaign scope
+
+The Version 1 AI Assistant is intentionally campaign-scoped. An authenticated user must have an
+active organization membership and access to at least one campaign before submitting grounded
+questions. The assistant may use approved aggregate Afrobarometer intelligence, but each request
+retains a campaign context for authorization, auditability, rate limiting, and citations. The UI
+must explain this prerequisite when no campaign is available; it must not create an independent or
+unaudited intelligence path.
+
 The assistant is a server-side retrieval-augmented service. The server detects intent, retrieves authorized records, caps context, calls a provider abstraction, validates structured output, and constructs citations from retrieved records.
 
 ## Data boundaries
