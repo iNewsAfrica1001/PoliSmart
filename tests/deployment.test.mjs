@@ -206,6 +206,25 @@ test("password-reset frontend preserves the email token and submits the backend 
   assert.match(authSource, /JSON\.stringify\(\{ token, password \}\)/);
 });
 
+test("email-verification frontend confirms once and exposes safe verification states", () => {
+  const appSource = fs.readFileSync(path.join(root, "src", "App.tsx"), "utf8");
+  const pageSource = fs.readFileSync(
+    path.join(root, "src", "pages", "VerifyEmailPage.tsx"),
+    "utf8",
+  );
+  const authSource = fs.readFileSync(path.join(root, "src", "lib", "auth.ts"), "utf8");
+  assert.match(appSource, /pathname === "\/verify-email"/);
+  assert.match(appSource, /searchParams\.get\("token"\)/);
+  assert.match(pageSource, /started\.current/);
+  assert.match(pageSource, /authApi\.verifyEmail\(token\)/);
+  assert.match(pageSource, /Verification link invalid/);
+  assert.match(pageSource, /Verification link expired/);
+  assert.match(pageSource, /Verification link already used/);
+  assert.match(pageSource, /Continue to login/);
+  assert.match(authSource, /\/api\/auth\/email-verification\/confirm/);
+  assert.match(authSource, /\/api\/auth\/email-verification\/request/);
+});
+
 test("login exposes safe password-reset requests and public registration", () => {
   const pageSource = fs.readFileSync(path.join(root, "src", "pages", "LoginPage.tsx"), "utf8");
   const authSource = fs.readFileSync(path.join(root, "src", "lib", "auth.ts"), "utf8");

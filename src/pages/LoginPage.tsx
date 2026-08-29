@@ -5,7 +5,7 @@ import { authApi } from "../lib/auth";
 type LoginPageProps = { onContinue: (email: string, password: string) => Promise<void> };
 
 export function LoginPage({ onContinue }: LoginPageProps) {
-  const [mode, setMode] = useState<"login" | "forgot" | "register">("login");
+  const [mode, setMode] = useState<"login" | "forgot" | "register" | "resend">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -23,6 +23,11 @@ export function LoginPage({ onContinue }: LoginPageProps) {
       if (mode === "forgot") {
         await authApi.requestPasswordReset(email);
         setConfirmation("If the account exists, reset instructions will be sent.");
+      } else if (mode === "resend") {
+        await authApi.requestEmailVerification(email);
+        setConfirmation(
+          "If the account exists and is unverified, verification instructions will be sent.",
+        );
       } else if (mode === "register") {
         const result = await authApi.register({
           email,
@@ -41,7 +46,7 @@ export function LoginPage({ onContinue }: LoginPageProps) {
       setSubmitting(false);
     }
   }
-  function changeMode(nextMode: "login" | "forgot" | "register") {
+  function changeMode(nextMode: "login" | "forgot" | "register" | "resend") {
     setMode(nextMode);
     setError("");
     setConfirmation("");
@@ -83,7 +88,7 @@ export function LoginPage({ onContinue }: LoginPageProps) {
       <section className="login-form-wrap">
         <form onSubmit={submit}>
           <div className="login-lock">
-            {mode === "forgot" ? (
+            {mode === "forgot" || mode === "resend" ? (
               <KeyRound />
             ) : mode === "register" ? (
               <UserPlus />
@@ -92,22 +97,26 @@ export function LoginPage({ onContinue }: LoginPageProps) {
             )}
           </div>
           <span className="eyebrow">
-            {mode === "forgot"
+            {mode === "forgot" || mode === "resend"
               ? "ACCOUNT RECOVERY"
               : mode === "register"
                 ? "CREATE WORKSPACE"
                 : "SECURE WORKSPACE"}
           </span>
           <h2>
-            {mode === "forgot"
-              ? "Reset password"
+            {mode === "forgot" || mode === "resend"
+              ? mode === "resend"
+                ? "Resend verification"
+                : "Reset password"
               : mode === "register"
                 ? "Create your account"
                 : "Welcome back"}
           </h2>
           <p>
-            {mode === "forgot"
-              ? "Enter your work email. We will send reset instructions if an account exists."
+            {mode === "forgot" || mode === "resend"
+              ? mode === "resend"
+                ? "Enter your work email. We will send verification instructions if an unverified account exists."
+                : "Enter your work email. We will send reset instructions if an account exists."
               : mode === "register"
                 ? "Create a campaign workspace and verify your email before use."
                 : "Sign in to continue to PoliSmart Africa AI."}
@@ -153,7 +162,7 @@ export function LoginPage({ onContinue }: LoginPageProps) {
             required
             autoComplete="email"
           />
-          {mode !== "forgot" && (
+          {mode !== "forgot" && mode !== "resend" && (
             <>
               <label htmlFor="password">Password</label>
               <input
@@ -194,19 +203,30 @@ export function LoginPage({ onContinue }: LoginPageProps) {
               ? "Please wait…"
               : mode === "forgot"
                 ? "Send reset instructions"
-                : mode === "register"
-                  ? "Create account"
-                  : "Enter workspace"}{" "}
+                : mode === "resend"
+                  ? "Send verification instructions"
+                  : mode === "register"
+                    ? "Create account"
+                    : "Enter workspace"}{" "}
             <ArrowRight />
           </button>
           {mode === "login" ? (
-            <button
-              type="button"
-              className="secondary-auth-action"
-              onClick={() => changeMode("register")}
-            >
-              Create a new organization account
-            </button>
+            <div className="auth-action-stack">
+              <button
+                type="button"
+                className="secondary-auth-action"
+                onClick={() => changeMode("register")}
+              >
+                Create a new organization account
+              </button>
+              <button
+                type="button"
+                className="secondary-auth-action"
+                onClick={() => changeMode("resend")}
+              >
+                Resend verification email
+              </button>
+            </div>
           ) : (
             <button
               type="button"

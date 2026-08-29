@@ -56,6 +56,10 @@ function invalidResetToken(code) {
   return Object.assign(new Error("Reset token is invalid or expired."), { status: 400 });
 }
 
+function verificationError(code, message) {
+  return Object.assign(new Error(message), { status: 400, verificationCode: code });
+}
+
 export function createAuthenticationService(
   database,
   { tokenSecret, now = () => new Date(), notifications = null },
@@ -179,6 +183,20 @@ export function createAuthenticationService(
       await deliverNotification("sendPasswordReset", { email: user.email, token });
       return token;
     },
+    async requestEmailVerification(email) {
+      const user = await database.authUser.findUnique({ where: { email: normalizeEmail(email) } });
+      if (!user || user.emailVerifiedAt) return null;
+      await database.emailVerificationToken.deleteMany({
+        where: { userId: user.id, usedAt: null },
+      });
+      const token = await issueToken(
+        database.emailVerificationToken,
+        user.id,
+        VERIFY_HOURS * 60 * 60 * 1000,
+      );
+      await deliverNotification("sendEmailVerification", { email: user.email, token });
+      return token;
+    },
     async resetPassword(token, password) {
       if (!/^[A-Za-z0-9_-]{43}$/.test(String(token ?? "")))
         throw invalidResetToken("RESET_TOKEN_FORMAT_INVALID");
@@ -208,13 +226,28 @@ export function createAuthenticationService(
       }
     },
     async verifyEmail(token) {
+      if (!/^[A-Za-z0-9_-]{43}$/.test(String(token ?? "")))
+        throw verificationError("VERIFICATION_TOKEN_INVALID", "Verification link is invalid.");
       const verification = await database.emailVerificationToken.findUnique({
         where: { tokenHash: hashToken(token, tokenSecret) },
       });
-      if (!verification || verification.usedAt || verification.expiresAt <= now())
-        throw Object.assign(new Error("Verification token is invalid or expired."), {
-          status: 400,
-        });
+      if (!verification)
+        throw verificationError("VERIFICATION_TOKEN_INVALID", "Verification link is invalid.");
+      if (verification.usedAt)
+        throw verificationError(
+          "VERIFICATION_TOKEN_ALREADY_USED",
+          "Verification link has already been used.",
+        );
+      if (verification.expiresAt <= now())
+        throw verificationError("VERIFICATION_TOKEN_EXPIRED", "Verification link has expired.");
+      const user = await database.authUser.findUnique({ where: { id: verification.userId } });
+      if (!user)
+        throw verificationError("VERIFICATION_TOKEN_INVALID", "Verification link is invalid.");
+      if (user.emailVerifiedAt)
+        throw verificationError(
+          "ACCOUNT_ALREADY_VERIFIED",
+          "This email address is already verified.",
+        );
       await database.$transaction([
         database.authUser.update({
           where: { id: verification.userId },

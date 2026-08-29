@@ -1,4 +1,12 @@
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+export class ApiError extends Error {
+  code?: string;
+  constructor(message: string, code?: string) {
+    super(message);
+    this.name = "ApiError";
+    this.code = code;
+  }
+}
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
@@ -6,8 +14,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
   if (!response.ok) {
-    const payload = (await response.json().catch(() => ({}))) as { message?: string };
-    throw new Error(payload.message ?? "Request failed.");
+    const payload = (await response.json().catch(() => ({}))) as {
+      message?: string;
+      code?: string;
+    };
+    throw new ApiError(payload.message ?? "Request failed.", payload.code);
   }
   return response.status === 204 ? (undefined as T) : (response.json() as Promise<T>);
 }
@@ -45,6 +56,16 @@ export const authApi = {
     request<{ message: string }>("/api/auth/password-reset/request", {
       method: "POST",
       body: JSON.stringify({ email }),
+    }),
+  requestEmailVerification: (email: string) =>
+    request<{ message: string }>("/api/auth/email-verification/request", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
+  verifyEmail: (token: string) =>
+    request<undefined>("/api/auth/email-verification/confirm", {
+      method: "POST",
+      body: JSON.stringify({ token }),
     }),
   resetPassword: (token: string, password: string) =>
     request<undefined>("/api/auth/password-reset/confirm", {

@@ -1062,6 +1062,9 @@ input:focus-visible {
 .secondary-auth-action svg {
   width: 16px;
 }
+.auth-action-stack .secondary-auth-action + .secondary-auth-action {
+  margin-top: 2px;
+}
 .form-success {
   color: #165d46 !important;
   background: #e7f5ef;

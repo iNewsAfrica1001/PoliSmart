@@ -9,11 +9,14 @@ import { AssistantPage } from "./pages/AssistantPage";
 import { IntelligenceWorkflowsPage } from "./pages/IntelligenceWorkflowsPage";
 import { GovernancePage } from "./pages/GovernancePage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
+import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 
 export default function App() {
   const currentUrl = new URL(window.location.href);
   if (currentUrl.pathname === "/reset-password")
     return <ResetPasswordPage token={currentUrl.searchParams.get("token") ?? ""} />;
+  if (currentUrl.pathname === "/verify-email")
+    return <VerifyEmailPage token={currentUrl.searchParams.get("token") ?? ""} />;
   return <WorkspaceApp />;
 }
 

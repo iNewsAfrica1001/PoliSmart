@@ -114,10 +114,28 @@ export function createAuthRouter({ authService, config, governance }) {
     }),
   );
   router.post(
+    "/email-verification/request",
+    asyncRoute(async (request, response) => {
+      await authService.requestEmailVerification(request.body?.email);
+      response.status(202).json({
+        message: "If the account exists and is unverified, verification instructions will be sent.",
+      });
+    }),
+  );
+  router.post(
     "/email-verification/confirm",
     asyncRoute(async (request, response) => {
-      await authService.verifyEmail(request.body?.token);
-      response.status(204).end();
+      try {
+        await authService.verifyEmail(request.body?.token);
+        response.status(204).end();
+      } catch (error) {
+        if (error.verificationCode)
+          return response.status(error.status || 400).json({
+            message: error.message,
+            code: error.verificationCode,
+          });
+        throw error;
+      }
     }),
   );
   router.get("/me", requireSession, (request, response) =>
