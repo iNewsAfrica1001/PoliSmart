@@ -281,6 +281,7 @@ test("email verification is single-use and enables login without bypassing passw
         session = { id: "session-verify", ...data };
         return session;
       },
+      findUnique: async ({ where }) => (session?.tokenHash === where.tokenHash ? session : null),
       deleteMany: async () => {
         session = null;
         return { count: 1 };
@@ -299,8 +300,9 @@ test("email verification is single-use and enables login without bypassing passw
     ipHash: "test",
   });
   assert.equal(login.session.id, "session-verify");
+  assert.equal((await service.authenticate(login.token))?.id, "session-verify");
   await service.logout(login.token);
-  assert.equal(session, null);
+  assert.equal(await service.authenticate(login.token), null);
   await assert.rejects(
     service.verifyEmail(rawToken),
     (error) => error.verificationCode === "VERIFICATION_TOKEN_ALREADY_USED",
