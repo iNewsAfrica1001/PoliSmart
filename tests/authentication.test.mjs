@@ -105,6 +105,33 @@ test("registration delivers the verification token through the configured provid
   assert.ok(delivered.token.length > 32);
 });
 
+test("unverified public registrations cannot authenticate", async () => {
+  const database = {
+    authUser: {
+      findUnique: async () => ({
+        id: "user-unverified",
+        email: "unverified@example.test",
+        displayName: "Unverified User",
+        emailVerifiedAt: null,
+        passwordHash: await hashPassword("StrongPassword123"),
+        memberships: [],
+      }),
+    },
+  };
+  const service = createAuthenticationService(database, {
+    tokenSecret: "test-only-token-secret-that-is-long-enough",
+  });
+  await assert.rejects(
+    service.login({
+      email: "unverified@example.test",
+      password: "StrongPassword123",
+      userAgent: "test",
+      ipHash: "test",
+    }),
+    (error) => error.status === 401 && error.message === "Invalid email or password.",
+  );
+});
+
 test("password reset delivers a newly generated secure token", async () => {
   let delivered;
   const created = [];
@@ -153,10 +180,16 @@ test("password reset updates the hash, revokes sessions, and consumes the token 
     passwordResetToken: {
       findUnique: async ({ where }) =>
         where.tokenHash === state.reset.tokenHash ? { ...state.reset } : null,
-      update: ({ data }) => async () => Object.assign(state.reset, data),
+      update:
+        ({ data }) =>
+        async () =>
+          Object.assign(state.reset, data),
     },
     authUser: {
-      update: ({ data }) => async () => Object.assign(state.user, data),
+      update:
+        ({ data }) =>
+        async () =>
+          Object.assign(state.user, data),
     },
     authSession: {
       deleteMany: () => async () => {
@@ -172,7 +205,10 @@ test("password reset updates the hash, revokes sessions, and consumes the token 
   assert.equal(await verifyPassword(newPassword, state.user.passwordHash), true);
   assert.ok(state.reset.usedAt instanceof Date);
   assert.equal(state.sessionsDeleted, true);
-  await assert.rejects(service.resetPassword(rawToken, "AnotherPassword2026"), /invalid or expired/);
+  await assert.rejects(
+    service.resetPassword(rawToken, "AnotherPassword2026"),
+    /invalid or expired/,
+  );
 });
 
 test("password reset rejects malformed, unknown, expired, and weak-password attempts", async () => {
@@ -193,6 +229,12 @@ test("password reset rejects malformed, unknown, expired, and weak-password atte
   };
   const service = createAuthenticationService(database, { tokenSecret: secret });
   await assert.rejects(service.resetPassword("invalid", "ValidPassword2026"), /invalid or expired/);
-  await assert.rejects(service.resetPassword(newOpaqueToken(), "ValidPassword2026"), /invalid or expired/);
-  await assert.rejects(service.resetPassword(expiredToken, "ValidPassword2026"), /invalid or expired/);
+  await assert.rejects(
+    service.resetPassword(newOpaqueToken(), "ValidPassword2026"),
+    /invalid or expired/,
+  );
+  await assert.rejects(
+    service.resetPassword(expiredToken, "ValidPassword2026"),
+    /invalid or expired/,
+  );
 });

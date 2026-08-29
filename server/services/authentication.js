@@ -133,7 +133,7 @@ export function createAuthenticationService(
         where: { email: normalizeEmail(email) },
         include: { memberships: { where: { status: "ACTIVE" }, include: { organization: true } } },
       });
-      if (!user || !(await verifyPassword(password, user.passwordHash)))
+      if (!user || !user.emailVerifiedAt || !(await verifyPassword(password, user.passwordHash)))
         throw Object.assign(new Error("Invalid email or password."), { status: 401 });
       const token = newOpaqueToken();
       const session = await database.authSession.create({
@@ -201,7 +201,9 @@ export function createAuthenticationService(
           database.authSession.deleteMany({ where: { userId: reset.userId } }),
         ]);
       } catch (error) {
-        recordResetFailure(error?.code === "P2025" ? "RESET_USER_NOT_FOUND" : "PASSWORD_UPDATE_FAILED");
+        recordResetFailure(
+          error?.code === "P2025" ? "RESET_USER_NOT_FOUND" : "PASSWORD_UPDATE_FAILED",
+        );
         throw Object.assign(new Error("Password reset could not be completed."), { status: 500 });
       }
     },
