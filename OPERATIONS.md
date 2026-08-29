@@ -2,17 +2,21 @@
 
 Production: `https://polismartafrica.ai`
 
-This runbook covers routine operation of Vercel, Neon PostgreSQL/pgvector, OpenAI, private Vercel Blob storage, Resend, and any managed Redis or job service. Never paste secret values, raw campaign documents, respondent data, session cookies, or personal information into tickets or chat.
+The canonical V1 monitoring and incident procedure is
+[`docs/OPERATIONS_MONITORING_RUNBOOK.md`](docs/OPERATIONS_MONITORING_RUNBOOK.md). This companion
+runbook covers routine operation of Vercel, Neon PostgreSQL/pgvector, OpenAI, private Vercel Blob
+storage, Microsoft Graph, and any managed Redis or job service. Never paste secret values, raw
+campaign documents, respondent data, session cookies, or personal information into tickets or chat.
 
 ## Ownership and access
 
-Assign an on-call primary and secondary. Maintain named, MFA-protected operator accounts; do not share accounts. Keep production access limited to authorized Sentinel LLC operators. Record changes in the release log and application audit log. The application runtime role should not be a database superuser, create roles/databases, or bypass row-level security.
+Assign an on-call primary and secondary. Maintain named, MFA-protected operator accounts; do not share accounts. Keep production access limited to authorized SentinelAI LLC operators. Record changes in the release log and application audit log. The application runtime role should not be a database superuser, create roles/databases, or bypass row-level security.
 
 ## Monitoring and alerts
 
-Use an external HTTPS monitor against `/api/health` every minute and `/api/ready` every five minutes. Both endpoints are intentionally minimal and contain no infrastructure details. Require three consecutive failures from at least two regions before paging, except confirmed TLS/DNS failure, which pages immediately.
+Use an external HTTPS monitor against the production homepage and `/api/health` every five minutes; monitor `/api/ready` every five minutes through an approved operational check. These endpoints are intentionally minimal and contain no infrastructure details. Require three consecutive failures from at least two regions before paging, except confirmed TLS/DNS failure, which pages immediately.
 
-Detailed `/api/metrics` access requires a valid session, `X-Organization-Id`, and `platform-audit:read`. Do not place authenticated cookies in third-party uptime tools. Use Vercel, Neon, Blob, OpenAI, Resend, Redis/job-provider dashboards and tenant-scoped governance records for detailed telemetry.
+Detailed `/api/metrics` access requires a valid session, `X-Organization-Id`, and `platform-audit:read`. Do not place authenticated cookies in third-party uptime tools. Use Vercel, Neon, Blob, OpenAI, Microsoft 365/Graph, Redis/job-provider dashboards and tenant-scoped governance records for detailed telemetry.
 
 | Signal         | Source                            | Warning                             | Critical                                |
 | -------------- | --------------------------------- | ----------------------------------- | --------------------------------------- |
@@ -32,7 +36,7 @@ The current application records request IDs, status, path, and duration as struc
 ### Daily review
 
 - Availability, TLS expiry, 5xx rate, latency, failed logins, AI failures, budget, database/storage utilization, and failed jobs.
-- Check Vercel/Neon/OpenAI/Blob/Resend status pages during correlated failures.
+- Check Vercel/Neon/OpenAI/Blob/Microsoft 365 status pages during correlated failures.
 - Review AI safety flags, ungrounded/missing-data answers, reported answers, and unexpected model changes.
 
 ### Weekly review
@@ -45,7 +49,7 @@ The current application records request IDs, status, path, and duration as struc
 
 Enable Neon point-in-time recovery appropriate to the plan and retain a release checkpoint before every migration. Keep private Blob versioning/retention or a separate encrypted backup according to policy. Raw Afrobarometer source files remain outside deployment bundles and need an integrity-checked protected copy.
 
-Monthly, restore the latest backup to an isolated recovery branch—not production—and run:
+Quarterly, restore the latest recovery point to an isolated recovery branch—not production—and run:
 
 ```bash
 npm ci
@@ -54,7 +58,7 @@ npm run db:validate:production
 npm test
 ```
 
-Verify record counts, tenant-consistency checks, pgvector, indexes, a sample approved document reference, and an aggregate intelligence query. Record backup timestamp, restore duration, recovery-point gap, validator output, operator, and deletion date for the recovery branch. Quarterly, conduct a timed full restore exercise. Target RPO: 15 minutes; target RTO: 60 minutes, subject to the purchased Neon plan.
+Verify record counts, tenant-consistency checks, pgvector, indexes, a sample approved document reference, and an aggregate intelligence query. Record recovery timestamp, restore duration, recovery-point gap, validator output, operator, and deletion date for the recovery branch. Recovery objectives must be owner-approved and supported by the active Neon plan; do not invent contractual RPO/RTO values.
 
 ## Normal deployment
 

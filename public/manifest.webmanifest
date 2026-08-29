@@ -1,13 +1,13 @@
 {
-  "name": "pTech Learning",
-  "short_name": "pTech",
-  "description": "Accessible digital literacy learning with an adaptive AI coach.",
+  "name": "PoliSmart Africa AI",
+  "short_name": "PoliSmart",
+  "description": "AI-powered political campaign intelligence and management for African political and governance environments.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#f7f8f5",
-  "theme_color": "#047857",
+  "theme_color": "#102c27",
   "categories": ["productivity", "business", "politics"],
   "icons": [
     {
@@ -27,20 +27,6 @@
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Content Studio",
-      "short_name": "Studio",
-      "url": "/?view=studio",
-      "description": "Draft and review campaign content"
-    },
-    {
-      "name": "Campaign Dashboard",
-      "short_name": "Dashboard",
-      "url": "/?view=dashboard",
-      "description": "Open campaign KPIs"
     }
   ]
 }

@@ -6,9 +6,15 @@
 - The disabled “Reports — Soon” navigation item is a roadmap indicator, not an active workflow.
 - Report generation must not be represented as available until its authorization, data contracts,
   tests, and production acceptance criteria are implemented in a later release.
+- Billing and payment processing are intentionally deferred and are **out of scope for Version 1**.
+- The disabled “Billing — Soon” navigation item reserves future product architecture only. No
+  subscriptions, pricing, invoices, transactions, payment credentials, billing tables, payment
+  provider integration, or payment-provider secrets are available in Version 1.
+- Future Privacy Policy and Terms updates must state when payment processing becomes enabled and
+  identify the applicable processor and data-handling terms before any billing launch.
 
-Audit date: 2026-08-23  
-Release status: **NOT READY FOR DEPLOYMENT — environment verification blockers remain**
+Audit date: 2026-08-29
+Release status: **READY FOR PRODUCTION DEPLOYMENT — post-deployment verification required**
 
 ## Automated quality gates
 

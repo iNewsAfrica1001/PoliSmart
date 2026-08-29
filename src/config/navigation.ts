@@ -12,6 +12,7 @@ import {
   Radio,
   Settings,
   ShieldCheck,
+  WalletCards,
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
@@ -35,6 +36,7 @@ export const navigation: NavigationItem[] = [
   { label: "Volunteers", icon: UsersRound, page: "volunteers", enabled: true },
   { label: "Events", icon: CalendarDays, page: "events", enabled: true },
   { label: "Reports", icon: FileBarChart, page: "reports", enabled: false },
+  { label: "Billing", icon: WalletCards, page: "billing", enabled: false },
   { label: "Compliance", icon: ShieldCheck, page: "compliance", enabled: true },
   { label: "Administration", icon: Settings, page: "administration", enabled: false },
 ];

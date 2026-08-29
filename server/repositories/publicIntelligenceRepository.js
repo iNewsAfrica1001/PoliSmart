@@ -1,11 +1,22 @@
 export function createPublicIntelligenceRepository(database) {
   return {
-    async listAggregates({ category, minimumSampleSize = 100 }) {
+    async listAggregates({ category, country, surveyRound, minimumSampleSize = 100 }) {
       const rows = await database.surveyAggregateResult.findMany({
         where: {
           isSuppressed: false,
           unweightedSampleSize: { gte: minimumSampleSize },
           indicatorDefinition: category ? { category } : undefined,
+          surveyCountry: country
+            ? {
+                is: {
+                  OR: [
+                    { sourceCode: { equals: country, mode: "insensitive" } },
+                    { countryName: { equals: country, mode: "insensitive" } },
+                  ],
+                },
+              }
+            : undefined,
+          surveyImport: surveyRound ? { is: { surveyRound } } : undefined,
         },
         select: {
           responseCode: true,
@@ -19,6 +30,7 @@ export function createPublicIntelligenceRepository(database) {
               indicatorName: true,
               category: true,
               questionCode: true,
+              mappingVersion: true,
             },
           },
           surveyImport: {
@@ -47,6 +59,7 @@ export function createPublicIntelligenceRepository(database) {
         weightField: row.weightField,
         surveyRound: row.surveyImport.surveyRound,
         importVersion: row.surveyImport.importVersion,
+        mappingVersion: row.indicatorDefinition.mappingVersion,
         surveySource: row.surveyImport.dataSource.name,
         attribution: row.surveyImport.dataSource.attribution,
         sourceUrl: row.surveyImport.dataSource.sourceUrl,

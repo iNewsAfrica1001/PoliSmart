@@ -57,32 +57,64 @@ export function LoginPage({ onContinue }: LoginPageProps) {
         <a className="login-brand" href="/">
           <span className="brand-symbol">P</span>
           <span>
-            <strong>PoliSmart</strong>
-            <small>AFRICA AI</small>
+            <strong>PoliSmart Africa AI</strong>
+            <small>CAMPAIGN INTELLIGENCE</small>
           </span>
         </a>
         <div>
-          <span className="eyebrow eyebrow--light">INTELLIGENCE • OPERATIONS • IMPACT</span>
+          <span className="eyebrow eyebrow--light">
+            POLITICAL INTELLIGENCE • CAMPAIGN OPERATIONS
+          </span>
           <h1>
-            Run smarter campaigns.
+            Grounded intelligence.
             <br />
-            <em>Serve people better.</em>
+            <em>Better campaign decisions.</em>
           </h1>
-          <p>A secure, Africa-focused platform for campaign leaders and their teams.</p>
-          <ul>
+          <p className="positioning-copy">
+            AI-powered political campaign intelligence and management platform designed for African
+            political and governance environments.
+          </p>
+          <p className="audience-copy">
+            Built for candidates, campaign teams, policy leaders, analysts, field teams, and
+            organization administrators who need evidence-aware coordination.
+          </p>
+          <ul className="brand-capabilities" aria-label="Version 1 capabilities">
             <li>
-              <Check /> Unified campaign operations
+              <Check /> Campaign management
             </li>
             <li>
-              <Check /> Responsible AI assistance
+              <Check /> Grounded public-opinion intelligence
             </li>
             <li>
-              <Check /> Built-in accountability
+              <Check /> AI-assisted analysis
+            </li>
+            <li>
+              <Check /> Afrobarometer-supported intelligence
+            </li>
+            <li>
+              <Check /> Policy workflows and event management
+            </li>
+            <li>
+              <Check /> Volunteer management
+            </li>
+            <li>
+              <Check /> Organization accounts
+            </li>
+            <li>
+              <Check /> Role-based administration
             </li>
           </ul>
+          <p className="evidence-note">
+            Grounded evidence helps teams separate observed data from AI interpretation. AI does not
+            guarantee outcomes; people remain responsible for campaign and policy decisions.
+          </p>
+          <p className="source-note">
+            Afrobarometer is an independent public research source. Coverage varies by country and
+            survey round; its use here does not imply endorsement or partnership.
+          </p>
         </div>
         <footer>
-          © 2026 Sentinel LLC <span>polismartafrica.ai</span>
+          © 2026 SentinelAI LLC <span>polismartafrica.ai</span>
         </footer>
       </section>
       <section className="login-form-wrap">
@@ -123,7 +155,7 @@ export function LoginPage({ onContinue }: LoginPageProps) {
           </p>
           {mode === "register" && (
             <>
-              <label htmlFor="display-name">Full name</label>
+              <label htmlFor="display-name">Authorized account owner</label>
               <input
                 id="display-name"
                 type="text"
@@ -131,8 +163,12 @@ export function LoginPage({ onContinue }: LoginPageProps) {
                 onChange={(event) => setDisplayName(event.target.value)}
                 required
                 autoComplete="name"
+                aria-describedby="display-name-help"
               />
-              <label htmlFor="organization-name">Organization</label>
+              <small id="display-name-help" className="field-help">
+                Enter the full name of the person authorized to administer this organization.
+              </small>
+              <label htmlFor="organization-name">Organization name</label>
               <input
                 id="organization-name"
                 type="text"
@@ -140,7 +176,11 @@ export function LoginPage({ onContinue }: LoginPageProps) {
                 onChange={(event) => setOrganizationName(event.target.value)}
                 required
                 autoComplete="organization"
+                aria-describedby="organization-name-help"
               />
+              <small id="organization-name-help" className="field-help">
+                This creates an isolated organization workspace for your campaign team.
+              </small>
               <label htmlFor="country">Country</label>
               <input
                 id="country"
@@ -175,7 +215,13 @@ export function LoginPage({ onContinue }: LoginPageProps) {
                 minLength={12}
                 maxLength={128}
                 autoComplete={mode === "register" ? "new-password" : "current-password"}
+                aria-describedby={mode === "register" ? "password-requirements" : undefined}
               />
+              {mode === "register" && (
+                <small id="password-requirements" className="field-help">
+                  Use 12–128 characters with an uppercase letter, lowercase letter, and number.
+                </small>
+              )}
             </>
           )}
           {mode === "login" && (
@@ -194,9 +240,15 @@ export function LoginPage({ onContinue }: LoginPageProps) {
             </p>
           )}
           {confirmation && (
-            <p className="form-success" role="status">
-              {confirmation}
-            </p>
+            <div className="form-success" role="status">
+              <strong>{confirmation}</strong>
+              {mode === "register" && (
+                <span>
+                  Next, open the time-limited verification link in your email, then return here to
+                  sign in. If it does not arrive, use “Resend verification email.”
+                </span>
+              )}
+            </div>
           )}
           <button className="sign-in-button" type="submit" disabled={submitting}>
             {submitting
@@ -210,6 +262,13 @@ export function LoginPage({ onContinue }: LoginPageProps) {
                     : "Enter workspace"}{" "}
             <ArrowRight />
           </button>
+          {mode === "register" && (
+            <p className="registration-legal">
+              By creating an account, you confirm authority to act for the organization and
+              acknowledge the <a href="/privacy">Privacy Policy</a> and{" "}
+              <a href="/terms">Terms of Service</a>. No consent option is pre-selected.
+            </p>
+          )}
           {mode === "login" ? (
             <div className="auth-action-stack">
               <button
@@ -238,8 +297,13 @@ export function LoginPage({ onContinue }: LoginPageProps) {
           )}
         </form>
         <p className="support-copy">
-          Team invitations are managed by your organization administrator.
+          Team invitations are managed by your organization administrator. Need help?{" "}
+          <a href="mailto:support@polismartafrica.ai">Contact PoliSmart Africa AI support</a>.
         </p>
+        <nav className="legal-placeholders" aria-label="Legal information">
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">Terms of Service</a>
+        </nav>
       </section>
     </main>
   );

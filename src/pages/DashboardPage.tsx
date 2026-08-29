@@ -141,7 +141,24 @@ export function DashboardPage({
       {!loading && !error && campaigns.length === 0 && !data && (
         <section className="ops-empty" aria-labelledby="dashboard-empty-title">
           <h2 id="dashboard-empty-title">No campaigns are assigned to this account yet</h2>
-          <p>Create a campaign to activate the command center and grounded intelligence tools.</p>
+          <p>
+            Your secure organization workspace is ready. Create the first campaign to activate the
+            command center and campaign-scoped intelligence.
+          </p>
+          <ol className="onboarding-steps" aria-label="Getting started">
+            <li>
+              <strong>1</strong>
+              <span>Organization account created</span>
+            </li>
+            <li>
+              <strong>2</strong>
+              <span>Email verified and signed in</span>
+            </li>
+            <li>
+              <strong>3</strong>
+              <span>Create and select your first campaign</span>
+            </li>
+          </ol>
           <button type="button" className="primary-button" onClick={onCreateCampaign}>
             Create campaign
           </button>

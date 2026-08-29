@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createAiAssistantService, createAiRateLimiter } from "../server/services/aiAssistant.js";
+import {
+  createAiAssistantService,
+  createAiRateLimiter,
+  detectIntent,
+} from "../server/services/aiAssistant.js";
 import { AiProviderError } from "../server/services/aiProvider.js";
 import { createAiRepository } from "../server/repositories/aiRepository.js";
 
@@ -77,6 +81,14 @@ test("missing data returns a transparent response without a provider claim", asy
   assert.equal(answer.grounded, false);
   assert.deepEqual(answer.citations, []);
   assert.match(answer.observedData, /No approved supporting data/);
+});
+
+test("elections and youth questions route to aggregate public intelligence", () => {
+  assert.equal(detectIntent("What do the elections results show?"), "PUBLIC_INTELLIGENCE");
+  assert.equal(
+    detectIntent("What does Afrobarometer show about youth respondents?"),
+    "PUBLIC_INTELLIGENCE",
+  );
 });
 
 test("provider failures are safely surfaced", async () => {
@@ -159,6 +171,7 @@ test("public intelligence sends aggregates rather than respondent rows", async (
     surveyRound: "9",
     sourceUrl: "https://example.test",
     importVersion: "r9-test",
+    mappingVersion: "r9-merged-codebook-2024-06-25-v3",
     attribution: "Afrobarometer public research data",
   };
   const { service } = harness({ aggregates: [row] });
@@ -174,6 +187,7 @@ test("public intelligence sends aggregates rather than respondent rows", async (
   assert.equal(answer.citations[0].question, "Q1");
   assert.equal(answer.citations[0].surveyRound, "9");
   assert.equal(answer.citations[0].weightField, "COMBINWT");
+  assert.equal(answer.citations[0].mappingVersion, "r9-merged-codebook-2024-06-25-v3");
   assert.equal(answer.citations[0].url, "https://example.test");
 });
 

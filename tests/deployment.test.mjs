@@ -257,6 +257,101 @@ test("Version 1 scope formally defers Reports and documents campaign-scoped inte
   assert.match(navigationSource, /label: "Reports"[\s\S]*page: "reports"[\s\S]*enabled: false/);
 });
 
+test("Version 1 reserves Billing without enabling payment processing", () => {
+  const checklist = fs.readFileSync(path.join(root, "PRODUCTION_CHECKLIST.md"), "utf8");
+  const billingDocs = fs.readFileSync(path.join(root, "docs", "FUTURE_BILLING.md"), "utf8");
+  const navigationSource = fs.readFileSync(
+    path.join(root, "src", "config", "navigation.ts"),
+    "utf8",
+  );
+  const environmentExample = fs.readFileSync(path.join(root, ".env.example"), "utf8");
+  const prismaSchema = fs.readFileSync(path.join(root, "prisma", "schema.prisma"), "utf8");
+
+  assert.match(navigationSource, /label: "Billing"[\s\S]*page: "billing"[\s\S]*enabled: false/);
+  assert.match(checklist, /Billing and payment processing are intentionally deferred/);
+  assert.match(billingDocs, /does not[\s\S]*process payments/);
+  assert.match(billingDocs, /must never store raw card numbers/);
+  assert.doesNotMatch(environmentExample, /STRIPE|PAYPAL|FLUTTERWAVE|PAYSTACK/i);
+  assert.doesNotMatch(prismaSchema, /model\s+(Payment|Invoice|Subscription|Billing)/);
+});
+
+test("production branding, public positioning and legal navigation are consistent", () => {
+  const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const manifest = fs.readFileSync(path.join(root, "public", "manifest.webmanifest"), "utf8");
+  const login = fs.readFileSync(path.join(root, "src", "pages", "LoginPage.tsx"), "utf8");
+  const assistant = fs.readFileSync(path.join(root, "src", "pages", "AssistantPage.tsx"), "utf8");
+  const shell = fs.readFileSync(
+    path.join(root, "src", "components", "layout", "AppShell.tsx"),
+    "utf8",
+  );
+  const reset = fs.readFileSync(path.join(root, "src", "pages", "ResetPasswordPage.tsx"), "utf8");
+  const verification = fs.readFileSync(
+    path.join(root, "src", "pages", "VerifyEmailPage.tsx"),
+    "utf8",
+  );
+  const notifications = fs.readFileSync(
+    path.join(root, "server", "services", "accountNotifications.js"),
+    "utf8",
+  );
+
+  assert.match(index, /PoliSmart Africa AI \| Grounded campaign intelligence/);
+  assert.match(index, /AI-powered political campaign intelligence and management platform/);
+  assert.match(manifest, /"name": "PoliSmart Africa AI"/);
+  assert.doesNotMatch(manifest, /pTech|adaptive AI coach/);
+  assert.match(login, /PoliSmart Africa AI/);
+  assert.match(login, /Grounded public-opinion intelligence/);
+  assert.match(login, /does not imply endorsement or partnership/);
+  assert.match(login, /href="\/privacy">Privacy Policy/);
+  assert.match(login, /href="\/terms">Terms of Service/);
+  assert.match(login, /mailto:support@polismartafrica\.ai/);
+  assert.match(reset, /mailto:support@polismartafrica\.ai/);
+  assert.match(verification, /mailto:support@polismartafrica\.ai/);
+  assert.match(assistant, /AI interpretation is not a guaranteed prediction/);
+  assert.match(assistant, /independent public research source/);
+  assert.match(shell, /workspaceName/);
+  assert.match(shell, /Sign out of PoliSmart Africa AI/);
+  assert.match(shell, /mailto:support@polismartafrica\.ai/);
+  assert.match(notifications, /mailto:support@polismartafrica\.ai/);
+  assert.match(notifications, /sender !== "no-reply@polismartafrica\.ai"/);
+});
+
+test("Stage 4 legal pages accurately describe V1 and remain owner-review drafts", () => {
+  const app = fs.readFileSync(path.join(root, "src", "App.tsx"), "utf8");
+  const login = fs.readFileSync(path.join(root, "src", "pages", "LoginPage.tsx"), "utf8");
+  const shell = fs.readFileSync(
+    path.join(root, "src", "components", "layout", "AppShell.tsx"),
+    "utf8",
+  );
+  const legal = fs.readFileSync(path.join(root, "src", "pages", "LegalPage.tsx"), "utf8");
+
+  assert.match(app, /currentUrl\.pathname === "\/privacy"/);
+  assert.match(app, /currentUrl\.pathname === "\/terms"/);
+  assert.match(login, /acknowledge the <a href="\/privacy">Privacy Policy<\/a>/);
+  assert.match(login, /No consent option is pre-selected/);
+  assert.match(shell, /href="\/privacy">Privacy<\/a>/);
+  assert.match(shell, /href="\/terms">Terms<\/a>/);
+  assert.match(legal, /AI-generated content may contain errors/);
+  assert.match(legal, /Observed Data/);
+  assert.match(legal, /AI Interpretation/);
+  assert.match(legal, /does not imply endorsement, sponsorship, or partnership/);
+  assert.match(legal, /Payments and Billing are not implemented in V1/);
+  assert.match(legal, /does not currently process\s+payments/);
+  assert.match(legal, /SentinelAI LLC/);
+  assert.match(legal, /3204 Pearsall Ave, Bronx, NY 10469/);
+  assert.match(legal, /EFFECTIVE DATE: TO BE CONFIRMED AT PUBLIC RELEASE/);
+  assert.match(legal, /laws of the State of New York/);
+  assert.match(legal, /state courts located in Bronx County, New York/);
+  assert.match(legal, /does not include mandatory arbitration/);
+  assert.match(legal, /LEGAL REVIEW \/ OPERATIONAL POLICY/);
+  assert.match(legal, /Mandatory privacy rights under\s+applicable law are not waived/);
+  assert.match(legal, /qualified legal review/);
+  assert.match(legal, /support@polismartafrica\.ai/);
+  assert.doesNotMatch(legal, /guarantee(?:s|d)? (?:absolute )?security/i);
+  assert.doesNotMatch(legal, /Stripe|PayPal|Paystack|Flutterwave/);
+  assert.doesNotMatch(legal, /postgres(?:ql)?:\/\/[^\s]+:[^\s]+@/i);
+  assert.doesNotMatch(legal, /sk-(?:proj-)?[A-Za-z0-9_-]{20,}/);
+});
+
 test("login exposes safe password-reset requests and public registration", () => {
   const pageSource = fs.readFileSync(path.join(root, "src", "pages", "LoginPage.tsx"), "utf8");
   const authSource = fs.readFileSync(path.join(root, "src", "lib", "auth.ts"), "utf8");
@@ -266,6 +361,77 @@ test("login exposes safe password-reset requests and public registration", () =>
   assert.match(authSource, /\/api\/auth\/password-reset\/request/);
   assert.match(authSource, /\/api\/auth\/register/);
   assert.match(pageSource, /Create a new organization account/);
+});
+
+test("Stage 2 onboarding guides a new organization without changing security boundaries", () => {
+  const app = fs.readFileSync(path.join(root, "src", "App.tsx"), "utf8");
+  const login = fs.readFileSync(path.join(root, "src", "pages", "LoginPage.tsx"), "utf8");
+  const dashboard = fs.readFileSync(path.join(root, "src", "pages", "DashboardPage.tsx"), "utf8");
+  const operations = fs.readFileSync(path.join(root, "src", "pages", "OperationsPage.tsx"), "utf8");
+  const assistant = fs.readFileSync(path.join(root, "src", "pages", "AssistantPage.tsx"), "utf8");
+  const workflows = fs.readFileSync(
+    path.join(root, "src", "pages", "IntelligenceWorkflowsPage.tsx"),
+    "utf8",
+  );
+  const navigation = fs.readFileSync(path.join(root, "src", "config", "navigation.ts"), "utf8");
+
+  assert.match(login, /Authorized account owner/);
+  assert.match(login, /12–128 characters with an uppercase letter, lowercase letter, and number/);
+  assert.match(login, /open the time-limited verification link/);
+  assert.match(login, /Resend verification email/);
+  assert.match(dashboard, /Create and select your first campaign/);
+  assert.match(dashboard, /campaign-scoped intelligence/);
+  assert.match(operations, /Campaigns scope intelligence, policy, events, and field work/);
+  assert.match(operations, /Open dashboard/);
+  assert.match(operations, /No events yet/);
+  assert.match(operations, /No volunteers yet/);
+  assert.match(assistant, /How grounded answers work/);
+  assert.match(assistant, /Observed Data/);
+  assert.match(assistant, /AI Interpretation/);
+  assert.match(assistant, /Citations/);
+  assert.match(workflows, /No policy projects yet/);
+  assert.match(app, /onCreateCampaign=\{\(\) => setPage\("campaigns"\)\}/);
+  assert.match(navigation, /label: "Reports"[\s\S]*enabled: false/);
+  assert.match(navigation, /label: "Billing"[\s\S]*enabled: false/);
+  assert.doesNotMatch(operations, /SUPER_ADMINISTRATOR|Super Administrator/);
+});
+
+test("Stage 3 administrator guide documents V1 operations without secret values", () => {
+  const guide = fs.readFileSync(
+    path.join(root, "docs", "POLISMART_ADMINISTRATOR_GUIDE.md"),
+    "utf8",
+  );
+
+  for (const role of [
+    "Super Administrator",
+    "Campaign Administrator",
+    "Candidate",
+    "Campaign Manager",
+    "Policy Director",
+    "Communications Director",
+    "Field Director",
+    "Volunteer Coordinator",
+    "Analyst",
+    "Volunteer",
+  ]) {
+    assert.match(
+      guide,
+      new RegExp(`\\|\\s+${role.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}\\s+\\|`),
+    );
+  }
+  assert.match(guide, /Campaign Administrator must never promote themselves/);
+  assert.match(
+    guide,
+    /Microsoft Graph HTTP `202 Accepted` means Graph accepted the message for processing/,
+  );
+  assert.match(guide, /Public Services\s+\|\s+`Q40B`/);
+  assert.match(guide, /Youth\s+\|\s+`Q1`/);
+  assert.match(guide, /Reports — Coming Soon/);
+  assert.match(guide, /Payments\/Billing — Reserved \/ Coming Soon/);
+  assert.match(guide, /Do not modify production database roles, migrations, mappings/);
+  assert.doesNotMatch(guide, /postgres(?:ql)?:\/\/[^\s]+:[^\s]+@/i);
+  assert.doesNotMatch(guide, /sk-(?:proj-)?[A-Za-z0-9_-]{20,}/);
+  assert.doesNotMatch(guide, /BEGIN (?:RSA )?PRIVATE KEY/);
 });
 
 test("production persistence is PostgreSQL and rejects an explicit memory fallback", () => {

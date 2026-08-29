@@ -8,9 +8,9 @@ Normal application APIs expose `survey_aggregate_results` only. They do not expo
 
 ## Approved Round 9 mapping set
 
-Mapping version `r9-merged-codebook-2024-06-25-v2` is transcribed from the official Afrobarometer Merged Round 9 codebook dated 25 June 2024. Mappings are source-controlled in `server/config/afrobarometer.js`; each entry includes the source question code, reviewed question wording, substantive response labels, indicator, and category. Refused, don't-know, missing, and inapplicable values are excluded rather than relabeled.
+Mapping version `r9-merged-codebook-2024-06-25-v3` is transcribed from the official Afrobarometer Merged Round 9 codebook dated 25 June 2024. Mappings are source-controlled in `server/config/afrobarometer.js`; each entry includes the source question code, reviewed question wording, substantive response labels, indicator, and category. Refused, don't-know, missing, and inapplicable values are excluded rather than relabeled.
 
-The approved set covers Public Priorities (`Q45PT1`), Economic Conditions (`Q4A`), Government Performance (`Q46A`), Institutional Trust (`Q37A`), Democracy (`Q23`), Elections (`Q12A`), Corruption (`Q39A`), Public Services (`Q40B`), Governance (`Q31`), and aggregate Youth age distribution (`Q1`, ages 18-35 only). All other codes remain explicitly `UNMAPPED` until reviewed against an authoritative codebook.
+The approved set covers Public Priorities (`Q45PT1`), Economic Conditions (`Q4A`), Government Performance (`Q46A`), Institutional Trust (`Q37A`), Democracy (`Q23`), Elections (`Q12A`), Corruption (`Q39A`), Public Services (`Q40B`), Governance (`Q31`), aggregate Youth age distribution (`Q1`, ages 18-35 only), Security (`Q7B`), and Civic Participation (`Q10A`). All other codes remain explicitly `UNMAPPED` until reviewed against an authoritative codebook.
 
 The enrichment process never persists or changes respondent-level observations. It recomputes weighted aggregate records from the immutable raw file, preserves `Combinwt_new_hh`, applies the minimum sample-size safeguard, and records the mapping version in transformation history. Re-running the production import adds missing aggregates without duplicating existing unique aggregate keys.
 
@@ -106,8 +106,27 @@ Results with fewer than 100 valid unweighted responses are stored as suppressed 
 - Zero or negative weight values: 0
 - Authoritatively mapped countries: 39
 - Valid country/region pairs observed: 519
-- Question codes: 314 unmapped, 10 mapped
-- Prepared aggregate records: 1,083 (suppressed records retain a null percentage)
+- Question codes: 312 unmapped, 12 mapped
+- Prepared aggregate records: 3,496 (suppressed records retain a null percentage)
+
+Prepared aggregate coverage by approved theme:
+
+| Theme | Aggregate records | Countries | Suppressed |
+| --- | ---: | ---: | ---: |
+| Public Priorities | 1,083 | 39 | 0 |
+| Economic Conditions | 195 | 39 | 0 |
+| Government Performance | 156 | 39 | 0 |
+| Institutional Trust | 156 | 39 | 0 |
+| Democracy | 117 | 39 | 0 |
+| Elections | 152 | 38 | 0 |
+| Corruption | 195 | 39 | 0 |
+| Governance | 194 | 39 | 0 |
+| Security | 195 | 39 | 0 |
+| Civic Participation | 195 | 39 | 0 |
+| Public Services | 156 | 39 | 0 |
+| Youth | 702 | 39 | 0 |
+
+The Elections mapping has 38-country coverage because the source file contains no substantive `Q12A` response for Burkina Faso. The country remains in the authoritative 39-country inventory; no country metadata is removed or inferred.
 
 ## Required follow-up
 

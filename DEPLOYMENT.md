@@ -15,7 +15,8 @@ No production deployment is performed by these instructions until the final prom
 - Neon PostgreSQL project with separate production and preview branches.
 - Private Vercel Blob store connected to the Vercel project.
 - Restricted OpenAI API project/key with usage limits.
-- Resend account with `polismartafrica.ai` verified for email delivery.
+- Microsoft Entra application with the approved Microsoft Graph `Mail.Send` application permission
+  and the `no-reply@polismartafrica.ai` Microsoft 365 mailbox.
 - Managed Redis provider before enabling multiple application instances.
 
 Use Node.js 20 or newer. The repository exports its Express app for Vercel and retains `npm run server` for local execution.
@@ -121,8 +122,6 @@ Create a dedicated OpenAI project for PoliSmart production. Apply project-level 
 
 ## 6. Email
 
-Verify the `polismartafrica.ai` domain with Resend, including SPF and DKIM. Configure `EMAIL_FROM` with a verified sender. Test verification and password-reset links on a preview deployment before production promotion.
-
 For Microsoft 365, configure `EMAIL_PROVIDER=microsoft_graph`. Register a confidential Microsoft Entra application, create a client secret, add only the Microsoft Graph **Application** permission `Mail.Send`, grant administrator consent, and confirm `no-reply@polismartafrica.ai` exists. Store the tenant ID, client ID, and client secret only in Vercel; mark the client secret Sensitive. The server uses MSAL's client-credentials flow with `https://graph.microsoft.com/.default` and sends through `/users/no-reply@polismartafrica.ai/sendMail`.
 
 To test Microsoft Graph independently from authentication workflows, run the private CLI from a trusted server-side environment containing the Graph variables:
@@ -197,7 +196,7 @@ Configure the DNS records Vercel provides. Choose one canonical hostname and red
 - Socket.IO classroom functionality requires a durable realtime design and shared state before relying on it across Vercel instances. Use managed Redis/realtime infrastructure and test connection behavior separately.
 - The current process-memory limiter is suitable for a single instance only. Connect the configured managed Redis service before horizontal production traffic.
 - Do not expose database, Blob, email, OpenAI, or auth secrets to client-side environment variables or GitHub source.
-- Enable Vercel log retention/observability, Neon monitoring, OpenAI budget alerts, Blob usage alerts, and Resend delivery monitoring.
+- Enable Vercel log retention/observability, Neon monitoring, OpenAI budget alerts, Blob usage alerts, and Microsoft 365/Graph delivery monitoring.
 
 ## 11. Production promotion
 

@@ -4,7 +4,13 @@ import { assistantApi, type AssistantAnswer } from "../lib/assistant";
 import type { SessionUser } from "../lib/auth";
 import { operationsApi } from "../lib/operations";
 
-export function AssistantPage({ user }: { user: SessionUser }) {
+export function AssistantPage({
+  user,
+  onCreateCampaign,
+}: {
+  user: SessionUser;
+  onCreateCampaign: () => void;
+}) {
   const tenantId = user.memberships[0]?.tenantId ?? "";
   const [campaignId, setCampaignId] = useState("");
   const [question, setQuestion] = useState("");
@@ -48,14 +54,40 @@ export function AssistantPage({ user }: { user: SessionUser }) {
         </div>
       </header>
       <div className="assistant-safety">
-        <strong>Data boundary:</strong> Respondent-level survey records are never sent to the model.
-        Verify critical campaign decisions with the cited source.
+        <strong>Human decision support:</strong> AI interpretation is not a guaranteed prediction.
+        Review cited evidence and country coverage before making campaign or policy decisions.
+        Respondent-level survey records are never sent to the model.
       </div>
+      <div className="assistant-attribution">
+        Afrobarometer is used as an independent public research source, not as an endorsement or
+        partnership. Available evidence represents only the cited countries, survey rounds, and
+        safeguarded aggregate samples.
+      </div>
+      <section className="assistant-guide" aria-label="How grounded answers work">
+        <div>
+          <strong>Observed Data</strong>
+          <span>Reported evidence retrieved from approved sources.</span>
+        </div>
+        <div>
+          <strong>AI Interpretation</strong>
+          <span>Contextual explanation for human review, not a prediction.</span>
+        </div>
+        <div>
+          <strong>Citations</strong>
+          <span>Source, country, survey, weighting, and sample details where available.</span>
+        </div>
+      </section>
       {campaignsLoaded && !campaignId && !error && (
-        <p className="ops-empty" role="status">
-          AI Assistant is campaign-scoped. Create or request access to a campaign before asking a
-          grounded intelligence question.
-        </p>
+        <div className="ops-empty" role="status">
+          <strong>No campaign selected</strong>
+          <p>
+            AI Assistant is campaign-scoped. Create or request access to a campaign before asking a
+            grounded intelligence question.
+          </p>
+          <button type="button" className="primary-button" onClick={onCreateCampaign}>
+            Create campaign
+          </button>
+        </div>
       )}
       {answer && (
         <article className="assistant-answer" aria-live="polite">

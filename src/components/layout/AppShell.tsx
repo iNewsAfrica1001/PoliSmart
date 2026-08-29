@@ -7,10 +7,34 @@ type AppShellProps = {
   onSignOut: () => void;
   activePage: string;
   onNavigate: (page: string) => void;
+  userName: string;
+  workspaceName: string;
+  role: string;
 };
 
-export function AppShell({ children, onSignOut, activePage, onNavigate }: AppShellProps) {
+const roleLabel = (role: string) =>
+  role
+    .toLowerCase()
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+export function AppShell({
+  children,
+  onSignOut,
+  activePage,
+  onNavigate,
+  userName,
+  workspaceName,
+  role,
+}: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const initials =
+    userName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "PA";
 
   return (
     <div className="workspace">
@@ -23,8 +47,8 @@ export function AppShell({ children, onSignOut, activePage, onNavigate }: AppShe
             P
           </span>
           <span>
-            <strong>PoliSmart</strong>
-            <small>AFRICA AI</small>
+            <strong>PoliSmart Africa AI</strong>
+            <small>CAMPAIGN INTELLIGENCE</small>
           </span>
           <button
             className="mobile-close"
@@ -54,8 +78,15 @@ export function AppShell({ children, onSignOut, activePage, onNavigate }: AppShe
         </nav>
         <div className="sidebar-footer">
           <span>Workspace</span>
-          <strong>Sentinel LLC</strong>
-          <small>Foundation environment</small>
+          <strong>{workspaceName}</strong>
+          <small>Secure organization workspace</small>
+          <a className="sidebar-support" href="mailto:support@polismartafrica.ai">
+            Contact support
+          </a>
+          <nav className="sidebar-legal" aria-label="Legal information">
+            <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
+          </nav>
         </div>
       </aside>
       <div className="workspace-main">
@@ -78,11 +109,16 @@ export function AppShell({ children, onSignOut, activePage, onNavigate }: AppShe
             <button className="icon-button" aria-label="Notifications" disabled>
               <Bell />
             </button>
-            <button className="profile-menu" onClick={onSignOut}>
-              <span>SL</span>
+            <button
+              className="profile-menu"
+              onClick={onSignOut}
+              aria-label="Sign out of PoliSmart Africa AI"
+              title="Sign out"
+            >
+              <span>{initials}</span>
               <span>
-                <strong>Sentinel LLC</strong>
-                <small>Administrator</small>
+                <strong>{userName}</strong>
+                <small>{roleLabel(role)} · Sign out</small>
               </span>
               <ChevronDown aria-hidden="true" />
             </button>

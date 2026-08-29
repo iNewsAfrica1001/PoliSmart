@@ -234,5 +234,35 @@ export const AFROBAROMETER_INDICATOR_MAPPINGS = Object.freeze([
       ),
     ),
   }),
+  Object.freeze({
+    questionCode: "Q7B",
+    questionText:
+      "Over the past year, how often, if ever, have you or anyone in your family feared crime in your own home?",
+    indicatorCode: "FEARED_CRIME_IN_HOME",
+    indicatorName: "Frequency of fearing crime in the home",
+    category: "SECURITY",
+    responseMapping: Object.freeze({
+      0: "Never",
+      1: "Just once or twice",
+      2: "Several times",
+      3: "Many times",
+      4: "Always",
+    }),
+  }),
+  Object.freeze({
+    questionCode: "Q10A",
+    questionText:
+      "Here is a list of actions that people sometimes take as citizens. For each of these, please tell me whether you, personally, have done any of these things during the past year: attended a community meeting? If yes, was this often, several times or once or twice? If no, would you do this if you had the chance?",
+    indicatorCode: "ATTENDED_COMMUNITY_MEETING",
+    indicatorName: "Participation in community meetings",
+    category: "CIVIC_PARTICIPATION",
+    responseMapping: Object.freeze({
+      0: "No: Would never do this",
+      1: "No: Would if had the chance",
+      2: "Yes: Once or twice",
+      3: "Yes: Several times",
+      4: "Yes: Often",
+    }),
+  }),
 ]);
-export const AFROBAROMETER_MAPPING_VERSION = "r9-merged-codebook-2024-06-25-v2";
+export const AFROBAROMETER_MAPPING_VERSION = "r9-merged-codebook-2024-06-25-v3";

@@ -265,11 +265,12 @@ test("Microsoft Graph sends verification and reset email with one cached app tok
   assert.ok(
     requests.every(
       ({ url }) =>
-        url ===
-        "https://graph.microsoft.com/v1.0/users/no-reply%40polismartafrica.ai/sendMail",
+        url === "https://graph.microsoft.com/v1.0/users/no-reply%40polismartafrica.ai/sendMail",
     ),
   );
-  assert.ok(requests.every(({ options }) => options.headers.Authorization === "Bearer test-access-token"));
+  assert.ok(
+    requests.every(({ options }) => options.headers.Authorization === "Bearer test-access-token"),
+  );
   assert.match(requests[0].options.body, /verify-email\?token=verify%20token/);
   assert.match(requests[1].options.body, /reset-password\?token=reset%20token/);
   assert.doesNotMatch(requests[0].options.body, /test-client-secret|test-access-token/);
@@ -277,10 +278,7 @@ test("Microsoft Graph sends verification and reset email with one cached app tok
 
 test("Microsoft Graph token failures are classified without exposing credentials", async () => {
   assert.equal(classifyGraphError({ errorCode: "invalid_client" }), "GRAPH_INVALID_CLIENT");
-  assert.equal(
-    classifyGraphError({ errorCode: "AADSTS7000215" }),
-    "GRAPH_INVALID_CLIENT_SECRET",
-  );
+  assert.equal(classifyGraphError({ errorCode: "AADSTS7000215" }), "GRAPH_INVALID_CLIENT_SECRET");
   assert.equal(classifyGraphError({ errorCode: "invalid_tenant" }), "GRAPH_INVALID_TENANT");
   const service = createAccountNotificationService(graphConfig(), {
     graphClient: {
@@ -359,8 +357,15 @@ test("Microsoft Graph payload is provider-native and 202 with an empty body succ
   const payload = JSON.parse(captured.options.body);
   assert.equal(captured.options.method, "POST");
   assert.equal(captured.options.headers["Content-Type"], "application/json");
-  assert.equal(payload.message.subject, "Reset your PoliSmart password");
+  assert.equal(payload.message.subject, "Reset your PoliSmart Africa AI password");
   assert.equal(payload.message.body.contentType, "HTML");
+  assert.match(payload.message.body.content, /POLISMART AFRICA AI/);
+  assert.match(payload.message.body.content, /Reset password/);
+  assert.match(
+    payload.message.body.content,
+    /does not replace campaign, policy, legal, or compliance judgment/,
+  );
+  assert.match(payload.message.body.content, /mailto:support@polismartafrica\.ai/);
   assert.equal(payload.message.toRecipients[0].emailAddress.address, "recipient@example.invalid");
   assert.equal(payload.saveToSentItems, true);
   assert.equal(payload.message.from, undefined);
@@ -424,10 +429,13 @@ test("Microsoft Graph error diagnostics never enter the public error", async () 
       }),
     },
     graphFetch: async () =>
-      new Response(JSON.stringify({ error: { code: "ErrorAccessDenied", message: "sensitive detail" } }), {
-        status: 403,
-        headers: { "Content-Type": "application/json", "request-id": "safe-request-id" },
-      }),
+      new Response(
+        JSON.stringify({ error: { code: "ErrorAccessDenied", message: "sensitive detail" } }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json", "request-id": "safe-request-id" },
+        },
+      ),
   });
   await assert.rejects(
     service.sendPasswordReset({ email: "recipient@example.invalid", token: "secret-reset-token" }),

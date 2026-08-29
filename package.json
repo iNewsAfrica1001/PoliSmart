@@ -1,7 +1,7 @@
 {
   "name": "polismart-africa-ai",
   "version": "1.0.0",
-  "description": "Africa-focused campaign intelligence and operations platform foundation.",
+  "description": "AI-powered political campaign intelligence and management platform designed for African political and governance environments.",
   "private": true,
   "type": "module",
   "scripts": {

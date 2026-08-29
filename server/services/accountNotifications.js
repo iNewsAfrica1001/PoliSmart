@@ -73,7 +73,10 @@ function sanitizeGraphMessage(value) {
   if (!message) return undefined;
   return message
     .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, "[mailbox]")
-    .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi, "[id]")
+    .replace(
+      /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi,
+      "[id]",
+    )
     .replace(/bearer\s+\S+/gi, "Bearer [redacted]");
 }
 
@@ -91,7 +94,8 @@ export function inspectGraphAccessToken(accessToken, config) {
       applicationToken: roles.length > 0 && !claims.scp,
       mailSendGranted: roles.includes("Mail.Send"),
       delegatedScopePresent: Boolean(claims.scp),
-      tenantMatches: String(claims.tid || "").toLowerCase() === String(config.microsoftTenantId).toLowerCase(),
+      tenantMatches:
+        String(claims.tid || "").toLowerCase() === String(config.microsoftTenantId).toLowerCase(),
       clientMatches:
         String(claims.appid || claims.azp || "").toLowerCase() ===
         String(config.microsoftClientId).toLowerCase(),
@@ -111,13 +115,27 @@ function mailboxAddress(value) {
   );
 }
 
+function accountEmailHtml({ heading, description, actionLabel, url }) {
+  return `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#17352d;line-height:1.6">
+    <p style="font-size:13px;font-weight:700;letter-spacing:.08em;color:#276b4e">POLISMART AFRICA AI</p>
+    <h1 style="font-size:26px;line-height:1.2">${heading}</h1>
+    <p>${description}</p>
+    <p><a href="${url}" style="display:inline-block;background:#176b52;color:#fff;text-decoration:none;padding:12px 18px;border-radius:4px;font-weight:700">${actionLabel}</a></p>
+    <p style="font-size:12px;color:#60736c">This secure link is time-limited and single-use. If you did not request this message, no action is required.</p>
+    <p style="font-size:12px;color:#60736c">PoliSmart Africa AI supports human decision-making; it does not replace campaign, policy, legal, or compliance judgment.</p>
+    <p style="font-size:12px;color:#60736c">Need help? <a href="mailto:support@polismartafrica.ai" style="color:#176b52;font-weight:700">Contact PoliSmart Africa AI support</a>.</p>
+  </div>`;
+}
+
 export function createAccountNotificationService(config = {}, options = {}) {
   const usesSmtp = ["smtp", "microsoft365"].includes(config.emailProvider);
   const createTransport = options.createTransport || nodemailer.createTransport;
   const smtpDeliveryTimeoutMs = options.smtpDeliveryTimeoutMs ?? 12_000;
   const graphFetch = options.graphFetch || fetch;
   const graphTimeoutMs = options.graphTimeoutMs ?? 10_000;
-  const sleep = options.sleep || ((milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)));
+  const sleep =
+    options.sleep ||
+    ((milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)));
   const graphClient =
     config.emailProvider === "microsoft_graph"
       ? options.graphClient ||
@@ -146,7 +164,13 @@ export function createAccountNotificationService(config = {}, options = {}) {
       })
     : null;
 
-  async function send({ email, subject, path }) {
+  async function send({ email, subject, path, heading, description, actionLabel }) {
+    const html = accountEmailHtml({
+      heading,
+      description,
+      actionLabel,
+      url: `${config.publicUrl}${path}`,
+    });
     if (config.emailProvider === "console" || !config.emailProvider) {
       console.info(JSON.stringify({ event: "account-email-queued", delivery: "console", subject }));
       return;
@@ -161,11 +185,16 @@ export function createAccountNotificationService(config = {}, options = {}) {
             from: config.emailFrom,
             to: email,
             subject,
-            html: `<p>${subject}</p><p><a href="${config.publicUrl}${path}">Continue securely</a></p>`,
+            html,
           }),
           new Promise((_, reject) => {
             timeoutHandle = setTimeout(
-              () => reject(Object.assign(new Error("SMTP delivery deadline exceeded."), { code: "ETIMEDOUT" })),
+              () =>
+                reject(
+                  Object.assign(new Error("SMTP delivery deadline exceeded."), {
+                    code: "ETIMEDOUT",
+                  }),
+                ),
               smtpDeliveryTimeoutMs,
             );
           }),
@@ -227,7 +256,7 @@ export function createAccountNotificationService(config = {}, options = {}) {
           subject,
           body: {
             contentType: "HTML",
-            content: `<p>${subject}</p><p><a href="${config.publicUrl}${path}">Continue securely</a></p>`,
+            content: html,
           },
           toRecipients: [{ emailAddress: { address: email } }],
         },
@@ -238,18 +267,29 @@ export function createAccountNotificationService(config = {}, options = {}) {
         const controller = new AbortController();
         const timeoutHandle = setTimeout(() => controller.abort(), graphTimeoutMs);
         try {
-          response = await graphFetch(`${GRAPH_BASE_URL}/users/${encodeURIComponent(sender)}/sendMail`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${cachedGraphToken.accessToken}`,
-              "Content-Type": "application/json",
+          response = await graphFetch(
+            `${GRAPH_BASE_URL}/users/${encodeURIComponent(sender)}/sendMail`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${cachedGraphToken.accessToken}`,
+                "Content-Type": "application/json",
+              },
+              body: requestBody,
+              signal: controller.signal,
             },
-            body: requestBody,
-            signal: controller.signal,
-          });
+          );
         } catch (error) {
           const code = error?.name === "AbortError" ? "NETWORK_TIMEOUT" : "GRAPH_SERVICE_ERROR";
-          console.error(JSON.stringify({ at: new Date().toISOString(), level: "error", event: "transactional-email-failed", provider: "microsoft_graph", code }));
+          console.error(
+            JSON.stringify({
+              at: new Date().toISOString(),
+              level: "error",
+              event: "transactional-email-failed",
+              provider: "microsoft_graph",
+              code,
+            }),
+          );
           throw new AccountNotificationError(code);
         } finally {
           clearTimeout(timeoutHandle);
@@ -291,7 +331,7 @@ export function createAccountNotificationService(config = {}, options = {}) {
         from: config.emailFrom,
         to: [email],
         subject,
-        html: `<p>${subject}</p><p><a href="${config.publicUrl}${path}">Continue securely</a></p>`,
+        html,
       }),
     });
     if (!response.ok) throw new Error("Account email delivery failed.");
@@ -300,13 +340,19 @@ export function createAccountNotificationService(config = {}, options = {}) {
     sendEmailVerification: ({ email, token }) =>
       send({
         email,
-        subject: "Verify your PoliSmart account",
+        subject: "Verify your PoliSmart Africa AI account",
+        heading: "Verify your email address",
+        description: "Confirm your email address to activate your secure organization workspace.",
+        actionLabel: "Verify email",
         path: `/verify-email?token=${encodeURIComponent(token)}`,
       }),
     sendPasswordReset: ({ email, token }) =>
       send({
         email,
-        subject: "Reset your PoliSmart password",
+        subject: "Reset your PoliSmart Africa AI password",
+        heading: "Reset your password",
+        description: "Use the secure link below to choose a new account password.",
+        actionLabel: "Reset password",
         path: `/reset-password?token=${encodeURIComponent(token)}`,
       }),
   };

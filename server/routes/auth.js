@@ -45,7 +45,7 @@ export function createAuthRouter({ authService, config, governance }) {
           },
           message: result.notificationDelivered
             ? "Registration complete. Check your email to verify your address."
-            : "Registration complete. Verification email delivery is delayed; contact support to resend it.",
+            : "Registration complete. Verification email delivery is delayed; use Resend verification email to try again.",
         });
       } catch (error) {
         if (error.code === "P2002")

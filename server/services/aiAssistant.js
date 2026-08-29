@@ -16,6 +16,12 @@ const INTELLIGENCE_TERMS = [
   "civic",
   "government performance",
   "public priorities",
+  "election",
+  "elections",
+  "electoral",
+  "youth",
+  "young people",
+  "young respondents",
 ];
 const CATEGORY_TERMS = {
   ECONOMIC_CONDITIONS: ["economy", "economic"],
@@ -87,6 +93,7 @@ export function createAiAssistantService({
           surveyRound: row.surveyRound,
           weightField: row.weightField,
           importVersion: row.importVersion,
+          mappingVersion: row.mappingVersion,
           attribution: row.attribution,
           surveySource: row.surveySource,
           url: row.sourceUrl || null,

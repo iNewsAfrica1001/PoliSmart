@@ -1,8 +1,11 @@
 # PoliSmart Africa AI
 
-PoliSmart Africa AI is an Africa-focused campaign intelligence and operations platform operated by Sentinel LLC. This repository currently contains the application foundation: a strict TypeScript React client, a responsive authenticated shell, navigation placeholders, and a landing/sign-in preview.
+Production operators should begin with the
+[PoliSmart Africa AI V1 Administrator Guide](docs/POLISMART_ADMINISTRATOR_GUIDE.md).
 
-The server now includes PostgreSQL-backed authentication, tenant RBAC, and the Campaign Operations MVP: campaigns, leadership, initiatives, activities, dependent tasks, events, volunteers, assignments, participation, and configurable geographic hierarchies. AI integrations and production hosting are not included.
+PoliSmart Africa AI is an AI-powered political campaign intelligence and management platform designed for African political and governance environments and operated by SentinelAI LLC. The Version 1 application includes a strict TypeScript React client, responsive authenticated workspace, public onboarding and legal pages, and server-side campaign operations, intelligence, and governance services.
+
+The server includes PostgreSQL-backed authentication, tenant RBAC, campaigns, leadership, initiatives, activities, dependent tasks, events, volunteers, assignments, participation, configurable geographic hierarchies, approved aggregate Afrobarometer intelligence, and an evidence-grounded AI Assistant. Production runs through the documented Vercel, Neon, Microsoft Graph, OpenAI, and private object-storage architecture.
 
 ## Technology
 

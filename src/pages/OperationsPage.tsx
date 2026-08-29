@@ -4,7 +4,15 @@ import type { SessionUser } from "../lib/auth";
 import { activeTenant, operationsApi, type Campaign, type OperationsItem } from "../lib/operations";
 
 type Section = "campaigns" | "field" | "volunteers" | "events";
-export function OperationsPage({ user, section }: { user: SessionUser; section: Section }) {
+export function OperationsPage({
+  user,
+  section,
+  onOpenDashboard,
+}: {
+  user: SessionUser;
+  section: Section;
+  onOpenDashboard: () => void;
+}) {
   const tenantId = activeTenant(user);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selected, setSelected] = useState("");
@@ -19,6 +27,7 @@ export function OperationsPage({ user, section }: { user: SessionUser; section: 
     }>
   >([]);
   const [error, setError] = useState("");
+  const [confirmation, setConfirmation] = useState("");
   const [showForm, setShowForm] = useState(false);
   const load = useCallback(async () => {
     try {
@@ -59,16 +68,22 @@ export function OperationsPage({ user, section }: { user: SessionUser; section: 
   } as const;
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError("");
+    setConfirmation("");
     const data = Object.fromEntries(new FormData(event.currentTarget));
     try {
-      if (section === "campaigns")
-        await operationsApi.createCampaign(tenantId, {
+      if (section === "campaigns") {
+        const result = await operationsApi.createCampaign(tenantId, {
           ...data,
           slug: String(data.name)
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, "-"),
         });
-      else if (section === "volunteers")
+        setSelected(result.campaign.id);
+        setConfirmation(
+          `${result.campaign.name} was created. Open the dashboard to select it and begin grounded intelligence.`,
+        );
+      } else if (section === "volunteers")
         await operationsApi.createVolunteer(tenantId, {
           displayName: data.displayName,
           contactAuthorized: data.contactAuthorized === "on",
@@ -102,7 +117,16 @@ export function OperationsPage({ user, section }: { user: SessionUser; section: 
           <h1>{titles[section][0]}</h1>
           <p>{titles[section][1]}</p>
         </div>
-        <button className="primary-action" onClick={() => setShowForm(!showForm)}>
+        <button
+          className="primary-action"
+          onClick={() => setShowForm(!showForm)}
+          disabled={section !== "campaigns" && section !== "volunteers" && !selected}
+          title={
+            section !== "campaigns" && section !== "volunteers" && !selected
+              ? "Create a campaign first"
+              : undefined
+          }
+        >
           <Plus /> Add {section === "field" ? "task" : section.slice(0, -1)}
         </button>
       </header>
@@ -111,10 +135,23 @@ export function OperationsPage({ user, section }: { user: SessionUser; section: 
           {error}
         </p>
       )}
+      {confirmation && (
+        <div className="ops-confirmation" role="status">
+          <span>{confirmation}</span>
+          <button type="button" onClick={onOpenDashboard}>
+            Open dashboard
+          </button>
+        </div>
+      )}
       {section !== "campaigns" && section !== "volunteers" && (
         <label className="campaign-picker">
           Campaign
-          <select value={selected} onChange={(event) => setSelected(event.target.value)}>
+          <select
+            value={selected}
+            onChange={(event) => setSelected(event.target.value)}
+            disabled={!campaigns.length}
+          >
+            {!campaigns.length && <option value="">Create a campaign first</option>}
             {campaigns.map((campaign) => (
               <option key={campaign.id} value={campaign.id}>
                 {campaign.name}
@@ -126,6 +163,12 @@ export function OperationsPage({ user, section }: { user: SessionUser; section: 
       {showForm && (
         <form className="ops-form" onSubmit={submit}>
           <h2>New {section === "field" ? "task" : section.slice(0, -1)}</h2>
+          {section === "campaigns" && (
+            <p className="form-guidance">
+              Campaigns scope intelligence, policy, events, and field work. Enter the official
+              campaign details below; dates may be added now or later.
+            </p>
+          )}
           {section === "volunteers" ? (
             <>
               <label>
@@ -170,11 +213,11 @@ export function OperationsPage({ user, section }: { user: SessionUser; section: 
                     <input name="electionType" required />
                   </label>
                   <label>
-                    Start date
+                    Start date <small>(optional)</small>
                     <input name="startsAt" type="date" />
                   </label>
                   <label>
-                    End date
+                    End date <small>(optional)</small>
                     <input name="endsAt" type="date" />
                   </label>
                 </>
@@ -342,11 +385,30 @@ export function OperationsPage({ user, section }: { user: SessionUser; section: 
           (!items.length && section !== "campaigns" && section !== "volunteers")) && (
           <div className="empty-state">
             <Map />
-            <h3>No records yet</h3>
-            <p>Use the add button to create the first tenant-owned record.</p>
+            <h3>{emptyState[section].title}</h3>
+            <p>{emptyState[section].body}</p>
           </div>
         )}
       </section>
     </div>
   );
 }
+
+const emptyState = {
+  campaigns: {
+    title: "Create your first campaign",
+    body: "Campaigns keep intelligence and operations scoped to the correct team and election.",
+  },
+  field: {
+    title: "No field tasks yet",
+    body: "Select a campaign, then add the first field task with an owner, priority, and deadline.",
+  },
+  volunteers: {
+    title: "No volunteers yet",
+    body: "Add a volunteer only when contact authorization has been obtained.",
+  },
+  events: {
+    title: "No events yet",
+    body: "Select a campaign, then schedule a rally, meeting, training, forum, or visit.",
+  },
+} as const;

@@ -9,7 +9,11 @@ import {
   analyzeAfrobarometer,
   persistAfrobarometer,
 } from "../server/services/afrobarometerIngestion.js";
-import { AFROBAROMETER_INDICATOR_MAPPINGS } from "../server/config/afrobarometer.js";
+import {
+  AFROBAROMETER_INDICATOR_MAPPINGS,
+  AFROBAROMETER_INTELLIGENCE_CATEGORIES,
+  AFROBAROMETER_MAPPING_VERSION,
+} from "../server/config/afrobarometer.js";
 import { createPublicIntelligenceRouter } from "../server/routes/publicIntelligence.js";
 
 test("explicit mappings produce weighted aggregates and enforce minimum sample size", async () => {
@@ -83,7 +87,7 @@ test("official Round 9 mapping produces safeguarded public-priority aggregates",
   assert.equal(analysis.rowsImported, 53444);
   assert.equal(analysis.rejectedRows, 1359);
   assert.equal(analysis.countries.length, 39);
-  assert.equal(analysis.unmappedQuestionCodes.length, 314);
+  assert.equal(analysis.unmappedQuestionCodes.length, 312);
   assert.ok(analysis.aggregateResults.length > 0);
   assert.ok(
     analysis.aggregateResults
@@ -104,6 +108,8 @@ test("official Round 9 mapping produces safeguarded public-priority aggregates",
     "PUBLIC_SERVICES",
     "ELECTIONS",
     "YOUTH",
+    "SECURITY",
+    "CIVIC_PARTICIPATION",
   ];
   assert.deepEqual(
     [...new Set(AFROBAROMETER_INDICATOR_MAPPINGS.map((mapping) => mapping.category))].sort(),
@@ -113,6 +119,26 @@ test("official Round 9 mapping produces safeguarded public-priority aggregates",
     assert.ok(mapping.questionText);
     assert.ok(Object.keys(mapping.responseMapping).length > 0);
     assert.equal(analysis.unmappedQuestionCodes.includes(mapping.questionCode), false);
+  }
+  assert.equal(AFROBAROMETER_MAPPING_VERSION, "r9-merged-codebook-2024-06-25-v3");
+  assert.deepEqual(
+    [...new Set(AFROBAROMETER_INDICATOR_MAPPINGS.map((mapping) => mapping.category))].sort(),
+    [...AFROBAROMETER_INTELLIGENCE_CATEGORIES].sort(),
+  );
+  for (const category of AFROBAROMETER_INTELLIGENCE_CATEGORIES) {
+    const indicators = new Set(
+      AFROBAROMETER_INDICATOR_MAPPINGS
+        .filter((mapping) => mapping.category === category)
+        .map((mapping) => mapping.indicatorCode),
+    );
+    const results = analysis.aggregateResults.filter((result) =>
+      indicators.has(result.indicatorCode),
+    );
+    assert.ok(results.length > 0, `${category} must have aggregate coverage`);
+    assert.ok(results.every((result) => result.weightField === "Combinwt_new_hh"));
+    assert.ok(
+      results.filter((result) => !result.isSuppressed).every((result) => result.unweightedSampleSize >= 100),
+    );
   }
 });
 
@@ -165,4 +191,52 @@ test("public intelligence API exposes aggregate results only with safeguards", a
   assert.equal(response.body.minimumSampleSize, 100);
   assert.equal("responses" in response.body, false);
   assert.equal(input.minimumSampleSize, 100);
+});
+
+test("public intelligence API passes an explicit country filter to aggregate storage", async () => {
+  let input;
+  const repository = {
+    listAggregates: async (value) => {
+      input = value;
+      return [];
+    },
+    latestImport: async () => null,
+  };
+  const app = express();
+  app.use((req, _res, next) => {
+    req.auth = { user: { memberships: [{ tenantId: "org-a", role: "ANALYST" }] } };
+    next();
+  });
+  app.use("/intelligence", createPublicIntelligenceRouter(repository));
+  await request(app)
+    .get("/intelligence/afrobarometer?category=ELECTIONS&country=Kenya&round=9")
+    .set("X-Organization-Id", "org-a")
+    .expect(200);
+  assert.equal(input.category, "ELECTIONS");
+  assert.equal(input.country, "Kenya");
+  assert.equal(input.surveyRound, "9");
+});
+
+test("public intelligence API safely reports aggregate storage failures", async () => {
+  const repository = {
+    listAggregates: async () => {
+      throw Object.assign(new Error("database connection details"), { code: "P1001" });
+    },
+    latestImport: async () => null,
+  };
+  const app = express();
+  app.use((req, _res, next) => {
+    req.auth = { user: { memberships: [{ tenantId: "org-a", role: "ANALYST" }] } };
+    next();
+  });
+  app.use("/intelligence", createPublicIntelligenceRouter(repository));
+  app.use((error, _req, res, _next) =>
+    res.status(error.status || 500).json({ message: error.message }),
+  );
+  const response = await request(app)
+    .get("/intelligence/afrobarometer")
+    .set("X-Organization-Id", "org-a")
+    .expect(503);
+  assert.equal(response.body.message, "Public intelligence data is temporarily unavailable.");
+  assert.doesNotMatch(response.body.message, /database|P1001/i);
 });

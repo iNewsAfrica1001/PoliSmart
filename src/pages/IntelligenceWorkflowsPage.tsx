@@ -135,6 +135,9 @@ export function IntelligenceWorkflowsPage({
               <Plus /> Open policy case
             </button>
           </CreateCard>
+          {!campaign && (
+            <Empty text="No campaign is available. Create a campaign before opening policy work." />
+          )}
           <div className="workflow-list">
             {policies.map((item) => (
               <article className="workflow-card" key={item.id}>
@@ -207,6 +210,9 @@ export function IntelligenceWorkflowsPage({
               </article>
             ))}
           </div>
+          {campaign && !policies.length && (
+            <Empty text="No policy projects yet. Define a problem above to start the evidence and human-review workflow." />
+          )}
         </>
       )}
       {module === "media" && (

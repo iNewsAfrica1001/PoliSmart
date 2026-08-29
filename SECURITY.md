@@ -10,7 +10,7 @@ The runtime and migration roles are separate. `DATABASE_URL` must identify a run
 
 ## Reporting
 
-Report suspected vulnerabilities privately to Sentinel LLC. Do not include credentials, real campaign data, or respondent-level survey records in reports.
+Report suspected vulnerabilities privately to SentinelAI LLC through the approved support process. Do not include credentials, real campaign data, or respondent-level survey records in reports.
 
 ## Controls
 

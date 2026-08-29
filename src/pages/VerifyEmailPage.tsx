@@ -70,8 +70,8 @@ export function VerifyEmailPage({ token }: VerifyEmailPageProps) {
         <a className="login-brand" href="/">
           <span className="brand-symbol">P</span>
           <span>
-            <strong>PoliSmart</strong>
-            <small>AFRICA AI</small>
+            <strong>PoliSmart Africa AI</strong>
+            <small>SECURE ACCOUNT ACCESS</small>
           </span>
         </a>
         <div>
@@ -107,6 +107,10 @@ export function VerifyEmailPage({ token }: VerifyEmailPageProps) {
             </a>
           )}
         </div>
+        <p className="support-copy">
+          Need help?{" "}
+          <a href="mailto:support@polismartafrica.ai">Contact PoliSmart Africa AI support</a>.
+        </p>
       </section>
     </main>
   );

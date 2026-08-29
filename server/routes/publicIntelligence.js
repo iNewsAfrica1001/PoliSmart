@@ -18,14 +18,30 @@ export function createPublicIntelligenceRouter(repository) {
         : undefined;
       if (category && !AFROBAROMETER_INTELLIGENCE_CATEGORIES.includes(category))
         throw Object.assign(new Error("category is invalid."), { status: 400 });
+      const country = request.query.country ? String(request.query.country).trim() : undefined;
+      const surveyRound = request.query.round ? String(request.query.round).trim() : undefined;
+      let results;
+      try {
+        results = await repository.listAggregates({
+          category,
+          country,
+          surveyRound,
+          minimumSampleSize: AFROBAROMETER_MINIMUM_SAMPLE_SIZE,
+        });
+      } catch (error) {
+        console.error("Public intelligence aggregate query failed.", {
+          errorName: error?.name || "Error",
+          errorCode: error?.code || null,
+        });
+        throw Object.assign(new Error("Public intelligence data is temporarily unavailable."), {
+          status: 503,
+        });
+      }
       response.json({
         source: "Afrobarometer",
         aggregateOnly: true,
         minimumSampleSize: AFROBAROMETER_MINIMUM_SAMPLE_SIZE,
-        results: await repository.listAggregates({
-          category,
-          minimumSampleSize: AFROBAROMETER_MINIMUM_SAMPLE_SIZE,
-        }),
+        results,
       });
     }),
   );
