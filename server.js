@@ -101,16 +101,7 @@ app.use(
 );
 
 app.get("/api/health", (_request, response) => {
-  response.json({
-    status: "ok",
-    service: "PoliSmart Africa AI",
-    env: config.env,
-    persistence: config.persistenceMode,
-    documentStorage: config.storageProvider,
-    databaseConfigured: Boolean(config.databaseUrl),
-    llmConfigured: aiProvider.isConfigured,
-    at: new Date().toISOString(),
-  });
+  response.json({ status: "ok" });
 });
 
 app.get("/api/ready", async (_request, response) => {

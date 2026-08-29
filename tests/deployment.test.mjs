@@ -206,6 +206,30 @@ test("password-reset frontend preserves the email token and submits the backend 
   assert.match(authSource, /JSON\.stringify\(\{ token, password \}\)/);
 });
 
+test("login exposes safe password-reset requests and public registration", () => {
+  const pageSource = fs.readFileSync(path.join(root, "src", "pages", "LoginPage.tsx"), "utf8");
+  const authSource = fs.readFileSync(path.join(root, "src", "lib", "auth.ts"), "utf8");
+  assert.match(pageSource, /onClick=\{\(\) => changeMode\("forgot"\)\}/);
+  assert.doesNotMatch(pageSource, /Forgot password\?<\/button>\s*\n?\s*<\/div>/);
+  assert.match(pageSource, /If the account exists, reset instructions will be sent\./);
+  assert.match(authSource, /\/api\/auth\/password-reset\/request/);
+  assert.match(authSource, /\/api\/auth\/register/);
+  assert.match(pageSource, /Create a new organization account/);
+});
+
+test("production persistence is PostgreSQL and rejects an explicit memory fallback", () => {
+  withEnvironment({ NODE_ENV: "production", PERSISTENCE_MODE: undefined }, () =>
+    assert.equal(loadConfig(root).persistenceMode, "postgresql"),
+  );
+  withEnvironment({ NODE_ENV: "production", PERSISTENCE_MODE: "memory" }, () =>
+    assert.ok(
+      validateProductionEnvironment(loadConfig(root)).includes(
+        "PERSISTENCE_MODE must be postgresql in production.",
+      ),
+    ),
+  );
+});
+
 test("production data import is explicit and absent from deployment builds", () => {
   const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
   assert.equal(
@@ -294,6 +318,9 @@ test("public readiness is minimal and operational metrics require authentication
   process.env.VERCEL = "1";
   try {
     const { default: app } = await import("../server.js");
+    const health = await request(app).get("/api/health");
+    assert.equal(health.status, 200);
+    assert.deepEqual(health.body, { status: "ok" });
     const ready = await request(app).get("/api/ready");
     assert.equal(ready.status, 200);
     assert.deepEqual(Object.keys(ready.body), ["status"]);

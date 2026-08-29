@@ -89,7 +89,7 @@ export function loadConfig(rootDir) {
     aiProvider: process.env.AI_PROVIDER || "openai",
     aiRateLimitWindowMs: parseNumber(process.env.AI_RATE_LIMIT_WINDOW_MS, 60_000),
     aiRateLimitMaxRequests: parseNumber(process.env.AI_RATE_LIMIT_MAX_REQUESTS, 12),
-    persistenceMode: process.env.PERSISTENCE_MODE || "memory",
+    persistenceMode: process.env.PERSISTENCE_MODE || (isProduction ? "postgresql" : "memory"),
     documentStoragePath:
       process.env.DOCUMENT_STORAGE_PATH || path.join(rootDir, "storage", "documents"),
     storageProvider: process.env.STORAGE_PROVIDER || (isProduction ? "vercel-blob" : "local"),
@@ -122,6 +122,8 @@ export function validateProductionEnvironment(config) {
   if (!config.isProduction) return [];
   const errors = [];
   if (!config.databaseUrl) errors.push("DATABASE_URL is required.");
+  if (config.persistenceMode !== "postgresql")
+    errors.push("PERSISTENCE_MODE must be postgresql in production.");
   if (!config.openAiApiKey) errors.push("OPENAI_API_KEY is required.");
   if (!config.openAiModel.trim()) errors.push("OPENAI_MODEL is required.");
   if (config.authSecret.length < 32) errors.push("AUTH_SECRET must be at least 32 characters.");
@@ -154,14 +156,14 @@ export function validateProductionEnvironment(config) {
     if (config.smtpSecure) errors.push("SMTP_SECURE must be false for Microsoft 365 STARTTLS.");
   }
   if (config.emailProvider === "microsoft_graph") {
-    if (!config.microsoftTenantId) errors.push("MICROSOFT_TENANT_ID is required for Microsoft Graph.");
-    if (!config.microsoftClientId) errors.push("MICROSOFT_CLIENT_ID is required for Microsoft Graph.");
+    if (!config.microsoftTenantId)
+      errors.push("MICROSOFT_TENANT_ID is required for Microsoft Graph.");
+    if (!config.microsoftClientId)
+      errors.push("MICROSOFT_CLIENT_ID is required for Microsoft Graph.");
     if (!config.microsoftClientSecret)
       errors.push("MICROSOFT_CLIENT_SECRET is required for Microsoft Graph.");
     if (config.emailFrom.trim().toLowerCase() !== "no-reply@polismartafrica.ai")
-      errors.push(
-        "EMAIL_FROM must be exactly no-reply@polismartafrica.ai for Microsoft Graph.",
-      );
+      errors.push("EMAIL_FROM must be exactly no-reply@polismartafrica.ai for Microsoft Graph.");
   }
   if (!config.emailFrom) errors.push("EMAIL_FROM is required.");
   return errors;
