@@ -21,8 +21,6 @@ import { createPublicIntelligenceRouter } from "./server/routes/publicIntelligen
 import { createCommandCenterRouter } from "./server/routes/commandCenter.js";
 import { createIntelligenceWorkflowsRouter } from "./server/routes/intelligenceWorkflows.js";
 import { createGovernanceRouter } from "./server/routes/governance.js";
-import { createAssessmentRouter } from "./server/routes/assessments.js";
-import { createTrainingRouter } from "./server/routes/training.js";
 import {
   authenticateRequests,
   requireSession,
@@ -173,9 +171,6 @@ app.use(
     }),
   }),
 );
-app.use("/api/assessments", requireSession, createAssessmentRouter());
-app.use("/api/training", requireSession, createTrainingRouter());
-
 app.use("/api", (request, response) => {
   response.status(404).json({
     message: "API route not found.",

@@ -11,7 +11,7 @@ PoliSmart Africa AI is an AI-powered political campaign intelligence and managem
 - Keeps OpenAI, Microsoft Graph, object-storage, and Neon access behind server-side services and protected environment variables.
 - Keeps the public health response minimal; protected operational endpoints never return credentials.
 
-The legacy Digital Literacy Socket.IO classroom interface, classroom API, chat, presence, hand-raise, and whiteboard features are not part of PoliSmart Africa AI V1 and are not exposed by the production runtime.
+The legacy Digital Literacy Socket.IO classroom interface, classroom API, assessments, learner training simulations, certificate requests, demo-user APIs, chat, presence, hand-raise, and whiteboard features are not part of PoliSmart Africa AI V1 and are not exposed by the production runtime.
 
 ## Production safeguards
 
@@ -31,6 +31,6 @@ npm run build
 npm run smoke
 ```
 
-The smoke suite expects a running application at `SMOKE_BASE_URL` or `http://127.0.0.1:4000`. It checks health/readiness, unauthenticated rejection on representative protected V1 routes, absence of the removed classroom API, and the application shell. It does not create production data.
+The smoke suite expects a running application at `SMOKE_BASE_URL` or `http://127.0.0.1:4000`. It checks health/readiness, unauthenticated rejection on representative protected V1 routes, absence of the removed classroom, assessment, training, and demo-user APIs, and the application shell. It does not create production data.
 
 Reports and Payments/Billing remain clearly marked **Coming Soon** and are not operational V1 features.

@@ -39,8 +39,21 @@ for (const path of protectedRoutes) {
   assert(result.response.status === 401, `${path} did not reject an unauthenticated request.`);
 }
 
-const classroom = await request("/api/classrooms");
-assert(classroom.response.status === 404, "Legacy classroom API remains exposed.");
+const removedLegacyRoutes = [
+  "/api/classrooms",
+  "/api/assessments",
+  "/api/assessments/legacy-assessment/grade",
+  "/api/training",
+  "/api/training/scams",
+  "/api/training/scams/legacy-simulation/attempt",
+  "/api/training/certificates/request",
+  "/api/users",
+];
+
+for (const path of removedLegacyRoutes) {
+  const result = await request(path);
+  assert(result.response.status === 404, `${path} remains exposed.`);
+}
 
 const homepageResponse = await fetch(baseUrl);
 const homepage = await homepageResponse.text();
@@ -54,7 +67,7 @@ console.log(
       baseUrl,
       ready: ready.payload.status,
       protectedRoutes: protectedRoutes.length,
-      legacyClassroomRoute: "not-found",
+      removedLegacyRoutes: removedLegacyRoutes.length,
       homepage: "ok",
     },
     null,

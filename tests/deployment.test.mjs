@@ -30,6 +30,29 @@ test("legacy Socket.IO classroom surface is absent from the V1 runtime", () => {
   );
 });
 
+test("legacy non-tenant assessment, training, and user APIs are absent", () => {
+  const serverSource = fs.readFileSync(path.join(root, "server.js"), "utf8");
+  const removedFiles = [
+    ["server", "routes", "assessments.js"],
+    ["server", "routes", "training.js"],
+    ["server", "routes", "users.js"],
+    ["server", "data", "store.js"],
+    ["server", "data", "catalog.js"],
+    ["server", "services", "grading.js"],
+    ["server", "services", "aiTutor.js"],
+    ["src", "components", "assessments", "AssessmentPanel.jsx"],
+    ["src", "components", "platform", "FeatureWorkspace.jsx"],
+  ];
+
+  assert.doesNotMatch(
+    serverSource,
+    /createAssessmentRouter|createTrainingRouter|\/api\/assessments|\/api\/training/,
+  );
+  for (const segments of removedFiles) {
+    assert.equal(fs.existsSync(path.join(root, ...segments)), false, segments.join("/"));
+  }
+});
+
 function withEnvironment(values, callback) {
   const previous = {};
   for (const [key, value] of Object.entries(values)) {
