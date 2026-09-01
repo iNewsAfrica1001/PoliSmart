@@ -4,7 +4,6 @@ import express from "express";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { Server } from "socket.io";
 import { loadConfig, validateProductionEnvironment } from "./server/config/env.js";
 import {
   securityHeaders,
@@ -23,7 +22,6 @@ import { createCommandCenterRouter } from "./server/routes/commandCenter.js";
 import { createIntelligenceWorkflowsRouter } from "./server/routes/intelligenceWorkflows.js";
 import { createGovernanceRouter } from "./server/routes/governance.js";
 import { createAssessmentRouter } from "./server/routes/assessments.js";
-import { createClassroomRouter } from "./server/routes/classrooms.js";
 import { createTrainingRouter } from "./server/routes/training.js";
 import {
   authenticateRequests,
@@ -47,7 +45,6 @@ import { createAiAssistantService, createAiRateLimiter } from "./server/services
 import { createIntelligenceWorkflowService } from "./server/services/intelligenceWorkflows.js";
 import { createGovernanceService } from "./server/services/governance.js";
 import { createDocumentStorage } from "./server/services/documentStorage.js";
-import { registerClassroomSockets } from "./server/sockets/classroom.js";
 import { PERMISSIONS } from "./server/config/authorization.js";
 
 const app = express();
@@ -77,13 +74,6 @@ const aiService = createAiAssistantService({
   governance: governanceService,
 });
 const intelligenceWorkflowRepository = createIntelligenceWorkflowRepository(prisma);
-const io = new Server(server, {
-  cors: { origin: config.clientOrigins, methods: ["GET", "POST"], credentials: true },
-  connectionStateRecovery: { maxDisconnectionDuration: 120_000 },
-  pingTimeout: 20_000,
-  pingInterval: 25_000,
-});
-
 server.keepAliveTimeout = 65_000;
 server.headersTimeout = 66_000;
 server.requestTimeout = 30_000;
@@ -118,7 +108,6 @@ app.get("/api/ready", async (_request, response) => {
     staticBuild: config.isDistReady(),
     productionEnvironment: productionEnvironmentErrors.length === 0,
     originConfigured: config.clientOrigins.length > 0,
-    realtime: io.engine.clientsCount >= 0,
     databaseConfigured: Boolean(config.databaseUrl),
     databaseReachable,
     llmConfigured: aiProvider.isConfigured,
@@ -127,7 +116,6 @@ app.get("/api/ready", async (_request, response) => {
     checks.staticBuild &&
     checks.productionEnvironment &&
     checks.originConfigured &&
-    checks.realtime &&
     (!config.isProduction ||
       (checks.databaseConfigured && checks.databaseReachable && checks.llmConfigured));
   response.status(ready ? 200 : 503).json({
@@ -144,7 +132,6 @@ app.get(
     const memory = process.memoryUsage();
     response.json({
       uptimeSeconds: Math.round(process.uptime()),
-      connectedSockets: io.engine.clientsCount,
       memory: {
         rssMb: Math.round(memory.rss / 1024 / 1024),
         heapUsedMb: Math.round(memory.heapUsed / 1024 / 1024),
@@ -187,7 +174,6 @@ app.use(
   }),
 );
 app.use("/api/assessments", requireSession, createAssessmentRouter());
-app.use("/api/classrooms", requireSession, createClassroomRouter(io));
 app.use("/api/training", requireSession, createTrainingRouter());
 
 app.use("/api", (request, response) => {
@@ -198,8 +184,6 @@ app.use("/api", (request, response) => {
 });
 
 app.use("/api", createApiErrorHandler({ isProduction: config.isProduction }));
-
-registerClassroomSockets(io);
 
 app.use(
   express.static(path.join(__dirname, "dist"), {
@@ -235,7 +219,6 @@ function shutdown(signal) {
     process.exit(1);
   }, 10_000);
   forceExit.unref();
-  io.close();
   server.close((error) => {
     if (error) {
       console.error(error);

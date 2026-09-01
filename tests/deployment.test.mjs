@@ -11,6 +11,25 @@ import { createApiErrorHandler } from "../server/middleware/http.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
+test("legacy Socket.IO classroom surface is absent from the V1 runtime", () => {
+  const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+  const serverSource = fs.readFileSync(path.join(root, "server.js"), "utf8");
+  const viteSource = fs.readFileSync(path.join(root, "vite.config.js"), "utf8");
+  const serviceWorkerSource = fs.readFileSync(path.join(root, "public", "sw.js"), "utf8");
+
+  assert.equal(packageJson.dependencies?.["socket.io"], undefined);
+  assert.equal(packageJson.dependencies?.["socket.io-client"], undefined);
+  assert.doesNotMatch(serverSource, /socket\.io|createClassroomRouter|registerClassroomSockets/);
+  assert.doesNotMatch(viteSource, /\/socket\.io/);
+  assert.doesNotMatch(serviceWorkerSource, /\/socket\.io/);
+  assert.equal(fs.existsSync(path.join(root, "server", "routes", "classrooms.js")), false);
+  assert.equal(fs.existsSync(path.join(root, "server", "sockets", "classroom.js")), false);
+  assert.equal(
+    fs.existsSync(path.join(root, "src", "components", "classroom", "LiveClassroom.jsx")),
+    false,
+  );
+});
+
 function withEnvironment(values, callback) {
   const previous = {};
   for (const [key, value] of Object.entries(values)) {

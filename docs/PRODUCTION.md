@@ -1,52 +1,36 @@
-# Digital Literacy AI Coach Production Guide
+# PoliSmart Africa AI V1 Production Guide
 
-This project is a production-ready frontend and Node.js service package for a Digital Literacy training and education platform. It includes a responsive React application, Express API, Socket.IO live classroom, generative AI coaching endpoint, assessment grading, governance views, health checks, and container deployment files.
+PoliSmart Africa AI is an AI-powered political campaign intelligence and management platform designed for African political and governance environments. The Version 1 runtime consists of a Vite React application and an Express API backed by PostgreSQL through Prisma.
 
-## Runtime Shape
+## Version 1 runtime
 
-- Serves the Vite-built React app from `dist`
-- Exposes `/api/*` REST endpoints
-- Runs Socket.IO for live classroom collaboration
-- Provides health, readiness, and process metrics endpoints
-- Applies production security headers, request IDs, JSON limits, and rate limits
-- Uses local fallback AI coaching when `LLM_API_KEY` is not configured
+- Serves the production React application from `dist`.
+- Exposes authenticated, tenant-scoped APIs under `/api`.
+- Supports organization accounts, campaigns, grounded AI Intelligence, approved knowledge, policy, events, volunteers, and role-based administration.
+- Applies security headers, request IDs, JSON limits, and rate limits.
+- Keeps OpenAI, Microsoft Graph, object-storage, and Neon access behind server-side services and protected environment variables.
+- Keeps the public health response minimal; protected operational endpoints never return credentials.
 
-## Production Environment
+The legacy Digital Literacy Socket.IO classroom interface, classroom API, chat, presence, hand-raise, and whiteboard features are not part of PoliSmart Africa AI V1 and are not exposed by the production runtime.
 
-```bash
-NODE_ENV=production
-HOST=0.0.0.0
-PORT=4000
-PUBLIC_APP_URL=https://literacy-ai.example.edu
-CLIENT_ORIGIN=https://literacy-ai.example.edu
-JWT_SECRET=<at-least-32-characters>
-PERSISTENCE_MODE=memory
-DATABASE_URL=postgresql://...
-REDIS_URL=redis://...
-LLM_API_KEY=<provider-key>
-```
+## Production safeguards
 
-## Required Workflow
-
-1. Student inputs a question, draft, source URL, assignment/rubric, learning goal, and data-sensitivity context.
-2. AI produces scaffolded coaching, source-quality prompts, citation guidance, confidence, risk label, and next activity.
-3. Student views coaching immediately unless it is high-risk or disputed.
-4. Professor views flagged chats, low-confidence answers, assessment gaps, and repeated misconceptions.
-5. Admin views anonymized incidents, usage, privacy events, latency, cost, accessibility, and model-quality reports.
-6. If AI is wrong, the answer is labeled disputed, routed to professor review, corrected, logged, and added to the evaluation set.
-7. Performance is measured with learning gains, helpfulness, citation quality, hallucination rate, review agreement, escalation rate, latency, uptime, cost, accessibility, and privacy incidents.
+- Never commit or log secrets, credentials, tokens, or connection strings.
+- Use the least-privilege runtime database identity for normal application operations.
+- Use the migration database identity only through an approved, reviewed migration process.
+- Enforce organization boundaries and permissions on the server.
+- Keep provider calls and grounded-evidence assembly on the server.
+- Do not run database migrations or public-intelligence imports automatically during deployment.
 
 ## Verification
 
 ```bash
-npm run verify:prod
-npm run verify:running
+npm run check
+npm test
+npm run build
+npm run smoke
 ```
 
-## Remaining Backend Work For Full Institutional Launch
+The smoke suite expects a running application at `SMOKE_BASE_URL` or `http://127.0.0.1:4000`. It checks health/readiness, unauthenticated rejection on representative protected V1 routes, absence of the removed classroom API, and the application shell. It does not create production data.
 
-- Replace `server/data/store.js` with a PostgreSQL repository using the Prisma schema.
-- Add authenticated session/JWT enforcement on protected routes.
-- Persist chat transcripts, review cases, audit events, and assessment submissions.
-- Connect a real LLM provider with moderation, retrieval, prompt logging, and evaluation controls.
-- Add CI browser tests for student, professor, and admin flows.
+Reports and Payments/Billing remain clearly marked **Coming Soon** and are not operational V1 features.
