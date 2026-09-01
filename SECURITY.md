@@ -30,3 +30,11 @@ Security events include successful login, document upload/deletion, policy and c
 ## Operational requirements
 
 Apply migrations, rotate production secrets, restrict database roles, encrypt backups, monitor authentication and AI error reports, test restoration, and retain audit records according to applicable law and campaign policy.
+# Browser security headers
+
+Production browser responses use an enforced same-origin Content Security Policy. Scripts cannot
+use inline execution or eval, framing is denied, object embedding is disabled, and forms and API
+connections are restricted to the application origin. Inline styles remain allowed only for the
+current React/Recharts presentation requirements. Vercel protects frontend/static responses and
+the Express middleware applies the aligned policy to APIs. Do not broaden CSP or CORS without a
+reviewed dependency inventory and Preview validation.

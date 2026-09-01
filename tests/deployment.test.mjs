@@ -234,6 +234,43 @@ test("Vercel routes APIs before the SPA and excludes raw survey data", () => {
   assert.match(ignored, /^storage\/$/m);
 });
 
+test("Vercel and API responses use the aligned enforced browser security policy", () => {
+  const config = JSON.parse(fs.readFileSync(path.join(root, "vercel.json"), "utf8"));
+  const serverHeaders = fs.readFileSync(
+    path.join(root, "server", "middleware", "http.js"),
+    "utf8",
+  );
+  const globalHeaders = config.headers.find((entry) => entry.source === "/(.*)")?.headers || [];
+  const header = (name) => globalHeaders.find((entry) => entry.key === name)?.value;
+  const csp = header("Content-Security-Policy");
+
+  assert.equal(header("X-Content-Type-Options"), "nosniff");
+  assert.equal(header("X-Frame-Options"), "DENY");
+  assert.equal(header("Referrer-Policy"), "strict-origin-when-cross-origin");
+  assert.equal(
+    header("Permissions-Policy"),
+    "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+  );
+  assert.equal(header("Cross-Origin-Opener-Policy"), "same-origin");
+  assert.equal(header("Cross-Origin-Resource-Policy"), "same-origin");
+  for (const directive of [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "connect-src 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ]) {
+    assert.match(csp, new RegExp(directive.replace(/[']/g, "'")));
+    assert.ok(serverHeaders.includes(directive));
+  }
+  assert.doesNotMatch(csp, /unsafe-eval|\bhttps:|\bdata:|\bblob:|(?:^|\s)\*(?:\s|;|$)/);
+  assert.doesNotMatch(serverHeaders, /connect-src[^;]*(?:ws:|wss:)/);
+  assert.equal(config.headers.some((entry) => entry.source === "/assets/:path*"), true);
+});
+
 test("password-reset frontend preserves the email token and submits the backend contract", () => {
   const appSource = fs.readFileSync(path.join(root, "src", "App.tsx"), "utf8");
   const pageSource = fs.readFileSync(

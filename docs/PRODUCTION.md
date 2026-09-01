@@ -22,6 +22,16 @@ The established AI Assistant policy remains 12 requests per user/organization op
 Communications assistance use 6 requests per user/operation and 30 per organization/operation per
 60 seconds. Authentication limits are purpose-specific and use IP plus HMAC-derived email or token
 identifiers; raw account and recovery values never enter Redis keys.
+
+## Browser security policy
+
+Vercel applies an enforced, same-origin Content Security Policy and browser security headers to
+the SPA, legal/authentication pages, static assets, and API routes. Express applies the same policy
+to API responses. The policy permits self-hosted scripts, styles, images, fonts, API connections,
+workers, media, and the manifest; dynamic presentation currently requires inline styles. Inline
+scripts, eval, external resource wildcards, framing, and plugins are prohibited. HSTS remains
+managed by the existing Vercel and API configuration, and hostile-origin CORS protection remains
+unchanged.
 - Keeps OpenAI, Microsoft Graph, object-storage, and Neon access behind server-side services and protected environment variables.
 - Keeps the public health response minimal; protected operational endpoints never return credentials.
 
