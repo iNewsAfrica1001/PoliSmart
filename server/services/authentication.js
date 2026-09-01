@@ -62,11 +62,23 @@ function verificationError(code, message) {
 
 export function createAuthenticationService(
   database,
-  { tokenSecret, now = () => new Date(), notifications = null },
+  { tokenSecret, now = () => new Date(), notifications = null, logger = console },
 ) {
   if (!tokenSecret || tokenSecret.length < 32)
     throw new Error("Authentication token secret must be at least 32 characters.");
   const expiresFromNow = (milliseconds) => new Date(now().getTime() + milliseconds);
+
+  function recordRegistrationEvent(code, metadata = {}) {
+    logger.info?.(
+      JSON.stringify({
+        at: now().toISOString(),
+        level: "info",
+        event: "registration",
+        code,
+        ...metadata,
+      }),
+    );
+  }
 
   async function deliverNotification(method, payload) {
     if (!notifications?.[method]) return false;
@@ -90,37 +102,97 @@ export function createAuthenticationService(
     return token;
   }
 
+  async function resendVerificationForExistingUser(user) {
+    recordRegistrationEvent("EXISTING_EMAIL", {
+      verificationRequired: !user.emailVerifiedAt,
+    });
+    if (user.emailVerifiedAt) {
+      return false;
+    }
+    await database.emailVerificationToken.deleteMany({
+      where: { userId: user.id, usedAt: null },
+    });
+    const token = await issueToken(
+      database.emailVerificationToken,
+      user.id,
+      VERIFY_HOURS * 60 * 60 * 1000,
+    );
+    recordRegistrationEvent("VERIFICATION_RESEND_ATTEMPTED");
+    return deliverNotification("sendEmailVerification", { email: user.email, token });
+  }
+
   return {
     async register({ email, password, displayName, organizationName, country }) {
       const normalizedEmail = normalizeEmail(email);
-      if (!/^\S+@\S+\.\S+$/.test(normalizedEmail))
+      if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+        recordRegistrationEvent("VALIDATION_FAILURE", { reason: "EMAIL_FORMAT" });
         throw Object.assign(new Error("A valid email address is required."), { status: 400 });
-      const passwordHash = await hashPassword(password);
+      }
+      let passwordHash;
+      try {
+        passwordHash = await hashPassword(password);
+      } catch (error) {
+        recordRegistrationEvent("VALIDATION_FAILURE", { reason: "PASSWORD_POLICY" });
+        throw error;
+      }
       const slugBase = String(organizationName ?? "")
         .trim()
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "");
-      if (!displayName?.trim() || !slugBase || !country?.trim())
+      if (!displayName?.trim() || !slugBase || !country?.trim()) {
+        recordRegistrationEvent("VALIDATION_FAILURE", { reason: "REQUIRED_FIELDS" });
         throw Object.assign(new Error("Display name, organization, and country are required."), {
           status: 400,
         });
-      const result = await database.$transaction(async (tx) => {
-        const user = await tx.authUser.create({
-          data: { email: normalizedEmail, passwordHash, displayName: displayName.trim() },
-        });
-        const organization = await tx.organization.create({
-          data: {
-            name: organizationName.trim(),
-            slug: `${slugBase}-${randomBytes(4).toString("hex")}`,
-            country: country.trim(),
-          },
-        });
-        const membership = await tx.membership.create({
-          data: { userId: user.id, tenantId: organization.id, role: "CAMPAIGN_ADMINISTRATOR" },
-        });
-        return { user, organization, membership };
+      }
+
+      const existingUser = await database.authUser.findUnique({
+        where: { email: normalizedEmail },
+        select: { id: true, email: true, emailVerifiedAt: true },
       });
+      if (existingUser) {
+        const notificationDelivered = await resendVerificationForExistingUser(existingUser);
+        return { created: false, notificationDelivered };
+      }
+
+      let result;
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          result = await database.$transaction(async (tx) => {
+            const user = await tx.authUser.create({
+              data: { email: normalizedEmail, passwordHash, displayName: displayName.trim() },
+            });
+            const organization = await tx.organization.create({
+              data: {
+                name: organizationName.trim(),
+                slug: `${slugBase}-${randomBytes(4).toString("hex")}`,
+                country: country.trim(),
+              },
+            });
+            const membership = await tx.membership.create({
+              data: { userId: user.id, tenantId: organization.id, role: "CAMPAIGN_ADMINISTRATOR" },
+            });
+            return { user, organization, membership };
+          });
+          break;
+        } catch (error) {
+          if (error?.code !== "P2002") throw error;
+          const racedUser = await database.authUser.findUnique({
+            where: { email: normalizedEmail },
+            select: { id: true, email: true, emailVerifiedAt: true },
+          });
+          if (racedUser) {
+            const notificationDelivered = await resendVerificationForExistingUser(racedUser);
+            return { created: false, notificationDelivered };
+          }
+          if (attempt === 2) throw error;
+          recordRegistrationEvent("ORGANIZATION_SLUG_RETRY", { attempt: attempt + 1 });
+        }
+      }
+
+      if (!result) throw new Error("Registration could not be completed.");
+      recordRegistrationEvent("NEW_ACCOUNT_CREATED");
       const verificationToken = await issueToken(
         database.emailVerificationToken,
         result.user.id,
@@ -130,7 +202,7 @@ export function createAuthenticationService(
         email: result.user.email,
         token: verificationToken,
       });
-      return { ...result, verificationToken, notificationDelivered };
+      return { ...result, created: true, verificationToken, notificationDelivered };
     },
     async login({ email, password, userAgent, ipHash }) {
       const user = await database.authUser.findUnique({

@@ -1,4 +1,6 @@
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+export const REGISTRATION_NEUTRAL_MESSAGE =
+  "If the information provided can be used to create or access an account, follow the instructions sent to the email address.";
 export class ApiError extends Error {
   code?: string;
   constructor(message: string, code?: string) {

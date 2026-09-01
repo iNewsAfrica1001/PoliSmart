@@ -402,6 +402,9 @@ test("login exposes safe password-reset requests and public registration", () =>
   assert.match(pageSource, /If the account exists, reset instructions will be sent\./);
   assert.match(authSource, /\/api\/auth\/password-reset\/request/);
   assert.match(authSource, /\/api\/auth\/register/);
+  assert.match(authSource, /REGISTRATION_NEUTRAL_MESSAGE/);
+  assert.match(pageSource, /setConfirmation\(REGISTRATION_NEUTRAL_MESSAGE\)/);
+  assert.doesNotMatch(pageSource, /setConfirmation\(result\.message\)/);
   assert.match(pageSource, /Create a new organization account/);
 });
 
@@ -419,7 +422,7 @@ test("Stage 2 onboarding guides a new organization without changing security bou
 
   assert.match(login, /Authorized account owner/);
   assert.match(login, /12–128 characters with an uppercase letter, lowercase letter, and number/);
-  assert.match(login, /open the time-limited verification link/);
+  assert.match(login, /open the time-limited link/);
   assert.match(login, /Resend verification email/);
   assert.match(dashboard, /Create and select your first campaign/);
   assert.match(dashboard, /campaign-scoped intelligence/);

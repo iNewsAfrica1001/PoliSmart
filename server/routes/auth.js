@@ -9,6 +9,20 @@ import {
 } from "../middleware/authentication.js";
 import { asyncRoute } from "../middleware/http.js";
 
+const REGISTRATION_NEUTRAL_MESSAGE =
+  "If the information provided can be used to create or access an account, follow the instructions sent to the email address.";
+
+async function normalizeRegistrationTiming(startedAt, timing = {}) {
+  const minimumMs = timing.minimumMs ?? 650;
+  const jitterMs = timing.jitterMs ?? 200;
+  const random = timing.random ?? Math.random;
+  const sleep =
+    timing.sleep ?? ((milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)));
+  const targetMs = minimumMs + Math.floor(random() * (jitterMs + 1));
+  const remainingMs = targetMs - (Date.now() - startedAt);
+  if (remainingMs > 0) await sleep(remainingMs);
+}
+
 function publicUser(user) {
   return {
     id: user.id,
@@ -29,32 +43,30 @@ function publicUser(user) {
   };
 }
 
-export function createAuthRouter({ authService, config, governance }) {
+export function createAuthRouter({ authService, config, governance, registrationTiming }) {
   const router = Router();
   router.post(
     "/register",
     asyncRoute(async (request, response) => {
+      const startedAt = Date.now();
       try {
-        const result = await authService.register(request.body);
-        response.status(201).json({
-          user: publicUser(result.user),
-          organization: {
-            id: result.organization.id,
-            name: result.organization.name,
-            country: result.organization.country,
-          },
-          message: result.notificationDelivered
-            ? "Registration complete. Check your email to verify your address."
-            : "Registration complete. Verification email delivery is delayed; use Resend verification email to try again.",
-        });
+        await authService.register(request.body);
       } catch (error) {
-        if (error.code === "P2002")
-          throw Object.assign(
-            new Error("An account or organization with those details already exists."),
-            { status: 409 },
-          );
-        throw error;
+        if (error.code !== "P2002") throw error;
+        console.info(
+          JSON.stringify({
+            at: new Date().toISOString(),
+            level: "info",
+            event: "registration",
+            code: "UNIQUE_CONSTRAINT_SUPPRESSED",
+            requestId: request.id,
+          }),
+        );
       }
+      await normalizeRegistrationTiming(startedAt, registrationTiming);
+      response.status(202).json({
+        message: REGISTRATION_NEUTRAL_MESSAGE,
+      });
     }),
   );
   router.post(

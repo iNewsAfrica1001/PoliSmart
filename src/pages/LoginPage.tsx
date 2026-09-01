@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, Check, KeyRound, ShieldCheck, UserPlus } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { authApi } from "../lib/auth";
+import { authApi, REGISTRATION_NEUTRAL_MESSAGE } from "../lib/auth";
 
 type LoginPageProps = { onContinue: (email: string, password: string) => Promise<void> };
 
@@ -29,14 +29,14 @@ export function LoginPage({ onContinue }: LoginPageProps) {
           "If the account exists and is unverified, verification instructions will be sent.",
         );
       } else if (mode === "register") {
-        const result = await authApi.register({
+        await authApi.register({
           email,
           password,
           displayName,
           organizationName,
           country,
         });
-        setConfirmation(result.message);
+        setConfirmation(REGISTRATION_NEUTRAL_MESSAGE);
       } else {
         await onContinue(email, password);
       }
@@ -244,8 +244,8 @@ export function LoginPage({ onContinue }: LoginPageProps) {
               <strong>{confirmation}</strong>
               {mode === "register" && (
                 <span>
-                  Next, open the time-limited verification link in your email, then return here to
-                  sign in. If it does not arrive, use “Resend verification email.”
+                  If verification instructions arrive, open the time-limited link and then return
+                  here to sign in. You can also use “Resend verification email.”
                 </span>
               )}
             </div>
