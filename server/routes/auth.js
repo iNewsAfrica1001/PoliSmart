@@ -8,6 +8,7 @@ import {
   sessionCookie,
 } from "../middleware/authentication.js";
 import { asyncRoute } from "../middleware/http.js";
+import { noRateLimit } from "../services/rateLimiting.js";
 
 const REGISTRATION_NEUTRAL_MESSAGE =
   "If the information provided can be used to create or access an account, follow the instructions sent to the email address.";
@@ -43,10 +44,18 @@ function publicUser(user) {
   };
 }
 
-export function createAuthRouter({ authService, config, governance, registrationTiming }) {
+export function createAuthRouter({
+  authService,
+  config,
+  governance,
+  registrationTiming,
+  rateLimiters = {},
+}) {
   const router = Router();
+  const limited = (name) => rateLimiters[name] || noRateLimit;
   router.post(
     "/register",
+    limited("registration"),
     asyncRoute(async (request, response) => {
       const startedAt = Date.now();
       try {
@@ -71,6 +80,7 @@ export function createAuthRouter({ authService, config, governance, registration
   );
   router.post(
     "/login",
+    limited("login"),
     asyncRoute(async (request, response) => {
       let result;
       try {
@@ -111,6 +121,7 @@ export function createAuthRouter({ authService, config, governance, registration
   );
   router.post(
     "/password-reset/request",
+    limited("passwordResetRequest"),
     asyncRoute(async (request, response) => {
       await authService.requestPasswordReset(request.body?.email);
       response
@@ -120,6 +131,7 @@ export function createAuthRouter({ authService, config, governance, registration
   );
   router.post(
     "/password-reset/confirm",
+    limited("passwordResetConfirmation"),
     asyncRoute(async (request, response) => {
       await authService.resetPassword(request.body?.token, request.body?.password);
       response.status(204).end();
@@ -127,6 +139,7 @@ export function createAuthRouter({ authService, config, governance, registration
   );
   router.post(
     "/email-verification/request",
+    limited("verificationResend"),
     asyncRoute(async (request, response) => {
       await authService.requestEmailVerification(request.body?.email);
       response.status(202).json({

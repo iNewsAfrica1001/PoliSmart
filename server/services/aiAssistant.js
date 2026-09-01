@@ -284,23 +284,3 @@ export function createAiAssistantService({
     },
   };
 }
-
-export function createAiRateLimiter({ windowMs = 60_000, maxRequests = 12, now = Date.now } = {}) {
-  const buckets = new Map();
-  return (request, response, next) => {
-    const key = `${request.tenant?.id}:${request.auth?.user.id}`;
-    const current = now();
-    const prior = buckets.get(key);
-    const bucket =
-      !prior || current >= prior.resetAt ? { count: 0, resetAt: current + windowMs } : prior;
-    bucket.count += 1;
-    buckets.set(key, bucket);
-    response.setHeader("X-RateLimit-Limit", String(maxRequests));
-    response.setHeader("X-RateLimit-Remaining", String(Math.max(0, maxRequests - bucket.count)));
-    if (bucket.count > maxRequests) {
-      response.setHeader("Retry-After", String(Math.ceil((bucket.resetAt - current) / 1000)));
-      return response.status(429).json({ message: "AI request limit reached. Try again shortly." });
-    }
-    next();
-  };
-}

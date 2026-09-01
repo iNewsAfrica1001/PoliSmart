@@ -1,5 +1,3 @@
-const buckets = new Map();
-
 export function assignRequestId(request, response, next) {
   const id =
     request.headers["x-request-id"] ||
@@ -42,27 +40,6 @@ export function logRequest(request, response, next) {
     else console.info(JSON.stringify(entry));
   });
   next();
-}
-
-export function rateLimit({ windowMs, maxRequests }) {
-  return (request, response, next) => {
-    const key = `${request.ip}:${request.path}`;
-    const now = Date.now();
-    const bucket = buckets.get(key) || { count: 0, resetAt: now + windowMs };
-    if (bucket.resetAt <= now) {
-      bucket.count = 0;
-      bucket.resetAt = now + windowMs;
-    }
-    bucket.count += 1;
-    buckets.set(key, bucket);
-    response.setHeader("RateLimit-Limit", String(maxRequests));
-    response.setHeader("RateLimit-Remaining", String(Math.max(0, maxRequests - bucket.count)));
-    if (bucket.count > maxRequests) {
-      response.status(429).json({ message: "Too many requests. Please retry shortly." });
-      return;
-    }
-    next();
-  };
 }
 
 export function asyncRoute(handler) {

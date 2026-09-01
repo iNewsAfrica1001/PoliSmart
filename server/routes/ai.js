@@ -3,12 +3,15 @@ import { PERMISSIONS } from "../config/authorization.js";
 import { requireSession, requireTenantPermission } from "../middleware/authentication.js";
 import { asyncRoute } from "../middleware/http.js";
 import { requireString } from "../services/validation.js";
+import { noRateLimit } from "../services/rateLimiting.js";
 
-export function createAiRouter({ service, rateLimiter }) {
+export function createAiRouter({ service, rateLimiters = {} }) {
   const router = Router();
-  router.use(requireSession, requireTenantPermission(PERMISSIONS.AI_ASSISTANT_USE), rateLimiter);
+  router.use(requireSession, requireTenantPermission(PERMISSIONS.AI_ASSISTANT_USE));
   router.post(
     "/chat",
+    rateLimiters.user || noRateLimit,
+    rateLimiters.organization || noRateLimit,
     asyncRoute(async (request, response) => {
       const question = requireString(request.body, "question", { min: 3, max: 2000 });
       const campaignId = requireString(request.body, "campaignId", { min: 36, max: 36 });

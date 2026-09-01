@@ -188,6 +188,8 @@ source, documentation, tickets, screenshots, chat, or Git.
 | `EMAIL_API_KEY` / `RESEND_API_KEY` | Credentials only if the alternative Resend provider is intentionally approved.                      |
 | `SMTP_USER` / `SMTP_PASSWORD`      | Credentials only if an SMTP provider is intentionally approved. SMTP is not the current Graph path. |
 | `REDIS_URL`                        | Optional managed rate-limit/cache connection; treat as credential-bearing.                          |
+| `RATE_LIMIT_KV_REST_API_URL`       | Server-only Upstash REST endpoint for distributed rate limiting; treat as sensitive configuration.  |
+| `RATE_LIMIT_KV_REST_API_TOKEN`     | Server-only write credential for atomic distributed rate limits; secret.                             |
 
 ### Non-secret configuration names
 

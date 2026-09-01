@@ -7,7 +7,21 @@ PoliSmart Africa AI is an AI-powered political campaign intelligence and managem
 - Serves the production React application from `dist`.
 - Exposes authenticated, tenant-scoped APIs under `/api`.
 - Supports organization accounts, campaigns, grounded AI Intelligence, approved knowledge, policy, events, volunteers, and role-based administration.
-- Applies security headers, request IDs, JSON limits, and rate limits.
+- Applies security headers, request IDs, JSON limits, and shared atomic Upstash rate limits.
+
+## Distributed rate limiting
+
+Production and Preview use the server-only `RATE_LIMIT_KV_REST_API_URL` and
+`RATE_LIMIT_KV_REST_API_TOKEN` variables. Counters use expiring, HMAC-derived keys and are shared
+across Vercel instances. Authentication and ordinary API requests use a bounded local fallback
+only during a shared-store outage. OpenAI-backed generation fails closed with HTTP 503 if shared
+cost protection cannot be enforced. Limit violations return HTTP 429 with `Retry-After`.
+
+The established AI Assistant policy remains 12 requests per user/organization operation per
+60 seconds, with an additional 60-request organization-wide window. Policy drafting and
+Communications assistance use 6 requests per user/operation and 30 per organization/operation per
+60 seconds. Authentication limits are purpose-specific and use IP plus HMAC-derived email or token
+identifiers; raw account and recovery values never enter Redis keys.
 - Keeps OpenAI, Microsoft Graph, object-storage, and Neon access behind server-side services and protected environment variables.
 - Keeps the public health response minimal; protected operational endpoints never return credentials.
 

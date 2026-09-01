@@ -3,6 +3,7 @@ import { PERMISSIONS } from "../config/authorization.js";
 import { requireSession, requireTenantPermission } from "../middleware/authentication.js";
 import { asyncRoute } from "../middleware/http.js";
 import { requireString } from "../services/validation.js";
+import { noRateLimit } from "../services/rateLimiting.js";
 const text = (body, key, max = 5000) => requireString(body, key, { min: 2, max });
 const decisionNote = (body) => (body?.note ? text(body, "note", 1000) : null);
 const SENTIMENTS = ["POSITIVE", "NEUTRAL", "NEGATIVE", "MIXED", "UNKNOWN"];
@@ -25,7 +26,13 @@ function sentiment(value) {
   return result;
 }
 
-export function createIntelligenceWorkflowsRouter({ repository, service, provider, governance }) {
+export function createIntelligenceWorkflowsRouter({
+  repository,
+  service,
+  provider,
+  governance,
+  aiRateLimiters = {},
+}) {
   const router = Router();
   router.use(requireSession);
   router.get(
@@ -113,6 +120,8 @@ export function createIntelligenceWorkflowsRouter({ repository, service, provide
   router.post(
     "/policy/:campaignId/:id/ai-draft",
     requireTenantPermission(PERMISSIONS.POLICY_MANAGE),
+    aiRateLimiters.policyUser || noRateLimit,
+    aiRateLimiters.policyOrganization || noRateLimit,
     asyncRoute(async (req, res) =>
       res.status(201).json({
         revision: await service.aiPolicyDraft({
@@ -218,6 +227,8 @@ export function createIntelligenceWorkflowsRouter({ repository, service, provide
   router.post(
     "/communications/:campaignId/:id/ai-assist",
     requireTenantPermission(PERMISSIONS.COMMUNICATIONS_MANAGE),
+    aiRateLimiters.communicationsUser || noRateLimit,
+    aiRateLimiters.communicationsOrganization || noRateLimit,
     asyncRoute(async (req, res) =>
       res.status(201).json({
         revision: await service.aiCommunicationDraft({

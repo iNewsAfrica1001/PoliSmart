@@ -9,7 +9,6 @@ import {
   securityHeaders,
   assignRequestId,
   logRequest,
-  rateLimit,
   createApiErrorHandler,
 } from "./server/middleware/http.js";
 import { createAiRouter } from "./server/routes/ai.js";
@@ -39,11 +38,19 @@ import { createAuthenticationService } from "./server/services/authentication.js
 import { createAccountNotificationService } from "./server/services/accountNotifications.js";
 import { createKnowledgeBaseService } from "./server/services/knowledgeBase.js";
 import { createAiProvider } from "./server/services/aiProvider.js";
-import { createAiAssistantService, createAiRateLimiter } from "./server/services/aiAssistant.js";
+import { createAiAssistantService } from "./server/services/aiAssistant.js";
 import { createIntelligenceWorkflowService } from "./server/services/intelligenceWorkflows.js";
 import { createGovernanceService } from "./server/services/governance.js";
 import { createDocumentStorage } from "./server/services/documentStorage.js";
 import { PERMISSIONS } from "./server/config/authorization.js";
+import { RATE_LIMIT_POLICIES } from "./server/config/rateLimits.js";
+import {
+  createLocalFallbackStore,
+  createRateLimitMiddleware,
+  createRateLimitService,
+  createUpstashRateLimitStore,
+  normalizeEmail,
+} from "./server/services/rateLimiting.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -52,6 +59,36 @@ const config = loadConfig(__dirname);
 const productionEnvironmentErrors = validateProductionEnvironment(config);
 if (productionEnvironmentErrors.length)
   throw new Error(`Invalid production environment: ${productionEnvironmentErrors.join(" ")}`);
+const rateLimitService = createRateLimitService({
+  sharedStore: createUpstashRateLimitStore({
+    url: config.rateLimitRestUrl,
+    token: config.rateLimitRestToken,
+  }),
+  fallbackStore: createLocalFallbackStore(),
+  secret: config.sessionSecret,
+});
+const sharedLimiter = ({ purpose, policy, identifiers, failurePolicy = "fallback" }) =>
+  createRateLimitMiddleware({
+    service: rateLimitService,
+    purpose,
+    limit: policy.limit,
+    windowMs: policy.windowMs,
+    identifiers,
+    failurePolicy,
+    unavailableMessage: "AI service temporarily unavailable.",
+  });
+const ipAndBodyHash = (field) => (request) => [
+  request.ip,
+  rateLimitService.hash(
+    field === "email" ? normalizeEmail(request.body?.email) : request.body?.[field],
+  ),
+];
+const authenticatedAiIdentifiers = (operation) => (request) => [
+  request.auth?.user.id,
+  request.tenant?.id,
+  operation,
+];
+const organizationAiIdentifiers = (operation) => (request) => [request.tenant?.id, operation];
 const authService = createAuthenticationService(prisma, {
   tokenSecret: config.sessionSecret,
   notifications: createAccountNotificationService(config),
@@ -85,7 +122,14 @@ app.use(securityHeaders({ isProduction: config.isProduction }));
 app.use(logRequest);
 app.use(
   "/api",
-  rateLimit({ windowMs: config.rateLimitWindowMs, maxRequests: config.rateLimitMaxRequests }),
+  sharedLimiter({
+    purpose: "general-api",
+    policy: {
+      limit: config.rateLimitMaxRequests,
+      windowMs: config.rateLimitWindowMs,
+    },
+    identifiers: (request) => [request.ip, request.path],
+  }),
 );
 
 app.get("/api/health", (_request, response) => {
@@ -138,7 +182,41 @@ app.get(
     });
   },
 );
-app.use("/api/auth", createAuthRouter({ authService, config, governance: governanceService }));
+app.use(
+  "/api/auth",
+  createAuthRouter({
+    authService,
+    config,
+    governance: governanceService,
+    rateLimiters: {
+      login: sharedLimiter({
+        purpose: "auth-login",
+        policy: RATE_LIMIT_POLICIES.login,
+        identifiers: ipAndBodyHash("email"),
+      }),
+      registration: sharedLimiter({
+        purpose: "auth-registration",
+        policy: RATE_LIMIT_POLICIES.registration,
+        identifiers: ipAndBodyHash("email"),
+      }),
+      verificationResend: sharedLimiter({
+        purpose: "auth-verification-resend",
+        policy: RATE_LIMIT_POLICIES.verificationResend,
+        identifiers: ipAndBodyHash("email"),
+      }),
+      passwordResetRequest: sharedLimiter({
+        purpose: "auth-password-reset-request",
+        policy: RATE_LIMIT_POLICIES.passwordResetRequest,
+        identifiers: ipAndBodyHash("email"),
+      }),
+      passwordResetConfirmation: sharedLimiter({
+        purpose: "auth-password-reset-confirmation",
+        policy: RATE_LIMIT_POLICIES.passwordResetConfirmation,
+        identifiers: ipAndBodyHash("token"),
+      }),
+    },
+  }),
+);
 app.use("/api/campaigns", createCampaignRouter(createCampaignRepository(prisma)));
 app.use("/api/operations", createOperationsRouter(createOperationsRepository(prisma)));
 app.use("/api/command-center", createCommandCenterRouter(createCommandCenterRepository(prisma)));
@@ -149,6 +227,32 @@ app.use(
     service: createIntelligenceWorkflowService(intelligenceWorkflowRepository, governanceService),
     provider: aiProvider,
     governance: governanceService,
+    aiRateLimiters: {
+      policyUser: sharedLimiter({
+        purpose: "ai-policy-user",
+        policy: RATE_LIMIT_POLICIES.aiWorkflowUser,
+        identifiers: authenticatedAiIdentifiers("policy-draft"),
+        failurePolicy: "closed",
+      }),
+      policyOrganization: sharedLimiter({
+        purpose: "ai-policy-organization",
+        policy: RATE_LIMIT_POLICIES.aiWorkflowOrganization,
+        identifiers: organizationAiIdentifiers("policy-draft"),
+        failurePolicy: "closed",
+      }),
+      communicationsUser: sharedLimiter({
+        purpose: "ai-communications-user",
+        policy: RATE_LIMIT_POLICIES.aiWorkflowUser,
+        identifiers: authenticatedAiIdentifiers("communications-assist"),
+        failurePolicy: "closed",
+      }),
+      communicationsOrganization: sharedLimiter({
+        purpose: "ai-communications-organization",
+        policy: RATE_LIMIT_POLICIES.aiWorkflowOrganization,
+        identifiers: organizationAiIdentifiers("communications-assist"),
+        failurePolicy: "closed",
+      }),
+    },
   }),
 );
 app.use("/api/governance", createGovernanceRouter(governanceRepository));
@@ -165,10 +269,23 @@ app.use(
   "/api/ai",
   createAiRouter({
     service: aiService,
-    rateLimiter: createAiRateLimiter({
-      windowMs: config.aiRateLimitWindowMs,
-      maxRequests: config.aiRateLimitMaxRequests,
-    }),
+    rateLimiters: {
+      user: sharedLimiter({
+        purpose: "ai-assistant-intelligence-user",
+        policy: {
+          limit: config.aiRateLimitMaxRequests,
+          windowMs: config.aiRateLimitWindowMs,
+        },
+        identifiers: authenticatedAiIdentifiers("assistant-chat"),
+        failurePolicy: "closed",
+      }),
+      organization: sharedLimiter({
+        purpose: "ai-assistant-intelligence-organization",
+        policy: RATE_LIMIT_POLICIES.aiAssistantOrganization,
+        identifiers: organizationAiIdentifiers("assistant-chat"),
+        failurePolicy: "closed",
+      }),
+    },
   }),
 );
 app.use("/api", (request, response) => {

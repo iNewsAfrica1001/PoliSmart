@@ -2,7 +2,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   createAiAssistantService,
-  createAiRateLimiter,
   detectIntent,
 } from "../server/services/aiAssistant.js";
 import { AiProviderError } from "../server/services/aiProvider.js";
@@ -129,33 +128,6 @@ test("knowledge retrieval always enforces tenant, campaign, approval, readiness 
   assert.equal(where.document.campaignId, "campaign-a");
   assert.equal(where.document.approvalStatus, "APPROVED");
   assert.equal(where.document.processingStatus, "READY");
-});
-
-test("AI rate limiter rejects requests beyond the configured user limit", () => {
-  const middleware = createAiRateLimiter({ maxRequests: 1, windowMs: 1000, now: () => 0 });
-  const headers = {};
-  let status;
-  const request = { tenant: { id: "tenant" }, auth: { user: { id: "user" } } };
-  const response = {
-    setHeader: (key, value) => {
-      headers[key] = value;
-    },
-    status: (value) => {
-      status = value;
-      return response;
-    },
-    json: () => response,
-  };
-  let passed = 0;
-  middleware(request, response, () => {
-    passed += 1;
-  });
-  middleware(request, response, () => {
-    passed += 1;
-  });
-  assert.equal(passed, 1);
-  assert.equal(status, 429);
-  assert.equal(headers["Retry-After"], "1");
 });
 
 test("public intelligence sends aggregates rather than respondent rows", async () => {

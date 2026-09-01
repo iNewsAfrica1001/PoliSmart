@@ -84,6 +84,8 @@ export function loadConfig(rootDir) {
     sessionSecret,
     databaseUrl: process.env.DATABASE_URL || "",
     redisUrl: process.env.REDIS_URL || "",
+    rateLimitRestUrl: process.env.RATE_LIMIT_KV_REST_API_URL || "",
+    rateLimitRestToken: process.env.RATE_LIMIT_KV_REST_API_TOKEN || "",
     openAiApiKey: process.env.OPENAI_API_KEY || "",
     openAiModel: process.env.OPENAI_MODEL || (isProduction ? "" : "gpt-5.4"),
     aiProvider: process.env.AI_PROVIDER || "openai",
