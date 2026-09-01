@@ -99,6 +99,35 @@ export const AFROBAROMETER_COUNTRY_MAPPINGS = Object.freeze({
   40: "Zimbabwe",
 });
 
+const COUNTRY_ALIASES = Object.freeze({
+  "Congo-Brazzaville": Object.freeze([
+    "Congo Brazzaville",
+    "Republic of the Congo",
+  ]),
+  "Côte d'Ivoire": Object.freeze(["Cote d'Ivoire", "Ivory Coast"]),
+});
+
+// Country intent is resolved independently of available aggregate rows so that an unavailable
+// named country cannot silently broaden to another country's evidence. The DRC entry is retained
+// even though it is not in the approved Round 9 import: an explicit request must fail closed.
+export const AFROBAROMETER_COUNTRY_REGISTRY = Object.freeze([
+  ...Object.values(AFROBAROMETER_COUNTRY_MAPPINGS).map((canonicalName) =>
+    Object.freeze({
+      canonicalName,
+      aliases: Object.freeze([canonicalName, ...(COUNTRY_ALIASES[canonicalName] || [])]),
+    }),
+  ),
+  Object.freeze({
+    canonicalName: "Democratic Republic of the Congo",
+    aliases: Object.freeze([
+      "Democratic Republic of the Congo",
+      "DR Congo",
+      "Congo-Kinshasa",
+      "DRC",
+    ]),
+  }),
+]);
+
 export const AFROBAROMETER_INDICATOR_MAPPINGS = Object.freeze([
   Object.freeze({
     questionCode: "Q45PT1",

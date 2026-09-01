@@ -1,19 +1,26 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import express from "express";
+import request from "supertest";
 import {
   createAiAssistantService,
   detectIntent,
+  resolveExplicitCountry,
 } from "../server/services/aiAssistant.js";
 import { AiProviderError } from "../server/services/aiProvider.js";
 import { createAiRepository } from "../server/repositories/aiRepository.js";
+import { createAiRouter } from "../server/routes/ai.js";
 
 function harness({
   chunks = [],
   aggregates = [],
+  aggregateResolver,
   providerFailure = false,
   sourceIds = ["S1", "FAKE"],
 } = {}) {
   const messages = [];
+  const aggregateQueries = [];
+  let providerCalls = 0;
   const repository = {
     findCampaign: async () => ({ id: "campaign" }),
     createConversation: async (data) => ({ id: "conversation", messages: [], ...data }),
@@ -30,6 +37,7 @@ function harness({
   const provider = {
     name: "openai",
     generate: async () => {
+      providerCalls += 1;
       if (providerFailure) throw new AiProviderError();
       return {
         observedData: "Approved evidence reports 42%.",
@@ -43,10 +51,17 @@ function harness({
   return {
     service: createAiAssistantService({
       repository,
-      intelligenceRepository: { listAggregates: async () => aggregates },
+      intelligenceRepository: {
+        listAggregates: async (input) => {
+          aggregateQueries.push(input);
+          return aggregateResolver ? aggregateResolver(input) : aggregates;
+        },
+      },
       provider,
     }),
     messages,
+    aggregateQueries,
+    providerCalls: () => providerCalls,
   };
 }
 
@@ -194,7 +209,7 @@ test("country-specific public intelligence never cites a different country", asy
     importVersion: "r9-test",
     sourceUrl: "https://example.test",
   };
-  const { service } = harness({
+  const { service, aggregateQueries } = harness({
     aggregates: [
       { ...base, country: "Angola" },
       { ...base, country: "Niger", weightedPercentage: 48 },
@@ -208,6 +223,178 @@ test("country-specific public intelligence never cites a different country", asy
     question: "What are the leading public priorities in Nigeria according to Afrobarometer?",
   });
   assert.equal(answer.grounded, true);
+  assert.equal(aggregateQueries[0].country, "Nigeria");
   assert.ok(answer.citations.length > 0);
   assert.ok(answer.citations.every((citation) => citation.country === "Nigeria"));
+});
+
+test("explicit country without safeguarded rows fails closed before provider invocation", async () => {
+  const otherCountry = {
+    country: "Ghana",
+    indicator: "Public priority",
+    responseCode: "Unemployment",
+    weightedPercentage: 44,
+    unweightedSampleSize: 900,
+    weightField: "COMBINWT",
+    surveySource: "Afrobarometer",
+    question: "Q45PT1",
+    surveyRound: "9",
+  };
+  const { service, aggregateQueries, providerCalls } = harness({
+    aggregateResolver: ({ country }) => (country ? [] : [otherCountry]),
+  });
+  const answer = await service.answer({
+    tenantId: "tenant",
+    campaignId: "campaign",
+    userId: "user",
+    question: "What are the public priorities in Kenya according to Afrobarometer?",
+  });
+  assert.equal(answer.grounded, false);
+  assert.equal(answer.reason, "INSUFFICIENT_COUNTRY_EVIDENCE");
+  assert.deepEqual(answer.citations, []);
+  assert.match(answer.observedData, /Kenya/);
+  assert.equal(providerCalls(), 0);
+  assert.deepEqual(aggregateQueries.map(({ country }) => country), ["Kenya"]);
+});
+
+test("insufficient country evidence preserves the HTTP 200 chat contract", async () => {
+  const app = express();
+  app.use(express.json());
+  app.use((req, _res, next) => {
+    req.auth = { user: { id: "user", memberships: [{ tenantId: "org-a", role: "ANALYST" }] } };
+    next();
+  });
+  app.use(
+    "/ai",
+    createAiRouter({
+      service: {
+        answer: async () => ({
+          conversationId: "conversation",
+          messageId: "message",
+          intent: "PUBLIC_INTELLIGENCE",
+          grounded: false,
+          reason: "INSUFFICIENT_COUNTRY_EVIDENCE",
+          observedData: "No approved safeguarded evidence is available for Kenya.",
+          interpretation: "No grounded country-specific interpretation is available.",
+          citations: [],
+        }),
+      },
+    }),
+  );
+  app.use((error, _req, res, _next) =>
+    res.status(error.status || 500).json({ message: error.message }),
+  );
+  const response = await request(app)
+    .post("/ai/chat")
+    .set("X-Organization-Id", "org-a")
+    .send({
+      campaignId: "00000000-0000-0000-0000-000000000000",
+      question: "What does Afrobarometer report about Kenya?",
+    })
+    .expect(200);
+  assert.equal(response.body.grounded, false);
+  assert.deepEqual(response.body.citations, []);
+  assert.equal(response.body.reason, "INSUFFICIENT_COUNTRY_EVIDENCE");
+});
+
+test("safeguard-rejected country evidence never broadens to another country", async () => {
+  const { service, aggregateQueries, providerCalls } = harness({
+    aggregateResolver: ({ country, minimumSampleSize }) => {
+      assert.equal(country, "Ghana");
+      assert.equal(minimumSampleSize, 100);
+      return [];
+    },
+  });
+  const answer = await service.answer({
+    tenantId: "tenant",
+    campaignId: "campaign",
+    userId: "user",
+    question: "What does the survey report about democracy in Ghana?",
+  });
+  assert.equal(answer.grounded, false);
+  assert.deepEqual(answer.citations, []);
+  assert.equal(providerCalls(), 0);
+  assert.equal(aggregateQueries.length, 1);
+});
+
+test("no-country public intelligence preserves broader safeguarded retrieval", async () => {
+  const row = {
+    country: "Ghana",
+    indicator: "Institutional trust",
+    responseCode: "A lot",
+    weightedPercentage: 48,
+    unweightedSampleSize: 600,
+    weightField: "COMBINWT",
+    surveySource: "Afrobarometer",
+    question: "Q37A",
+    surveyRound: "9",
+  };
+  const { service, aggregateQueries, providerCalls } = harness({ aggregates: [row] });
+  const answer = await service.answer({
+    tenantId: "tenant",
+    campaignId: "campaign",
+    userId: "user",
+    question: "What does Afrobarometer report about institutional trust?",
+  });
+  assert.equal(aggregateQueries[0].country, undefined);
+  assert.equal(answer.grounded, true);
+  assert.equal(answer.citations[0].country, "Ghana");
+  assert.equal(providerCalls(), 1);
+});
+
+test("country resolution normalizes case, accents, punctuation, and safe aliases", () => {
+  assert.deepEqual(resolveExplicitCountry("TRUST IN côte d’ivoire?"), {
+    status: "RESOLVED",
+    country: "Côte d'Ivoire",
+  });
+  assert.deepEqual(resolveExplicitCountry("Trust in Cote d'Ivoire"), {
+    status: "RESOLVED",
+    country: "Côte d'Ivoire",
+  });
+  assert.deepEqual(resolveExplicitCountry("Trust in Ivory Coast"), {
+    status: "RESOLVED",
+    country: "Côte d'Ivoire",
+  });
+  assert.deepEqual(resolveExplicitCountry("Trust in DRC"), {
+    status: "RESOLVED",
+    country: "Democratic Republic of the Congo",
+  });
+});
+
+test("qualified Congo names remain distinct while bare Congo fails closed", () => {
+  assert.deepEqual(resolveExplicitCountry("Democracy in Democratic Republic of the Congo"), {
+    status: "RESOLVED",
+    country: "Democratic Republic of the Congo",
+  });
+  assert.deepEqual(resolveExplicitCountry("Democracy in Republic of the Congo"), {
+    status: "RESOLVED",
+    country: "Congo-Brazzaville",
+  });
+  assert.deepEqual(resolveExplicitCountry("Democracy in Congo"), {
+    status: "AMBIGUOUS",
+    country: null,
+  });
+});
+
+test("ambiguous or unavailable Congo evidence returns no citations and skips OpenAI", async () => {
+  for (const question of [
+    "What does Afrobarometer report about democracy in Congo?",
+    "What does Afrobarometer report about democracy in DRC?",
+  ]) {
+    const { service, aggregateQueries, providerCalls } = harness({
+      aggregateResolver: () => [],
+    });
+    const answer = await service.answer({
+      tenantId: "tenant",
+      campaignId: "campaign",
+      userId: "user",
+      question,
+    });
+    assert.equal(answer.grounded, false);
+    assert.equal(answer.reason, "INSUFFICIENT_COUNTRY_EVIDENCE");
+    assert.deepEqual(answer.citations, []);
+    assert.equal(providerCalls(), 0);
+    if (question.endsWith("Congo?")) assert.equal(aggregateQueries.length, 0);
+    else assert.equal(aggregateQueries[0].country, "Democratic Republic of the Congo");
+  }
 });
