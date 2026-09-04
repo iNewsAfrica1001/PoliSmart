@@ -34,6 +34,7 @@ export type SessionUser = {
     role: string;
     canCreateEvents?: boolean;
     canCreateVolunteers?: boolean;
+    canReadCompliance?: boolean;
     organization: { id: string; name: string; country: string; isDemo: boolean };
   }>;
 };

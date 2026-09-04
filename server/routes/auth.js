@@ -38,6 +38,7 @@ function publicUser(user) {
         role,
         canCreateEvents: hasPermission({ role }, PERMISSIONS.EVENTS_CREATE),
         canCreateVolunteers: hasPermission({ role }, PERMISSIONS.VOLUNTEERS_CREATE),
+        canReadCompliance: hasPermission({ role }, PERMISSIONS.PLATFORM_AUDIT_READ),
         organization: {
           id: organization.id,
           name: organization.name,

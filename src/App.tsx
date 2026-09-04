@@ -50,7 +50,9 @@ export default function App() {
 function WorkspaceApp() {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState("dashboard");
+  const [page, setPage] = useState(
+    window.location.pathname === "/compliance" ? "compliance" : "dashboard",
+  );
   useEffect(() => {
     authApi
       .me()
@@ -85,6 +87,7 @@ function WorkspaceApp() {
       userName={user.displayName}
       workspaceName={membership?.organization.name || "Organization workspace"}
       role={membership?.role || "MEMBER"}
+      canReadCompliance={membership?.canReadCompliance === true}
       onNavigate={setPage}
       onSignOut={() => {
         void authApi.logout().finally(() => setUser(null));

@@ -53,6 +53,11 @@ Administrators do not gain volunteer editing, assignments, or event-participatio
 through this permission. Contact information still requires explicit authorization. The volunteer
 form uses a server-provided capability; server-side tenant and permission checks remain mandatory.
 
+Compliance audit views require the existing `platform-audit:read` permission and matching
+organization membership. Navigation is hidden without this capability; direct `/compliance`
+access shows a restricted-access message. Campaign Administrators have no Compliance audit-read
+access. Super Administrator access remains tenant-bound, and audit records remain append-only.
+
 Unknown or missing roles fail closed. A Campaign Administrator must never promote themselves or
 another person to Super Administrator, including through a direct API request. Only an already
 authorized Super Administrator can assign that role. Administrators must not attempt to bypass

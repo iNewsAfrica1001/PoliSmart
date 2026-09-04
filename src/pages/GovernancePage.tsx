@@ -2,6 +2,7 @@ import { AlertTriangle, Bot, LockKeyhole, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { SessionUser } from "../lib/auth";
 const BASE = import.meta.env.VITE_API_BASE ?? "";
+const RESTRICTED = "Compliance information is restricted to authorized administrators.";
 type Governance = {
   immutable: boolean;
   prohibitedCapabilities: string[];
@@ -19,21 +20,43 @@ type Governance = {
 };
 export function GovernancePage({ user }: { user: SessionUser }) {
   const tenant = user.memberships[0]?.tenantId || "";
+  const allowed = Boolean(tenant) && user.memberships[0]?.canReadCompliance === true;
   const [data, setData] = useState<Governance>();
   const [error, setError] = useState("");
   useEffect(() => {
+    setData(undefined);
+    setError("");
+    if (!allowed) return;
+    let cancelled = false;
     fetch(`${BASE}/api/governance`, {
       credentials: "include",
       headers: { "X-Organization-Id": tenant },
     })
       .then(async (response) => {
-        const body = await response.json();
-        if (!response.ok) throw new Error(body.message);
-        return body;
+        if (response.status === 403) throw new Error(RESTRICTED);
+        if (!response.ok) throw new Error("Unable to load compliance information.");
+        return response.json();
       })
-      .then(setData)
-      .catch((cause) => setError(cause.message || "Unable to load governance records."));
-  }, [tenant]);
+      .then((result) => {
+        if (!cancelled) setData(result);
+      })
+      .catch((cause) => {
+        if (!cancelled)
+          setError(
+            cause.message === RESTRICTED ? RESTRICTED : "Unable to load compliance information.",
+          );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tenant, allowed]);
+  if (!allowed)
+    return (
+      <section aria-labelledby="compliance-restricted-title">
+        <h1 id="compliance-restricted-title">Compliance access restricted</h1>
+        <p role="status">{RESTRICTED}</p>
+      </section>
+    );
   return (
     <div className="governance-page">
       <header className="workflow-heading">

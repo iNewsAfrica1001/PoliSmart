@@ -10,6 +10,7 @@ type AppShellProps = {
   userName: string;
   workspaceName: string;
   role: string;
+  canReadCompliance?: boolean;
 };
 
 const roleLabel = (role: string) =>
@@ -26,6 +27,7 @@ export function AppShell({
   userName,
   workspaceName,
   role,
+  canReadCompliance = false,
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const initials =
@@ -59,22 +61,24 @@ export function AppShell({
           </button>
         </div>
         <nav aria-label="Workspace navigation">
-          {navigation.map(({ label, icon: Icon, page, enabled }) => (
-            <button
-              className={activePage === page ? "nav-item nav-item--active" : "nav-item"}
-              key={label}
-              disabled={!enabled}
-              title={!enabled ? `${label} is coming soon` : undefined}
-              onClick={() => {
-                onNavigate(page);
-                setMobileOpen(false);
-              }}
-            >
-              <Icon aria-hidden="true" />
-              <span>{label}</span>
-              {!enabled && <small>SOON</small>}
-            </button>
-          ))}
+          {navigation
+            .filter((item) => item.page !== "compliance" || canReadCompliance)
+            .map(({ label, icon: Icon, page, enabled }) => (
+              <button
+                className={activePage === page ? "nav-item nav-item--active" : "nav-item"}
+                key={label}
+                disabled={!enabled}
+                title={!enabled ? `${label} is coming soon` : undefined}
+                onClick={() => {
+                  onNavigate(page);
+                  setMobileOpen(false);
+                }}
+              >
+                <Icon aria-hidden="true" />
+                <span>{label}</span>
+                {!enabled && <small>SOON</small>}
+              </button>
+            ))}
         </nav>
         <div className="sidebar-footer">
           <span>Workspace</span>

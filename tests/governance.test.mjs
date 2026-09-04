@@ -7,6 +7,75 @@ import {
   PROHIBITED_AI_CAPABILITIES,
 } from "../server/services/governance.js";
 import { createGovernanceRepository } from "../server/repositories/governanceRepository.js";
+import express from "express";
+import request from "supertest";
+import { createGovernanceRouter } from "../server/routes/governance.js";
+import { createAuthRouter } from "../server/routes/auth.js";
+
+test("Compliance keeps administrator access denied and Super Administrator access tenant-bound", async () => {
+  for (const [role, tenant, status] of [
+    ["CAMPAIGN_ADMINISTRATOR", "org-a", 403],
+    ["SUPER_ADMINISTRATOR", "org-a", 200],
+    ["SUPER_ADMINISTRATOR", "org-b", 403],
+    ["UNKNOWN", "org-a", 403],
+  ]) {
+    const calls = [];
+    const app = express();
+    app.use((req, _res, next) => {
+      req.auth = {
+        user: {
+          memberships: [
+            {
+              tenantId: "org-a",
+              role,
+              organization: { id: "org-a", name: "Fictional test organization" },
+            },
+          ],
+        },
+      };
+      next();
+    });
+    app.use("/auth", createAuthRouter({ authService: {}, config: {} }));
+    const list = async (scope) => {
+      calls.push(scope);
+      return [{ action: "PRIVATE_TEST_METADATA" }];
+    };
+    app.use(
+      "/governance",
+      createGovernanceRouter({ listAudit: list, listAiUsage: list, listErrors: list }),
+    );
+    app.use((error, _req, res, _next) =>
+      res.status(error.status || 500).json({ message: error.message }),
+    );
+    const capability = await request(app).get("/auth/me").expect(200);
+    assert.equal(
+      capability.body.user.memberships[0].canReadCompliance,
+      role === "SUPER_ADMINISTRATOR",
+    );
+    const result = await request(app)
+      .get("/governance")
+      .set("X-Organization-Id", tenant)
+      .expect(status);
+    assert.equal(calls.length, status === 200 ? 3 : 0);
+    assert.ok(calls.every((scope) => scope === "org-a"));
+    if (status === 403)
+      assert.doesNotMatch(JSON.stringify(result.body), /PRIVATE_TEST_METADATA|auditEvents|aiUsage/);
+  }
+});
+
+test("Compliance navigation and direct page use fail-closed capabilities and safe messaging", () => {
+  const shell = readFileSync("src/components/layout/AppShell.tsx", "utf8");
+  const page = readFileSync("src/pages/GovernancePage.tsx", "utf8");
+  const app = readFileSync("src/App.tsx", "utf8");
+  assert.match(shell, /canReadCompliance = false/);
+  assert.match(shell, /item.page !== "compliance" \|\| canReadCompliance/);
+  assert.match(app, /canReadCompliance=\{membership\?\.canReadCompliance === true\}/);
+  assert.match(app, /window.location.pathname === "\/compliance"/);
+  assert.ok(page.indexOf("if (!allowed) return;") < page.indexOf("fetch("));
+  assert.match(page, /Compliance information is restricted to authorized administrators\./);
+  assert.match(page, /response.status === 403/);
+  assert.doesNotMatch(page, /throw new Error\(body.message\)/);
+});
 
 test("responsible AI blocks all prohibited political capability classes", () => {
   const cases = [
