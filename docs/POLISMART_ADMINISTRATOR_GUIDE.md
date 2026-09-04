@@ -42,6 +42,12 @@ campaign.
 | Analyst                 | Reads analytics, approved knowledge, campaign information, and uses the AI Assistant.                                                                                            |
 | Volunteer               | Limited organization/campaign read access and assigned participation capabilities.                                                                                               |
 
+Event creation uses the dedicated server-side `events:create` permission. Campaign Administrators,
+Super Administrators, Field Directors, and Volunteer Coordinators can create events within their
+authorized organization. This does not grant Campaign Administrators unrelated field-management
+permissions. The event form uses a server-provided capability for guidance; the API independently
+enforces permission and tenant scope.
+
 Unknown or missing roles fail closed. A Campaign Administrator must never promote themselves or
 another person to Super Administrator, including through a direct API request. Only an already
 authorized Super Administrator can assign that role. Administrators must not attempt to bypass
@@ -189,7 +195,7 @@ source, documentation, tickets, screenshots, chat, or Git.
 | `SMTP_USER` / `SMTP_PASSWORD`      | Credentials only if an SMTP provider is intentionally approved. SMTP is not the current Graph path. |
 | `REDIS_URL`                        | Optional managed rate-limit/cache connection; treat as credential-bearing.                          |
 | `RATE_LIMIT_KV_REST_API_URL`       | Server-only Upstash REST endpoint for distributed rate limiting; treat as sensitive configuration.  |
-| `RATE_LIMIT_KV_REST_API_TOKEN`     | Server-only write credential for atomic distributed rate limits; secret.                             |
+| `RATE_LIMIT_KV_REST_API_TOKEN`     | Server-only write credential for atomic distributed rate limits; secret.                            |
 
 ### Non-secret configuration names
 

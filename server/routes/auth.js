@@ -9,6 +9,8 @@ import {
 } from "../middleware/authentication.js";
 import { asyncRoute } from "../middleware/http.js";
 import { noRateLimit } from "../services/rateLimiting.js";
+import { PERMISSIONS } from "../config/authorization.js";
+import { hasPermission } from "../services/authorization.js";
 
 const REGISTRATION_NEUTRAL_MESSAGE =
   "If the information provided can be used to create or access an account, follow the instructions sent to the email address.";
@@ -34,6 +36,7 @@ function publicUser(user) {
       user.memberships?.map(({ tenantId, role, organization }) => ({
         tenantId,
         role,
+        canCreateEvents: hasPermission({ role }, PERMISSIONS.EVENTS_CREATE),
         organization: {
           id: organization.id,
           name: organization.name,

@@ -14,6 +14,10 @@ export function OperationsPage({
   onOpenDashboard: () => void;
 }) {
   const tenantId = activeTenant(user);
+  // UI guidance only; the API independently enforces events:create and tenant scope.
+  const canCreateEvent =
+    user.memberships.find((membership) => membership.tenantId === tenantId)?.canCreateEvents ===
+    true;
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selected, setSelected] = useState("");
   const [items, setItems] = useState<OperationsItem[]>([]);
@@ -68,6 +72,7 @@ export function OperationsPage({
   } as const;
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (section === "events" && !canCreateEvent) return;
     setError("");
     setConfirmation("");
     const data = Object.fromEntries(new FormData(event.currentTarget));
@@ -120,11 +125,16 @@ export function OperationsPage({
         <button
           className="primary-action"
           onClick={() => setShowForm(!showForm)}
-          disabled={section !== "campaigns" && section !== "volunteers" && !selected}
+          disabled={
+            (section === "events" && !canCreateEvent) ||
+            (section !== "campaigns" && section !== "volunteers" && !selected)
+          }
           title={
-            section !== "campaigns" && section !== "volunteers" && !selected
-              ? "Create a campaign first"
-              : undefined
+            section === "events" && !canCreateEvent
+              ? "Your role cannot create events"
+              : section !== "campaigns" && section !== "volunteers" && !selected
+                ? "Create a campaign first"
+                : undefined
           }
         >
           <Plus /> Add {section === "field" ? "task" : section.slice(0, -1)}
@@ -160,7 +170,7 @@ export function OperationsPage({
           </select>
         </label>
       )}
-      {showForm && (
+      {showForm && (section !== "events" || canCreateEvent) && (
         <form className="ops-form" onSubmit={submit}>
           <h2>New {section === "field" ? "task" : section.slice(0, -1)}</h2>
           {section === "campaigns" && (

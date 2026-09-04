@@ -89,7 +89,7 @@ export function createOperationsRouter(repository) {
   );
   router.post(
     "/:campaignId/events",
-    requireTenantPermission(PERMISSIONS.FIELD_MANAGE),
+    requireTenantPermission(PERMISSIONS.EVENTS_CREATE),
     asyncRoute(async (request, response) =>
       response.status(201).json({
         item: await repository.create(request.tenant.id, request.params.campaignId, "events", {

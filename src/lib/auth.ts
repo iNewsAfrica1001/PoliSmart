@@ -32,6 +32,7 @@ export type SessionUser = {
   memberships: Array<{
     tenantId: string;
     role: string;
+    canCreateEvents?: boolean;
     organization: { id: string; name: string; country: string; isDemo: boolean };
   }>;
 };
