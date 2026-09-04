@@ -35,6 +35,9 @@ export type SessionUser = {
     canCreateEvents?: boolean;
     canCreateVolunteers?: boolean;
     canReadCompliance?: boolean;
+    canManagePolicy?: boolean;
+    canManageCommunications?: boolean;
+    canApproveKnowledge?: boolean;
     organization: { id: string; name: string; country: string; isDemo: boolean };
   }>;
 };

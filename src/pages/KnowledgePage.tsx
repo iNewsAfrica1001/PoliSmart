@@ -6,6 +6,10 @@ import { operationsApi } from "../lib/operations";
 
 export function KnowledgePage({ user }: { user: SessionUser }) {
   const tenantId = user.memberships[0]?.tenantId ?? "";
+  const canApprove =
+    user.memberships.find((item) => item.tenantId === tenantId)?.canApproveKnowledge === true;
+  const [approving, setApproving] = useState(false);
+  const [notice, setNotice] = useState("");
   const [campaigns, setCampaigns] = useState<Array<{ id: string; name: string }>>([]);
   const [campaignId, setCampaignId] = useState("");
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
@@ -61,6 +65,12 @@ export function KnowledgePage({ user }: { user: SessionUser }) {
           <ShieldCheck /> Tenant isolated
         </span>
       </header>
+      <p>Upload → READY/DRAFT → Authorized Approval → APPROVED → Available for grounded AI.</p>
+      <p>
+        READY means processing is complete, not approved. Approved documents are eligible for AI
+        retrieval when relevant to the question and permitted campaign context.
+      </p>
+      {notice && <p role="status">{notice}</p>}
       {error && (
         <p className="ops-error" role="alert">
           {error}
@@ -172,6 +182,42 @@ export function KnowledgePage({ user }: { user: SessionUser }) {
                 <div className="document-state">
                   <span>{document.processingStatus}</span>
                   <small>{document.approvalStatus}</small>
+                  {document.approvalStatus !== "APPROVED" && (
+                    <p>Awaiting approval before this document can be used by AI Assistant.</p>
+                  )}
+                  {canApprove &&
+                    document.processingStatus === "READY" &&
+                    document.approvalStatus !== "APPROVED" && (
+                      <button
+                        type="button"
+                        disabled={approving}
+                        onClick={async () => {
+                          if (!canApprove || approving) return;
+                          if (
+                            !window.confirm(
+                              `Approve "${document.title}" for grounded AI use? Confirm that you have reviewed its content.`,
+                            )
+                          )
+                            return;
+                          setApproving(true);
+                          setError("");
+                          setNotice("");
+                          try {
+                            await knowledgeApi.approve(tenantId, document.id);
+                            await load();
+                            setNotice("Document approved and eligible for grounded AI retrieval.");
+                          } catch {
+                            setError(
+                              "Unable to approve this document. Check your approval access and try again.",
+                            );
+                          } finally {
+                            setApproving(false);
+                          }
+                        }}
+                      >
+                        Approve {document.title} for AI
+                      </button>
+                    )}
                 </div>
                 <button
                   onClick={async () => {

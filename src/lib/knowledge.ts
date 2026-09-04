@@ -20,6 +20,13 @@ export type KnowledgeDocument = {
   uploadedAt: string;
 };
 export const knowledgeApi = {
+  approve: (tenantId: string, id: string) =>
+    fetch(`${API_BASE}/api/knowledge/${encodeURIComponent(id)}/approval`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json", "X-Organization-Id": tenantId },
+      body: JSON.stringify({ approvalStatus: "APPROVED" }),
+    }).then((response) => parse<{ updated: boolean }>(response)),
   list: (tenantId: string, campaignId: string, query = "") =>
     fetch(
       `${API_BASE}/api/knowledge?campaignId=${encodeURIComponent(campaignId)}&q=${encodeURIComponent(query)}`,

@@ -32,6 +32,11 @@ export function IntelligenceWorkflowsPage({
   module: "policy" | "media" | "communications";
 }) {
   const tenant = user.memberships[0]?.tenantId || "";
+  const membership = user.memberships.find((item) => item.tenantId === tenant);
+  const canManage =
+    module === "policy"
+      ? membership?.canManagePolicy === true
+      : module === "communications" && membership?.canManageCommunications === true;
   const [campaign, setCampaign] = useState("");
   const [policies, setPolicies] = useState<PolicyCase[]>([]);
   const [media, setMedia] = useState<MediaItem[]>([]);
@@ -61,6 +66,7 @@ export function IntelligenceWorkflowsPage({
   }, [load]);
   async function create(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!canManage) return;
     setBusy(true);
     const form = event.currentTarget;
     const data = Object.fromEntries(new FormData(form));
@@ -80,6 +86,7 @@ export function IntelligenceWorkflowsPage({
     }
   }
   const act = async (action: () => Promise<unknown>) => {
+    if (!canManage) return;
     setBusy(true);
     setError("");
     try {
@@ -122,19 +129,24 @@ export function IntelligenceWorkflowsPage({
       )}
       {module === "policy" && (
         <>
-          <CreateCard onSubmit={create}>
-            <label>
-              Policy title
-              <input name="title" required maxLength={160} />
-            </label>
-            <label>
-              Problem statement
-              <textarea name="problem" required rows={3} />
-            </label>
-            <button disabled={busy || !campaign}>
-              <Plus /> Open policy case
-            </button>
-          </CreateCard>
+          {!canManage && (
+            <p>You have read-only access. Policy management is restricted to authorized users.</p>
+          )}
+          {canManage && (
+            <CreateCard onSubmit={create}>
+              <label>
+                Policy title
+                <input name="title" required maxLength={160} />
+              </label>
+              <label>
+                Problem statement
+                <textarea name="problem" required rows={3} />
+              </label>
+              <button disabled={busy || !campaign}>
+                <Plus /> Open policy case
+              </button>
+            </CreateCard>
+          )}
           {!campaign && (
             <Empty text="No campaign is available. Create a campaign before opening policy work." />
           )}
@@ -149,7 +161,7 @@ export function IntelligenceWorkflowsPage({
                   <span>{item.options.length} options</span>
                   <span>{item.revisions.length} revisions</span>
                 </div>
-                {["EVIDENCE", "RESEARCH"].includes(item.status) && (
+                {canManage && ["EVIDENCE", "RESEARCH"].includes(item.status) && (
                   <form
                     className="inline-workflow-form"
                     onSubmit={(event) => {
@@ -169,7 +181,7 @@ export function IntelligenceWorkflowsPage({
                     <button>Add {title(item.status)}</button>
                   </form>
                 )}
-                {item.status === "OPTIONS" && (
+                {canManage && item.status === "OPTIONS" && (
                   <form
                     className="inline-workflow-form"
                     onSubmit={(event) => {
@@ -190,28 +202,35 @@ export function IntelligenceWorkflowsPage({
                 )}
                 {item.revisions[0]?.isAiGenerated && <AiNotice />}
                 <div className="workflow-actions">
-                  {nextPolicy(item.status, item).map((next) => (
-                    <button
-                      key={next}
-                      disabled={busy}
-                      onClick={() =>
-                        void act(() =>
-                          next === "AI_DRAFT"
-                            ? workflowApi.policyAi(tenant, campaign, item.id)
-                            : workflowApi.policyTransition(tenant, campaign, item.id, next),
-                        )
-                      }
-                    >
-                      {next === "AI_DRAFT" && <Bot />}
-                      {title(next)}
-                    </button>
-                  ))}
+                  {canManage &&
+                    nextPolicy(item.status, item).map((next) => (
+                      <button
+                        key={next}
+                        disabled={busy}
+                        onClick={() =>
+                          void act(() =>
+                            next === "AI_DRAFT"
+                              ? workflowApi.policyAi(tenant, campaign, item.id)
+                              : workflowApi.policyTransition(tenant, campaign, item.id, next),
+                          )
+                        }
+                      >
+                        {next === "AI_DRAFT" && <Bot />}
+                        {title(next)}
+                      </button>
+                    ))}
                 </div>
               </article>
             ))}
           </div>
           {campaign && !policies.length && (
-            <Empty text="No policy projects yet. Define a problem above to start the evidence and human-review workflow." />
+            <Empty
+              text={
+                canManage
+                  ? "No policy projects yet. Define a problem above to start the evidence and human-review workflow."
+                  : "No policy projects yet. An authorized policy manager can create one."
+              }
+            />
           )}
         </>
       )}
@@ -251,39 +270,47 @@ export function IntelligenceWorkflowsPage({
       )}
       {module === "communications" && (
         <>
-          <CreateCard onSubmit={create}>
-            <label>
-              Title
-              <input name="title" required />
-            </label>
-            <label>
-              Content type
-              <select name="type">
-                {[
-                  "SPEECH",
-                  "PRESS_RELEASE",
-                  "POLICY_EXPLANATION",
-                  "ANNOUNCEMENT",
-                  "NEWSLETTER",
-                  "FAQ",
-                ].map((x) => (
-                  <option key={x} value={x}>
-                    {title(x)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Initial draft
-              <textarea name="content" required rows={4} />
-            </label>
-            <label className="check-label">
-              <input type="checkbox" name="complianceRequired" /> Compliance review required
-            </label>
-            <button disabled={busy || !campaign}>
-              <Plus /> Create draft
-            </button>
-          </CreateCard>
+          {!canManage && (
+            <p>
+              You have read-only access. Communications management is restricted to authorized
+              users.
+            </p>
+          )}
+          {canManage && (
+            <CreateCard onSubmit={create}>
+              <label>
+                Title
+                <input name="title" required />
+              </label>
+              <label>
+                Content type
+                <select name="type">
+                  {[
+                    "SPEECH",
+                    "PRESS_RELEASE",
+                    "POLICY_EXPLANATION",
+                    "ANNOUNCEMENT",
+                    "NEWSLETTER",
+                    "FAQ",
+                  ].map((x) => (
+                    <option key={x} value={x}>
+                      {title(x)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Initial draft
+                <textarea name="content" required rows={4} />
+              </label>
+              <label className="check-label">
+                <input type="checkbox" name="complianceRequired" /> Compliance review required
+              </label>
+              <button disabled={busy || !campaign}>
+                <Plus /> Create draft
+              </button>
+            </CreateCard>
+          )}
           <div className="workflow-list">
             {communications.map((item) => (
               <article className="workflow-card" key={item.id}>
@@ -301,45 +328,52 @@ export function IntelligenceWorkflowsPage({
                 </div>
                 {item.revisions[0]?.isAiGenerated && <AiNotice />}
                 <div className="revision-preview">{item.revisions[0]?.content}</div>
-                {["DRAFT", "AI_ASSISTED", "HUMAN_REVIEW", "COMPLIANCE_REVIEW"].includes(
-                  item.status,
-                ) && (
-                  <form
-                    className="inline-workflow-form"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      const content = String(
-                        new FormData(event.currentTarget).get("content") || "",
-                      );
-                      void act(() => workflowApi.addRevision(tenant, campaign, item.id, content));
-                    }}
-                  >
-                    <textarea
-                      name="content"
-                      defaultValue={item.revisions[0]?.content}
-                      aria-label={`New revision for ${item.title}`}
-                      required
-                    />
-                    <button>Save human revision</button>
-                  </form>
-                )}
-                <div className="workflow-actions">
-                  {nextCommunication(item).map((next) => (
-                    <button
-                      key={next}
-                      disabled={busy}
-                      onClick={() =>
-                        void act(() =>
-                          next === "AI_ASSISTED"
-                            ? workflowApi.communicationAi(tenant, campaign, item.id)
-                            : workflowApi.communicationTransition(tenant, campaign, item.id, next),
-                        )
-                      }
+                {canManage &&
+                  ["DRAFT", "AI_ASSISTED", "HUMAN_REVIEW", "COMPLIANCE_REVIEW"].includes(
+                    item.status,
+                  ) && (
+                    <form
+                      className="inline-workflow-form"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        const content = String(
+                          new FormData(event.currentTarget).get("content") || "",
+                        );
+                        void act(() => workflowApi.addRevision(tenant, campaign, item.id, content));
+                      }}
                     >
-                      {next === "AI_ASSISTED" && <Bot />}
-                      {title(next)}
-                    </button>
-                  ))}
+                      <textarea
+                        name="content"
+                        defaultValue={item.revisions[0]?.content}
+                        aria-label={`New revision for ${item.title}`}
+                        required
+                      />
+                      <button>Save human revision</button>
+                    </form>
+                  )}
+                <div className="workflow-actions">
+                  {canManage &&
+                    nextCommunication(item).map((next) => (
+                      <button
+                        key={next}
+                        disabled={busy}
+                        onClick={() =>
+                          void act(() =>
+                            next === "AI_ASSISTED"
+                              ? workflowApi.communicationAi(tenant, campaign, item.id)
+                              : workflowApi.communicationTransition(
+                                  tenant,
+                                  campaign,
+                                  item.id,
+                                  next,
+                                ),
+                          )
+                        }
+                      >
+                        {next === "AI_ASSISTED" && <Bot />}
+                        {title(next)}
+                      </button>
+                    ))}
                 </div>
                 <small className="no-publish">
                   <ShieldCheck /> PoliSmart cannot autonomously publish this communication.
