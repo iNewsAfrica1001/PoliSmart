@@ -37,6 +37,7 @@ function publicUser(user) {
         tenantId,
         role,
         canCreateEvents: hasPermission({ role }, PERMISSIONS.EVENTS_CREATE),
+        canCreateVolunteers: hasPermission({ role }, PERMISSIONS.VOLUNTEERS_CREATE),
         organization: {
           id: organization.id,
           name: organization.name,

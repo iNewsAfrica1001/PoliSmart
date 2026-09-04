@@ -177,7 +177,7 @@ export function createOperationsRouter(repository) {
   );
   router.post(
     "/volunteers",
-    requireTenantPermission(PERMISSIONS.VOLUNTEERS_MANAGE),
+    requireTenantPermission(PERMISSIONS.VOLUNTEERS_CREATE),
     asyncRoute(async (request, response) => {
       const data = {
         displayName: requireString(request.body, "displayName", { min: 2, max: 120 }),

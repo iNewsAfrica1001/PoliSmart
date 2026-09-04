@@ -27,6 +27,10 @@ function eventApp(role, calls) {
   app.use(
     "/operations",
     createOperationsRouter({
+      createVolunteer: async (tenantId, data) => {
+        calls.push({ tenantId, data });
+        return { id: "volunteer-a", tenantId, ...data };
+      },
       create: async (tenantId, campaignId, kind, data) => {
         calls.push({ tenantId, campaignId, kind, data });
         return { id: "event-a", tenantId, campaignId, ...data };
@@ -97,11 +101,75 @@ test("event UI capability comes from the server policy and guards form submissio
     app.use(createAuthRouter({ authService: {}, config: {} }));
     const response = await request(app).get("/me").expect(200);
     assert.equal(response.body.user.memberships[0].canCreateEvents, eventCreators.includes(role));
+    assert.equal(
+      response.body.user.memberships[0].canCreateVolunteers,
+      eventCreators.includes(role),
+    );
   }
   const source = readFileSync(new URL("../src/pages/OperationsPage.tsx", import.meta.url), "utf8");
   assert.match(source, /\?\.canCreateEvents\s*===\s*true/);
   assert.ok(source.includes('if (section === "events" && !canCreateEvent) return;'));
-  assert.ok(source.includes('showForm && (section !== "events" || canCreateEvent)'));
+  assert.match(source, /showForm\s*&&\s*\(section !== "events" \|\| canCreateEvent\)/);
+  assert.match(source, /\?\.canCreateVolunteers\s*===\s*true/);
+  assert.ok(source.includes('if (section === "volunteers" && !canCreateVolunteer) return;'));
+  assert.ok(source.includes('(section !== "volunteers" || canCreateVolunteer)'));
+});
+
+test("volunteer creation enforces the full role matrix and ignores caller tenant overrides", async () => {
+  for (const role of [...new Set(Object.values(ROLES)), "UNKNOWN", null]) {
+    const calls = [];
+    const allowed = eventCreators.includes(role);
+    await request(eventApp(role, calls))
+      .post("/operations/volunteers")
+      .set("X-Organization-Id", "org-a")
+      .send({
+        displayName: "Fictional test volunteer",
+        contactAuthorized: true,
+        email: "volunteer@example.invalid",
+        tenantId: "org-b",
+      })
+      .expect(role === null ? 401 : allowed ? 201 : 403);
+    assert.equal(calls.length, allowed ? 1 : 0);
+    if (allowed) {
+      assert.equal(calls[0].tenantId, "org-a");
+      assert.equal(calls[0].data.tenantId, undefined);
+    }
+  }
+});
+
+test("volunteer creation rejects foreign or absent tenant and unauthorized contact data", async () => {
+  for (const tenant of [null, "org-b", "org-a"]) {
+    const calls = [];
+    const req = request(eventApp("CAMPAIGN_ADMINISTRATOR", calls)).post("/operations/volunteers");
+    if (tenant) req.set("X-Organization-Id", tenant);
+    await req
+      .send({
+        displayName: "Fictional volunteer",
+        email: "volunteer@example.invalid",
+        contactAuthorized: false,
+      })
+      .expect(tenant === "org-a" ? 400 : 403);
+    assert.equal(calls.length, 0);
+  }
+});
+
+test("volunteer creation does not authorize administrator edits or assignments", async () => {
+  const actor = { role: ROLES.CAMPAIGN_ADMINISTRATOR };
+  assert.equal(hasPermission(actor, PERMISSIONS.VOLUNTEERS_CREATE), true);
+  assert.equal(hasPermission(actor, PERMISSIONS.VOLUNTEERS_MANAGE), false);
+  const calls = [];
+  const app = eventApp(actor.role, calls);
+  await request(app)
+    .patch("/operations/volunteers/volunteer-a")
+    .set("X-Organization-Id", "org-a")
+    .send({})
+    .expect(403);
+  await request(app)
+    .post("/operations/campaign-a/assignments")
+    .set("X-Organization-Id", "org-a")
+    .send({})
+    .expect(403);
+  assert.equal(calls.length, 0);
 });
 
 test("all operational statuses are accepted and unknown values fail", () => {

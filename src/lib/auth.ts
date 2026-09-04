@@ -33,6 +33,7 @@ export type SessionUser = {
     tenantId: string;
     role: string;
     canCreateEvents?: boolean;
+    canCreateVolunteers?: boolean;
     organization: { id: string; name: string; country: string; isDemo: boolean };
   }>;
 };

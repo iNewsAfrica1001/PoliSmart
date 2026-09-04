@@ -48,6 +48,11 @@ authorized organization. This does not grant Campaign Administrators unrelated f
 permissions. The event form uses a server-provided capability for guidance; the API independently
 enforces permission and tenant scope.
 
+Volunteer creation similarly uses `volunteers:create` for these same four roles. Campaign
+Administrators do not gain volunteer editing, assignments, or event-participation management
+through this permission. Contact information still requires explicit authorization. The volunteer
+form uses a server-provided capability; server-side tenant and permission checks remain mandatory.
+
 Unknown or missing roles fail closed. A Campaign Administrator must never promote themselves or
 another person to Super Administrator, including through a direct API request. Only an already
 authorized Super Administrator can assign that role. Administrators must not attempt to bypass

@@ -19,6 +19,9 @@ export function OperationsPage({
     user.memberships.find((membership) => membership.tenantId === tenantId)?.canCreateEvents ===
     true;
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const canCreateVolunteer =
+    user.memberships.find((membership) => membership.tenantId === tenantId)?.canCreateVolunteers ===
+    true;
   const [selected, setSelected] = useState("");
   const [items, setItems] = useState<OperationsItem[]>([]);
   const [volunteers, setVolunteers] = useState<
@@ -73,6 +76,7 @@ export function OperationsPage({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (section === "events" && !canCreateEvent) return;
+    if (section === "volunteers" && !canCreateVolunteer) return;
     setError("");
     setConfirmation("");
     const data = Object.fromEntries(new FormData(event.currentTarget));
@@ -127,14 +131,17 @@ export function OperationsPage({
           onClick={() => setShowForm(!showForm)}
           disabled={
             (section === "events" && !canCreateEvent) ||
+            (section === "volunteers" && !canCreateVolunteer) ||
             (section !== "campaigns" && section !== "volunteers" && !selected)
           }
           title={
             section === "events" && !canCreateEvent
               ? "Your role cannot create events"
-              : section !== "campaigns" && section !== "volunteers" && !selected
-                ? "Create a campaign first"
-                : undefined
+              : section === "volunteers" && !canCreateVolunteer
+                ? "Your role cannot create volunteers"
+                : section !== "campaigns" && section !== "volunteers" && !selected
+                  ? "Create a campaign first"
+                  : undefined
           }
         >
           <Plus /> Add {section === "field" ? "task" : section.slice(0, -1)}
@@ -170,126 +177,128 @@ export function OperationsPage({
           </select>
         </label>
       )}
-      {showForm && (section !== "events" || canCreateEvent) && (
-        <form className="ops-form" onSubmit={submit}>
-          <h2>New {section === "field" ? "task" : section.slice(0, -1)}</h2>
-          {section === "campaigns" && (
-            <p className="form-guidance">
-              Campaigns scope intelligence, policy, events, and field work. Enter the official
-              campaign details below; dates may be added now or later.
-            </p>
-          )}
-          {section === "volunteers" ? (
-            <>
-              <label>
-                Name
-                <input name="displayName" required />
-              </label>
-              <label>
-                Languages
-                <input name="languages" placeholder="English, French" />
-              </label>
-              <label>
-                Skills
-                <input name="skills" placeholder="Logistics, registration" />
-              </label>
-              <label>
-                Email
-                <input name="email" type="email" />
-              </label>
-              <label>
-                Phone
-                <input name="phone" type="tel" />
-              </label>
-              <label className="consent-check">
-                <input name="contactAuthorized" type="checkbox" /> Authorized to store and use these
-                contact details
-              </label>
-            </>
-          ) : (
-            <>
-              <label>
-                Name
-                <input name={section === "campaigns" ? "name" : "title"} required />
-              </label>
-              {section === "campaigns" && (
-                <>
-                  <label>
-                    Country
-                    <input name="country" required />
-                  </label>
-                  <label>
-                    Election type
-                    <input name="electionType" required />
-                  </label>
-                  <label>
-                    Start date <small>(optional)</small>
-                    <input name="startsAt" type="date" />
-                  </label>
-                  <label>
-                    End date <small>(optional)</small>
-                    <input name="endsAt" type="date" />
-                  </label>
-                </>
-              )}
-              {section === "field" && (
-                <>
-                  <label>
-                    Priority
-                    <select name="priority">
-                      <option>NORMAL</option>
-                      <option>HIGH</option>
-                      <option>URGENT</option>
-                      <option>LOW</option>
-                    </select>
-                  </label>
-                  <label>
-                    Deadline
-                    <input name="dueAt" type="datetime-local" />
-                  </label>
-                </>
-              )}
-              {section === "events" && (
-                <>
-                  <label>
-                    Type
-                    <select name="type">
-                      {[
-                        "RALLY",
-                        "TOWN_HALL",
-                        "PRESS_CONFERENCE",
-                        "COMMUNITY_MEETING",
-                        "VOLUNTEER_TRAINING",
-                        "POLICY_FORUM",
-                        "CANDIDATE_VISIT",
-                        "INTERNAL_MEETING",
-                      ].map((type) => (
-                        <option key={type}>{type}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Starts
-                    <input name="startsAt" type="datetime-local" required />
-                  </label>
-                  <label>
-                    Venue
-                    <input name="venue" />
-                  </label>
-                </>
-              )}
-            </>
-          )}
-          <div>
-            <button type="button" onClick={() => setShowForm(false)}>
-              Cancel
-            </button>
-            <button className="primary-action" type="submit">
-              Save
-            </button>
-          </div>
-        </form>
-      )}
+      {showForm &&
+        (section !== "events" || canCreateEvent) &&
+        (section !== "volunteers" || canCreateVolunteer) && (
+          <form className="ops-form" onSubmit={submit}>
+            <h2>New {section === "field" ? "task" : section.slice(0, -1)}</h2>
+            {section === "campaigns" && (
+              <p className="form-guidance">
+                Campaigns scope intelligence, policy, events, and field work. Enter the official
+                campaign details below; dates may be added now or later.
+              </p>
+            )}
+            {section === "volunteers" ? (
+              <>
+                <label>
+                  Name
+                  <input name="displayName" required />
+                </label>
+                <label>
+                  Languages
+                  <input name="languages" placeholder="English, French" />
+                </label>
+                <label>
+                  Skills
+                  <input name="skills" placeholder="Logistics, registration" />
+                </label>
+                <label>
+                  Email
+                  <input name="email" type="email" />
+                </label>
+                <label>
+                  Phone
+                  <input name="phone" type="tel" />
+                </label>
+                <label className="consent-check">
+                  <input name="contactAuthorized" type="checkbox" /> Authorized to store and use
+                  these contact details
+                </label>
+              </>
+            ) : (
+              <>
+                <label>
+                  Name
+                  <input name={section === "campaigns" ? "name" : "title"} required />
+                </label>
+                {section === "campaigns" && (
+                  <>
+                    <label>
+                      Country
+                      <input name="country" required />
+                    </label>
+                    <label>
+                      Election type
+                      <input name="electionType" required />
+                    </label>
+                    <label>
+                      Start date <small>(optional)</small>
+                      <input name="startsAt" type="date" />
+                    </label>
+                    <label>
+                      End date <small>(optional)</small>
+                      <input name="endsAt" type="date" />
+                    </label>
+                  </>
+                )}
+                {section === "field" && (
+                  <>
+                    <label>
+                      Priority
+                      <select name="priority">
+                        <option>NORMAL</option>
+                        <option>HIGH</option>
+                        <option>URGENT</option>
+                        <option>LOW</option>
+                      </select>
+                    </label>
+                    <label>
+                      Deadline
+                      <input name="dueAt" type="datetime-local" />
+                    </label>
+                  </>
+                )}
+                {section === "events" && (
+                  <>
+                    <label>
+                      Type
+                      <select name="type">
+                        {[
+                          "RALLY",
+                          "TOWN_HALL",
+                          "PRESS_CONFERENCE",
+                          "COMMUNITY_MEETING",
+                          "VOLUNTEER_TRAINING",
+                          "POLICY_FORUM",
+                          "CANDIDATE_VISIT",
+                          "INTERNAL_MEETING",
+                        ].map((type) => (
+                          <option key={type}>{type}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Starts
+                      <input name="startsAt" type="datetime-local" required />
+                    </label>
+                    <label>
+                      Venue
+                      <input name="venue" />
+                    </label>
+                  </>
+                )}
+              </>
+            )}
+            <div>
+              <button type="button" onClick={() => setShowForm(false)}>
+                Cancel
+              </button>
+              <button className="primary-action" type="submit">
+                Save
+              </button>
+            </div>
+          </form>
+        )}
       <section className="ops-metrics">
         <article>
           <Flag />
