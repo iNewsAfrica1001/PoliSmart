@@ -111,6 +111,39 @@ retrieval, AI conversations, policies, events, and operational work retain campa
 authorization and auditability. A user with no campaign must create one or request access from an
 authorized administrator; the AI Assistant must not provide a campaign-independent bypass.
 
+### Knowledge document governance
+
+The deployed Knowledge Base workflow is:
+
+`Upload → Processing → READY / DRAFT → Authorized Approval → APPROVED → Eligible for grounded AI retrieval`
+
+**READY does not mean APPROVED.** READY records have completed document processing, but a
+READY/DRAFT document remains unapproved and is excluded from approved-document AI grounding.
+Uploading a document does not approve it and does not grant the uploader approval authority.
+
+Only a user who already has the server-defined knowledge-approval permission may approve an
+eligible document. The approval action requires explicit positive confirmation. Unauthorized users
+cannot approve, organization boundaries remain enforced, and users must never attempt to bypass
+these controls. Once APPROVED, a document becomes eligible for campaign- and tenant-scoped AI
+retrieval and may be cited when it is relevant to the question. Approval does not guarantee that
+every query will retrieve the document.
+
+### Permission-aware Policy and Communications access
+
+Read and management access are separate. A Campaign Administrator may be able to read the Policy
+or Communications workspace while management controls remain hidden because the assigned role
+lacks the corresponding management permission. Seeing either page does not by itself authorize
+creating, editing, approving, publishing, or otherwise managing its records. Before treating a
+missing management action as a software error, administrators should verify the user's existing
+role and permissions; they must not broaden access simply to reveal a button.
+
+### Media in Version 1
+
+Media is a monitoring-oriented V1 workflow for lawfully sourced, imported records. It is not a
+general-purpose manual media-creation workflow, so the absence of a **Create Media** button is not
+a V1 defect. Provider or import capabilities depend on a lawfully configured integration and must
+not be described as active merely because integration architecture exists.
+
 ## 5. AI and public-intelligence administration
 
 The AI Assistant retrieves approved campaign knowledge and safeguarded aggregate public
@@ -304,3 +337,6 @@ Afrobarometer imports are explicit operations and must never run automatically d
 - **Payments/Billing — Reserved / Coming Soon.** V1 has no payment processing, payment provider,
   card or bank-data collection, payment credentials, invoices, transactions, or payment database
   tables. Billing must not be required for registration or any V1 workflow.
+- **Fundraising — V1.1 / Not Implemented.** It is not available in the current production release.
+- **PostgreSQL row-level security — Post-V1 defense in depth / Not Implemented.** Existing
+  server-side tenant enforcement remains authoritative for V1.
