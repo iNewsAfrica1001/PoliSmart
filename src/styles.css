@@ -94,6 +94,55 @@
   padding: 8px 10px;
   cursor: pointer;
 }
+
+.feedback-row button.feedback-selected {
+  border-color: var(--navy);
+  background: var(--navy);
+  color: white;
+}
+
+.feedback-status,
+.refresh-status {
+  margin: 0.5rem 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.confirmation-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(15 23 42 / 55%);
+}
+
+.confirmation-dialog {
+  width: min(100%, 28rem);
+  padding: 1.5rem;
+  border-radius: 1rem;
+  background: white;
+  box-shadow: 0 24px 64px rgb(15 23 42 / 30%);
+}
+
+.confirmation-dialog h3 {
+  margin-top: 0;
+}
+
+.confirmation-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.danger-button {
+  border-color: #b91c1c !important;
+  background: #b91c1c !important;
+  color: white !important;
+}
 .assistant-composer {
   display: grid;
   gap: 10px;
@@ -140,6 +189,23 @@
   border-radius: 10px;
   background: #fff;
   cursor: pointer;
+}
+
+.refresh-button:disabled,
+.feedback-row button:disabled,
+.confirmation-actions button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .command-filters {
   display: grid;
@@ -1545,6 +1611,21 @@ textarea:focus-visible {
   background: none;
   width: 260px;
   color: #65746f;
+}
+
+.search--coming-soon {
+  cursor: default;
+  color: var(--muted);
+}
+
+.search--coming-soon span {
+  flex: 1;
+}
+
+.search--coming-soon small {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
 }
 .topbar-actions {
   display: flex;

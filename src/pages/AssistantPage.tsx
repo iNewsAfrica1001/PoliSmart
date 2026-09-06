@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Bot, Send, ThumbsUp, TriangleAlert } from "lucide-react";
 import { assistantApi, type AssistantAnswer } from "../lib/assistant";
 import type { SessionUser } from "../lib/auth";
@@ -19,6 +19,13 @@ export function AssistantPage({
   const [busy, setBusy] = useState(false);
   const [campaignsLoaded, setCampaignsLoaded] = useState(false);
   const [error, setError] = useState("");
+  const [feedbackType, setFeedbackType] = useState<"HELPFUL" | "INCORRECT" | "REPORT" | null>(null);
+  const [pendingFeedback, setPendingFeedback] = useState<"HELPFUL" | "INCORRECT" | "REPORT" | null>(
+    null,
+  );
+  const [feedbackStatus, setFeedbackStatus] = useState("");
+  const [reportOpen, setReportOpen] = useState(false);
+  const feedbackInFlight = useRef(false);
   useEffect(() => {
     operationsApi
       .campaigns(tenantId)
@@ -34,12 +41,34 @@ export function AssistantPage({
     try {
       const result = await assistantApi.chat(tenantId, campaignId, question.trim(), conversationId);
       setAnswer(result);
+      setFeedbackType(null);
+      setFeedbackStatus("");
+      setReportOpen(false);
       setConversationId(result.conversationId);
       setQuestion("");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Request failed.");
     } finally {
       setBusy(false);
+    }
+  }
+  async function submitFeedback(type: "HELPFUL" | "INCORRECT" | "REPORT") {
+    if (!answer || feedbackInFlight.current) return;
+    feedbackInFlight.current = true;
+    setPendingFeedback(type);
+    setFeedbackStatus("");
+    try {
+      await assistantApi.feedback(tenantId, answer.messageId, type);
+      setFeedbackType(type);
+      setFeedbackStatus(
+        type === "REPORT" ? "Answer reported for review." : "Thanks for your feedback.",
+      );
+      setReportOpen(false);
+    } catch {
+      setFeedbackStatus("Unable to save feedback. Try again.");
+    } finally {
+      feedbackInFlight.current = false;
+      setPendingFeedback(null);
     }
   }
   return (
@@ -120,23 +149,71 @@ export function AssistantPage({
             <span>Was this answer useful?</span>
             <button
               type="button"
-              onClick={() => void assistantApi.feedback(tenantId, answer.messageId, "HELPFUL")}
+              className={feedbackType === "HELPFUL" ? "feedback-selected" : undefined}
+              aria-pressed={feedbackType === "HELPFUL"}
+              disabled={pendingFeedback !== null}
+              onClick={() => void submitFeedback("HELPFUL")}
             >
-              <ThumbsUp size={16} /> Helpful
+              <ThumbsUp size={16} /> {pendingFeedback === "HELPFUL" ? "Saving…" : "Helpful"}
             </button>
             <button
               type="button"
-              onClick={() => void assistantApi.feedback(tenantId, answer.messageId, "INCORRECT")}
+              className={feedbackType === "INCORRECT" ? "feedback-selected" : undefined}
+              aria-pressed={feedbackType === "INCORRECT"}
+              disabled={pendingFeedback !== null}
+              onClick={() => void submitFeedback("INCORRECT")}
             >
-              <TriangleAlert size={16} /> Incorrect
+              <TriangleAlert size={16} />
+              {pendingFeedback === "INCORRECT" ? "Saving…" : "Incorrect"}
             </button>
             <button
               type="button"
-              onClick={() => void assistantApi.feedback(tenantId, answer.messageId, "REPORT")}
+              className={feedbackType === "REPORT" ? "feedback-selected" : undefined}
+              aria-pressed={feedbackType === "REPORT"}
+              disabled={pendingFeedback !== null}
+              onClick={() => setReportOpen(true)}
             >
-              Report answer
+              {pendingFeedback === "REPORT" ? "Reporting…" : "Report answer"}
             </button>
           </div>
+          {feedbackStatus && (
+            <p className="feedback-status" role="status" aria-live="polite">
+              {feedbackStatus}
+            </p>
+          )}
+          {reportOpen && (
+            <div className="confirmation-backdrop" role="presentation">
+              <section
+                className="confirmation-dialog"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="report-answer-title"
+                aria-describedby="report-answer-description"
+              >
+                <h3 id="report-answer-title">Report this AI answer for review?</h3>
+                <p id="report-answer-description">
+                  This will flag the answer for review. No additional information will be collected.
+                </p>
+                <div className="confirmation-actions">
+                  <button
+                    type="button"
+                    onClick={() => setReportOpen(false)}
+                    disabled={pendingFeedback !== null}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="danger-button"
+                    disabled={pendingFeedback !== null}
+                    onClick={() => void submitFeedback("REPORT")}
+                  >
+                    {pendingFeedback === "REPORT" ? "Reporting…" : "Report answer"}
+                  </button>
+                </div>
+              </section>
+            </div>
+          )}
         </article>
       )}
       <form className="assistant-composer" onSubmit={submit}>

@@ -12,7 +12,7 @@ import {
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { SessionUser } from "../lib/auth";
 import { commandCenterApi, type CommandCenter } from "../lib/commandCenter";
 import { operationsApi, type Campaign } from "../lib/operations";
@@ -50,6 +50,8 @@ export function DashboardPage({
   const [data, setData] = useState<CommandCenter | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshStatus, setRefreshStatus] = useState("");
+  const refreshInFlight = useRef(false);
   useEffect(() => {
     operationsApi
       .campaigns(tenantId)
@@ -64,20 +66,30 @@ export function DashboardPage({
         setLoading(false);
       });
   }, [tenantId]);
-  const load = useCallback(async () => {
-    if (!campaignId) return;
-    setLoading(true);
-    setError("");
-    try {
-      const result = await commandCenterApi.load(tenantId, campaignId, country, areaId);
-      setData(result.dashboard);
-      setAreas(result.geography);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to load command center.");
-    } finally {
-      setLoading(false);
-    }
-  }, [tenantId, campaignId, country, areaId]);
+  const load = useCallback(
+    async (announceRefresh = false) => {
+      if (!campaignId || (announceRefresh && refreshInFlight.current)) return;
+      if (announceRefresh) refreshInFlight.current = true;
+      setLoading(true);
+      setError("");
+      setRefreshStatus(announceRefresh ? "Refreshing campaign intelligence…" : "");
+      try {
+        const result = await commandCenterApi.load(tenantId, campaignId, country, areaId);
+        setData(result.dashboard);
+        setAreas(result.geography);
+        if (announceRefresh) setRefreshStatus("Updated just now.");
+      } catch {
+        setError(
+          announceRefresh ? "Unable to refresh. Try again." : "Unable to load command center.",
+        );
+        if (announceRefresh) setRefreshStatus("Refresh failed.");
+      } finally {
+        if (announceRefresh) refreshInFlight.current = false;
+        setLoading(false);
+      }
+    },
+    [tenantId, campaignId, country, areaId],
+  );
   useEffect(() => {
     void load();
   }, [load]);
@@ -89,10 +101,22 @@ export function DashboardPage({
           <h1>{data?.campaign.name || "Executive dashboard"}</h1>
           <p>A decision-ready view of execution, evidence, ownership, and risk.</p>
         </div>
-        <button type="button" className="refresh-button" onClick={() => void load()}>
-          <RefreshCw size={16} /> Refresh
+        <button
+          type="button"
+          className="refresh-button"
+          onClick={() => void load(true)}
+          disabled={loading}
+          aria-busy={loading}
+        >
+          <RefreshCw className={loading ? "spin" : undefined} size={16} />
+          {loading ? "Refreshing…" : "Refresh"}
         </button>
       </header>
+      {refreshStatus && (
+        <p className="refresh-status" role="status" aria-live="polite">
+          {refreshStatus}
+        </p>
+      )}
       <section className="command-filters" aria-label="Dashboard filters">
         <label>
           Campaign

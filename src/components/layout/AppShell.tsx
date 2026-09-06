@@ -102,12 +102,10 @@ export function AppShell({
           >
             <Menu />
           </button>
-          <div className="search">
+          <div className="search search--coming-soon" aria-label="Workspace search coming soon">
             <Search aria-hidden="true" />
-            <label className="sr-only" htmlFor="global-search">
-              Search workspace
-            </label>
-            <input id="global-search" placeholder="Search workspace" disabled />
+            <span>Search workspace</span>
+            <small>COMING SOON</small>
           </div>
           <div className="topbar-actions">
             <button className="icon-button" aria-label="Notifications" disabled>
