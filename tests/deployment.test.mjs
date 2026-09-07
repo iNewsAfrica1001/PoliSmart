@@ -395,6 +395,32 @@ test("production branding, public positioning and legal navigation are consisten
   assert.match(notifications, /sender !== "no-reply@polismartafrica\.ai"/);
 });
 
+test("public homepage presents accurate V1 marketing while login remains separate", () => {
+  const app = fs.readFileSync(path.join(root, "src", "App.tsx"), "utf8");
+  const homepage = fs.readFileSync(
+    path.join(root, "src", "pages", "MarketingHomePage.tsx"),
+    "utf8",
+  );
+
+  assert.match(app, /currentUrl\.pathname === "\/"/);
+  assert.match(app, /MarketingHomePage/);
+  assert.match(homepage, /Grounded Intelligence\./);
+  assert.match(homepage, /href="\/login"/);
+  assert.match(homepage, /id="capabilities"/);
+  assert.match(homepage, /Observed Data/);
+  assert.match(homepage, /AI Interpretation/);
+  assert.match(homepage, /not endorsed by, affiliated with or partnered with/);
+  assert.match(homepage, /Reports/);
+  assert.match(homepage, /Fundraising Management/);
+  assert.match(homepage, /No payment processing, donor profiling, scoring or sensitive-trait inference/);
+  assert.match(homepage, /mailto:support@polismartafrica\.ai/);
+  assert.match(homepage, /Operated by SentinelAI LLC/);
+  assert.match(homepage, /3204 Pearsall Ave/);
+  assert.match(homepage, /href="\/privacy"/);
+  assert.match(homepage, /href="\/terms"/);
+  assert.doesNotMatch(homepage, /Stripe|PayPal|Paystack|Flutterwave/);
+});
+
 test("Stage 4 legal pages accurately describe V1 and remain owner-review drafts", () => {
   const app = fs.readFileSync(path.join(root, "src", "App.tsx"), "utf8");
   const login = fs.readFileSync(path.join(root, "src", "pages", "LoginPage.tsx"), "utf8");
