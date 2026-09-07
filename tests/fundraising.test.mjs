@@ -14,6 +14,7 @@ import {
   formatCurrencyAmount,
   isSupportedFundraisingCurrency,
 } from "../shared/currencies.js";
+import { fundraisingFormHeading } from "../shared/fundraisingLabels.js";
 
 function appFor(role, repository, tenantId = "org-a") {
   const app = express();
@@ -114,8 +115,7 @@ test("fundraising UI is permission-aware, accessible, campaign-scoped, and prese
   assert.match(page, /does not process contributions/);
   assert.match(page, /do not enter sensitive personal information/i);
   assert.match(page, /CurrencySelector/);
-  assert.match(page, /activities: "activity"/);
-  assert.match(page, /New \{singularLabels\[section\]\}/);
+  assert.match(page, /fundraisingFormHeading\(section\)/);
   assert.doesNotMatch(page, /labels\[section\]\.slice\(0, -1\)/);
   assert.match(page, /SUPPORTED_FUNDRAISING_CURRENCIES/);
   assert.match(page, /PoliSmart does not convert currencies/);
@@ -124,6 +124,10 @@ test("fundraising UI is permission-aware, accessible, campaign-scoped, and prese
   assert.match(app, /FundraisingPage/);
   assert.match(navigation, /label: "Reports"[\s\S]*enabled: false/);
   assert.match(navigation, /label: "Billing"[\s\S]*enabled: false/);
+});
+
+test("the rendered fundraising activity form heading is exact", () => {
+  assert.equal(fundraisingFormHeading("activities"), "New activity");
 });
 
 test("African campaign countries resolve to their local ISO currencies", () => {
