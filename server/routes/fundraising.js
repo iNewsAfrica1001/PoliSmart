@@ -3,6 +3,7 @@ import { PERMISSIONS } from "../config/authorization.js";
 import { requireSession, requireTenantPermission } from "../middleware/authentication.js";
 import { asyncRoute } from "../middleware/http.js";
 import { requireString } from "../services/validation.js";
+import { isSupportedFundraisingCurrency } from "../../shared/currencies.js";
 
 const recordStatuses = new Set(["PLANNED", "ACTIVE", "COMPLETED", "CANCELLED"]);
 const contributionStatuses = new Set(["PENDING", "CONFIRMED", "REVERSED"]);
@@ -22,8 +23,8 @@ function amount(value) {
 }
 function currency(value) {
   const normalized = String(value || "").trim().toUpperCase();
-  if (!/^[A-Z]{3}$/.test(normalized))
-    throw Object.assign(new Error("currency must be a three-letter currency code."), { status: 400 });
+  if (!isSupportedFundraisingCurrency(normalized))
+    throw Object.assign(new Error("currency must be a supported three-letter currency code."), { status: 400 });
   return normalized;
 }
 function oneOf(value, allowed, fallback, field = "status") {

@@ -7,6 +7,11 @@ import { createFundraisingRouter } from "../server/routes/fundraising.js";
 import { createFundraisingRepository } from "../server/repositories/fundraisingRepository.js";
 import { hasPermission } from "../server/services/authorization.js";
 import { PERMISSIONS } from "../server/config/authorization.js";
+import {
+  currencyForCountry,
+  formatCurrencyAmount,
+  isSupportedFundraisingCurrency,
+} from "../shared/currencies.js";
 
 function appFor(role, repository, tenantId = "org-a") {
   const app = express();
@@ -101,8 +106,52 @@ test("fundraising UI is permission-aware, accessible, campaign-scoped, and prese
   assert.match(page, /Campaign context/);
   assert.match(page, /does not process contributions/);
   assert.match(page, /do not enter sensitive personal information/i);
+  assert.match(page, /CurrencySelector/);
+  assert.match(page, /SUPPORTED_FUNDRAISING_CURRENCIES/);
+  assert.match(page, /PoliSmart does not convert currencies/);
+  assert.doesNotMatch(page, /placeholder="USD"/);
   assert.match(shell, /canReadFundraising/);
   assert.match(app, /FundraisingPage/);
   assert.match(navigation, /label: "Reports"[\s\S]*enabled: false/);
   assert.match(navigation, /label: "Billing"[\s\S]*enabled: false/);
+});
+
+test("African campaign countries resolve to their local ISO currencies", () => {
+  assert.equal(currencyForCountry("Nigeria"), "NGN");
+  assert.equal(currencyForCountry("Ghana"), "GHS");
+  assert.equal(currencyForCountry("Kenya"), "KES");
+  assert.equal(currencyForCountry("South Africa"), "ZAR");
+  assert.equal(currencyForCountry("Côte d’Ivoire"), "XOF");
+  assert.equal(currencyForCountry("Unknown"), "");
+  assert.equal(isSupportedFundraisingCurrency("USD"), true);
+  assert.equal(formatCurrencyAmount("NGN", 250000), "NGN 250,000");
+});
+
+test("goal progress and totals never aggregate different currencies", async () => {
+  const database = {
+    campaign: { count: async () => 1 },
+    fundraisingGoal: { findMany: async () => [{ id: "goal-a", currency: "NGN", targetAmount: 1000 }] },
+    fundraisingContact: { findMany: async () => [] },
+    fundraisingContribution: { findMany: async () => [
+      { id: "ngn", goalId: "goal-a", status: "CONFIRMED", currency: "NGN", amount: 250 },
+      { id: "usd", goalId: "goal-a", status: "CONFIRMED", currency: "USD", amount: 100 },
+    ] },
+    fundraisingActivity: { findMany: async () => [] },
+    fundraisingFollowUp: { findMany: async () => [] },
+  };
+  const overview = await createFundraisingRepository(database).overview("org-a", "campaign-a");
+  assert.equal(overview.goals[0].confirmedAmount, 250);
+  assert.deepEqual(overview.confirmedTotals, [
+    { currency: "NGN", amount: 250 },
+    { currency: "USD", amount: 100 },
+  ]);
+});
+
+test("fundraising API accepts legacy USD but rejects unsupported currency codes", async () => {
+  const calls = [];
+  const repository = { create: async (...args) => { calls.push(args); return { id: "goal-a" }; } };
+  const payload = { title: "Community support", targetAmount: "1000.00" };
+  await request(appFor("CAMPAIGN_MANAGER", repository)).post("/fundraising/campaign-a/goals").set("X-Organization-Id", "org-a").send({ ...payload, currency: "USD" }).expect(201);
+  await request(appFor("CAMPAIGN_MANAGER", repository)).post("/fundraising/campaign-a/goals").set("X-Organization-Id", "org-a").send({ ...payload, currency: "ZZZ" }).expect(400);
+  assert.equal(calls.length, 1);
 });
