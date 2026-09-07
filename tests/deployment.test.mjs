@@ -5,9 +5,10 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import request from "supertest";
 import express from "express";
+import { Prisma } from "@prisma/client";
 
 import { loadConfig, validateProductionEnvironment } from "../server/config/env.js";
-import { createApiErrorHandler } from "../server/middleware/http.js";
+import { assignRequestId, createApiErrorHandler } from "../server/middleware/http.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -554,6 +555,72 @@ test("malformed JSON returns a stable client message", async () => {
     .expect(400);
   assert.equal(response.body.message, "Malformed JSON request.");
   assert.doesNotMatch(response.body.message, /position|expected|syntax/i);
+});
+
+async function capturePrismaError({ isProduction, includePrismaDiagnostics }) {
+  const app = express();
+  const error = new Prisma.PrismaClientKnownRequestError(
+    "Sensitive query context for person@example.invalid with token secret-token-value",
+    {
+      code: "P2022",
+      clientVersion: "6.12.0",
+      meta: {
+        modelName: "AuthUser",
+        column: "public.auth_users.email_verified_at",
+        target: ["email"],
+        unsafe: "person@example.invalid",
+        constraint: "unsafe@example.invalid",
+      },
+    },
+  );
+  const entries = [];
+  const originalError = console.error;
+  console.error = (entry) => entries.push(entry);
+  try {
+    app.use(assignRequestId);
+    app.get("/api/test", () => {
+      throw error;
+    });
+    app.use(
+      "/api",
+      createApiErrorHandler({ isProduction, includePrismaDiagnostics }),
+    );
+    const response = await request(app).get("/api/test").expect(500);
+    return { response, entry: JSON.parse(entries.at(-1)) };
+  } finally {
+    console.error = originalError;
+  }
+}
+
+test("Preview logs safe Prisma diagnostics without changing the client response", async () => {
+  const { response, entry } = await capturePrismaError({
+    isProduction: true,
+    includePrismaDiagnostics: true,
+  });
+  assert.equal(response.body.message, "Unexpected server error.");
+  assert.equal(typeof response.body.requestId, "string");
+  assert.equal(entry.message, "Unhandled API error");
+  assert.equal(entry.prismaCode, "P2022");
+  assert.deepEqual(entry.prismaMeta, {
+    modelName: "AuthUser",
+    column: "public.auth_users.email_verified_at",
+    target: ["email"],
+  });
+  assert.doesNotMatch(JSON.stringify(entry), /person@example\.invalid|secret-token-value/);
+});
+
+test("Production logs remain sanitized for known Prisma request errors", async () => {
+  const { response, entry } = await capturePrismaError({
+    isProduction: true,
+    includePrismaDiagnostics: false,
+  });
+  assert.equal(response.body.message, "Unexpected server error.");
+  assert.equal(typeof response.body.requestId, "string");
+  assert.equal(entry.message, "Unhandled API error");
+  assert.equal(entry.prismaCode, undefined);
+  assert.equal(entry.prismaMeta, undefined);
+  assert.equal(entry.stack, undefined);
+  assert.doesNotMatch(JSON.stringify(entry), /person@example\.invalid|secret-token-value/);
 });
 
 test("production Microsoft 365 sender must match the authorized mailbox", () => {

@@ -295,7 +295,14 @@ app.use("/api", (request, response) => {
   });
 });
 
-app.use("/api", createApiErrorHandler({ isProduction: config.isProduction }));
+app.use(
+  "/api",
+  createApiErrorHandler({
+    isProduction: config.isProduction,
+    includePrismaDiagnostics:
+      !config.isProduction || String(process.env.VERCEL_ENV || "").toLowerCase() === "preview",
+  }),
+);
 
 app.use(
   express.static(path.join(__dirname, "dist"), {

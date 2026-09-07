@@ -1,3 +1,31 @@
+import { Prisma } from "@prisma/client";
+
+const SAFE_PRISMA_META_FIELDS = Object.freeze([
+  "modelName",
+  "table",
+  "column",
+  "field_name",
+  "constraint",
+  "target",
+]);
+const SAFE_PRISMA_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_.$"]{0,127}$/;
+
+function safePrismaMeta(meta) {
+  if (!meta || typeof meta !== "object") return undefined;
+  const result = {};
+  for (const field of SAFE_PRISMA_META_FIELDS) {
+    const value = meta[field];
+    if (typeof value === "string" && SAFE_PRISMA_IDENTIFIER.test(value)) result[field] = value;
+    else if (
+      Array.isArray(value) &&
+      value.length <= 20 &&
+      value.every((item) => typeof item === "string" && SAFE_PRISMA_IDENTIFIER.test(item))
+    )
+      result[field] = value;
+  }
+  return Object.keys(result).length ? result : undefined;
+}
+
 export function assignRequestId(request, response, next) {
   const id =
     request.headers["x-request-id"] ||
@@ -56,7 +84,10 @@ export function asyncRoute(handler) {
   };
 }
 
-export function createApiErrorHandler({ isProduction = false } = {}) {
+export function createApiErrorHandler({
+  isProduction = false,
+  includePrismaDiagnostics = !isProduction,
+} = {}) {
   return (error, request, response, _next) => {
     const malformedJson = error?.type === "entity.parse.failed";
     const status = malformedJson ? 400 : Number(error.status || 500);
@@ -68,7 +99,15 @@ export function createApiErrorHandler({ isProduction = false } = {}) {
           : error.message,
       requestId: request.id,
     };
-    if (status >= 500 || malformedJson)
+    if (status >= 500 || malformedJson) {
+      const prismaMeta =
+        includePrismaDiagnostics && error instanceof Prisma.PrismaClientKnownRequestError
+          ? safePrismaMeta(error.meta)
+          : undefined;
+      const prismaDiagnostics =
+        includePrismaDiagnostics && error instanceof Prisma.PrismaClientKnownRequestError
+          ? { prismaCode: error.code, ...(prismaMeta ? { prismaMeta } : {}) }
+          : {};
       console.error(
         JSON.stringify({
           at: new Date().toISOString(),
@@ -82,8 +121,10 @@ export function createApiErrorHandler({ isProduction = false } = {}) {
               ? "Unhandled API error"
               : error.message,
           stack: isProduction ? undefined : error.stack,
+          ...prismaDiagnostics,
         }),
       );
+    }
     response.status(status).json(payload);
   };
 }
