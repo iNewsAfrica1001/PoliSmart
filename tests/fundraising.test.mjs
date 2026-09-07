@@ -104,6 +104,11 @@ test("fundraising UI is permission-aware, accessible, campaign-scoped, and prese
   assert.match(page, /canManageFundraising/);
   assert.match(page, /canArchiveFundraising/);
   assert.match(page, /Campaign context/);
+  assert.match(page, /Campaign:<\/dt>/);
+  assert.match(page, /Country:<\/dt>/);
+  assert.match(page, /Default currency:<\/dt>/);
+  assert.match(page, /selectCampaign\(event\.target\.value\)/);
+  assert.match(page, /setSelectedCurrency\(currencyForCountry\(nextCampaign\?\.country/);
   assert.match(page, /does not process contributions/);
   assert.match(page, /do not enter sensitive personal information/i);
   assert.match(page, /CurrencySelector/);
@@ -121,6 +126,7 @@ test("African campaign countries resolve to their local ISO currencies", () => {
   assert.equal(currencyForCountry("Ghana"), "GHS");
   assert.equal(currencyForCountry("Kenya"), "KES");
   assert.equal(currencyForCountry("South Africa"), "ZAR");
+  assert.equal(currencyForCountry("United States"), "USD");
   assert.equal(currencyForCountry("Côte d’Ivoire"), "XOF");
   assert.equal(currencyForCountry("Unknown"), "");
   assert.equal(isSupportedFundraisingCurrency("USD"), true);

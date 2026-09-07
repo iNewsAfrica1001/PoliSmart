@@ -12,6 +12,7 @@ const COUNTRY_CURRENCIES = Object.freeze({
   "sao tome principe": "STN", senegal: "XOF", seychelles: "SCR", "sierra leone": "SLE",
   somalia: "SOS", "south africa": "ZAR", "south sudan": "SSP", sudan: "SDG", tanzania: "TZS",
   togo: "XOF", tunisia: "TND", uganda: "UGX", zambia: "ZMW", zimbabwe: "ZWG",
+  "united states": "USD", "united states of america": "USD", usa: "USD", us: "USD",
 });
 
 export const SUPPORTED_FUNDRAISING_CURRENCIES = Object.freeze([
