@@ -6,14 +6,16 @@ import test from "node:test";
 const root = process.cwd();
 const read = (...parts) => fs.readFileSync(path.join(root, ...parts), "utf8");
 const shell = read("src", "components", "layout", "AppShell.tsx");
+const workspaceSearch = read("src", "components", "layout", "WorkspaceSearch.tsx");
 const dashboard = read("src", "pages", "DashboardPage.tsx");
 const assistant = read("src", "pages", "AssistantPage.tsx");
 
-test("workspace search is visibly deferred and cannot appear interactive", () => {
-  assert.match(shell, /Workspace search coming soon/);
-  assert.match(shell, /Search workspace/);
-  assert.match(shell, /COMING SOON/);
-  assert.doesNotMatch(shell, /id="global-search"/);
+test("workspace search is an accessible authenticated control", () => {
+  assert.match(shell, /<WorkspaceSearch/);
+  assert.match(workspaceSearch, /Search workspace/);
+  assert.match(workspaceSearch, /role="listbox"/);
+  assert.match(workspaceSearch, /ArrowDown/);
+  assert.doesNotMatch(shell, /Workspace search coming soon/);
 });
 
 test("dashboard refresh announces progress and prevents duplicate requests", () => {

@@ -20,6 +20,7 @@ import { createPublicIntelligenceRouter } from "./server/routes/publicIntelligen
 import { createCommandCenterRouter } from "./server/routes/commandCenter.js";
 import { createIntelligenceWorkflowsRouter } from "./server/routes/intelligenceWorkflows.js";
 import { createGovernanceRouter } from "./server/routes/governance.js";
+import { createWorkspaceSearchRouter } from "./server/routes/workspaceSearch.js";
 import {
   authenticateRequests,
   requireSession,
@@ -34,6 +35,7 @@ import { createCommandCenterRepository } from "./server/repositories/commandCent
 import { createIntelligenceWorkflowRepository } from "./server/repositories/intelligenceWorkflowRepository.js";
 import { createGovernanceRepository } from "./server/repositories/governanceRepository.js";
 import { createAiRepository } from "./server/repositories/aiRepository.js";
+import { createWorkspaceSearchRepository } from "./server/repositories/workspaceSearchRepository.js";
 import { createAuthenticationService } from "./server/services/authentication.js";
 import { createAccountNotificationService } from "./server/services/accountNotifications.js";
 import { createKnowledgeBaseService } from "./server/services/knowledgeBase.js";
@@ -218,6 +220,7 @@ app.use(
   }),
 );
 app.use("/api/campaigns", createCampaignRouter(createCampaignRepository(prisma)));
+app.use("/api/search", createWorkspaceSearchRouter(createWorkspaceSearchRepository(prisma)));
 app.use("/api/operations", createOperationsRouter(createOperationsRepository(prisma)));
 app.use("/api/command-center", createCommandCenterRouter(createCommandCenterRepository(prisma)));
 app.use(

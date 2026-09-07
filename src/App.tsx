@@ -93,6 +93,7 @@ function WorkspaceApp() {
       workspaceName={membership?.organization.name || "Organization workspace"}
       role={membership?.role || "MEMBER"}
       canReadCompliance={membership?.canReadCompliance === true}
+      tenantId={membership?.tenantId || ""}
       onNavigate={setPage}
       onSignOut={() => {
         void authApi.logout().finally(() => setUser(null));

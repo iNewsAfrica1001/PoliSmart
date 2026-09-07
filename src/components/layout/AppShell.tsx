@@ -1,6 +1,7 @@
-import { Bell, ChevronDown, Menu, Search, X } from "lucide-react";
+import { Bell, ChevronDown, Menu, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { navigation } from "../../config/navigation";
+import { WorkspaceSearch } from "./WorkspaceSearch";
 
 type AppShellProps = {
   children: ReactNode;
@@ -11,6 +12,7 @@ type AppShellProps = {
   workspaceName: string;
   role: string;
   canReadCompliance?: boolean;
+  tenantId: string;
 };
 
 const roleLabel = (role: string) =>
@@ -28,6 +30,7 @@ export function AppShell({
   workspaceName,
   role,
   canReadCompliance = false,
+  tenantId,
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const initials =
@@ -102,11 +105,7 @@ export function AppShell({
           >
             <Menu />
           </button>
-          <div className="search search--coming-soon" aria-label="Workspace search coming soon">
-            <Search aria-hidden="true" />
-            <span>Search workspace</span>
-            <small>COMING SOON</small>
-          </div>
+          <WorkspaceSearch tenantId={tenantId} onNavigate={onNavigate} />
           <div className="topbar-actions">
             <button className="icon-button" aria-label="Notifications" disabled>
               <Bell />
