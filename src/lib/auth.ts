@@ -38,6 +38,10 @@ export type SessionUser = {
     canManagePolicy?: boolean;
     canManageCommunications?: boolean;
     canApproveKnowledge?: boolean;
+    canReadFundraising?: boolean;
+    canManageFundraising?: boolean;
+    canArchiveFundraising?: boolean;
+    canReadFundraisingHistory?: boolean;
     organization: { id: string; name: string; country: string; isDemo: boolean };
   }>;
 };

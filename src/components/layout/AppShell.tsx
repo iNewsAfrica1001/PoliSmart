@@ -12,6 +12,7 @@ type AppShellProps = {
   workspaceName: string;
   role: string;
   canReadCompliance?: boolean;
+  canReadFundraising?: boolean;
   tenantId: string;
 };
 
@@ -30,6 +31,7 @@ export function AppShell({
   workspaceName,
   role,
   canReadCompliance = false,
+  canReadFundraising = false,
   tenantId,
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -65,7 +67,9 @@ export function AppShell({
         </div>
         <nav aria-label="Workspace navigation">
           {navigation
-            .filter((item) => item.page !== "compliance" || canReadCompliance)
+            .filter((item) =>
+              (item.page !== "compliance" || canReadCompliance) &&
+              (item.page !== "fundraising" || canReadFundraising))
             .map(({ label, icon: Icon, page, enabled }) => (
               <button
                 className={activePage === page ? "nav-item nav-item--active" : "nav-item"}

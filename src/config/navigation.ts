@@ -13,6 +13,7 @@ import {
   Settings,
   ShieldCheck,
   WalletCards,
+  HandCoins,
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
@@ -35,6 +36,7 @@ export const navigation: NavigationItem[] = [
   { label: "Field Operations", icon: BriefcaseBusiness, page: "field", enabled: true },
   { label: "Volunteers", icon: UsersRound, page: "volunteers", enabled: true },
   { label: "Events", icon: CalendarDays, page: "events", enabled: true },
+  { label: "Fundraising", icon: HandCoins, page: "fundraising", enabled: true },
   { label: "Reports", icon: FileBarChart, page: "reports", enabled: false },
   { label: "Billing", icon: WalletCards, page: "billing", enabled: false },
   { label: "Compliance", icon: ShieldCheck, page: "compliance", enabled: true },

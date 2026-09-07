@@ -26,6 +26,7 @@ export function createWorkspaceSearchRouter(repository) {
           media: permitted(PERMISSIONS.ANALYTICS_READ),
           policy: permitted(PERMISSIONS.CAMPAIGN_READ),
           communications: permitted(PERMISSIONS.CAMPAIGN_READ),
+          fundraising: permitted(PERMISSIONS.FUNDRAISING_READ),
         },
       });
       response.json({ results });

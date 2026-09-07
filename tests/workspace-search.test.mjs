@@ -15,6 +15,7 @@ const models = [
   "campaignTask",
   "policyCase",
   "communication",
+  "fundraisingGoal",
 ];
 
 function databaseWith(results = {}) {

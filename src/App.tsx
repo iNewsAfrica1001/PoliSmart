@@ -12,6 +12,7 @@ import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { LegalPage } from "./pages/LegalPage";
 import { MarketingHomePage } from "./pages/MarketingHomePage";
+import { FundraisingPage } from "./pages/FundraisingPage";
 
 const pageTitles: Record<string, string> = {
   dashboard: "Dashboard",
@@ -25,6 +26,7 @@ const pageTitles: Record<string, string> = {
   volunteers: "Volunteers",
   events: "Events",
   compliance: "Compliance",
+  fundraising: "Fundraising Management",
 };
 
 export default function App() {
@@ -93,6 +95,7 @@ function WorkspaceApp() {
       workspaceName={membership?.organization.name || "Organization workspace"}
       role={membership?.role || "MEMBER"}
       canReadCompliance={membership?.canReadCompliance === true}
+      canReadFundraising={membership?.canReadFundraising === true}
       tenantId={membership?.tenantId || ""}
       onNavigate={setPage}
       onSignOut={() => {
@@ -109,6 +112,8 @@ function WorkspaceApp() {
         <GovernancePage user={user} />
       ) : page === "knowledge" ? (
         <KnowledgePage user={user} />
+      ) : page === "fundraising" ? (
+        <FundraisingPage user={user} />
       ) : (
         <OperationsPage
           user={user}

@@ -10,7 +10,7 @@ export function createWorkspaceSearchRepository(database) {
         ...limit,
       });
 
-      const [documents, events, volunteers, media, tasks, policies, communications] =
+      const [documents, events, volunteers, media, tasks, policies, communications, fundraisingGoals] =
         await Promise.all([
           permissions.knowledge
             ? database.knowledgeDocument.findMany({
@@ -68,6 +68,13 @@ export function createWorkspaceSearchRepository(database) {
                 ...limit,
               })
             : [],
+          permissions.fundraising
+            ? database.fundraisingGoal.findMany({
+                where: { tenantId, archivedAt: null, title: contains(query) },
+                select: { id: true, campaignId: true, title: true, status: true },
+                ...limit,
+              })
+            : [],
         ]);
 
       return [
@@ -79,6 +86,7 @@ export function createWorkspaceSearchRepository(database) {
         ...tasks.map((item) => ({ id: item.id, campaignId: item.campaignId, type: "FIELD", title: item.title, detail: String(item.status).replaceAll("_", " "), page: "field" })),
         ...policies.map((item) => ({ id: item.id, campaignId: item.campaignId, type: "POLICY", title: item.title, detail: String(item.status).replaceAll("_", " "), page: "policy" })),
         ...communications.map((item) => ({ id: item.id, campaignId: item.campaignId, type: "COMMUNICATION", title: item.title, detail: String(item.type).replaceAll("_", " "), page: "communications" })),
+        ...fundraisingGoals.map((item) => ({ id: item.id, campaignId: item.campaignId, type: "FUNDRAISING", title: item.title, detail: String(item.status).replaceAll("_", " "), page: "fundraising" })),
       ];
     },
   };

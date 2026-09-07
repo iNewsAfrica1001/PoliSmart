@@ -196,6 +196,28 @@ enum GovernanceApprovalStatus {
   REJECTED
 }
 
+enum FundraisingRecordStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+enum ContributionStatus {
+  PENDING
+  CONFIRMED
+  REVERSED
+  ARCHIVED
+}
+
+enum FollowUpStatus {
+  OPEN
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
 model AuthUser {
   id                     String                   @id @default(uuid()) @db.Uuid
   email                  String                   @unique
@@ -221,54 +243,67 @@ model AuthUser {
   createdCommunications  Communication[]          @relation("CommunicationCreator")
   communicationRevisions CommunicationRevision[]  @relation("CommunicationRevisionAuthor")
   communicationApprovals CommunicationApproval[]  @relation("CommunicationReviewer")
+  fundraisingHistory     FundraisingHistory[]     @relation("FundraisingHistoryActor")
 
   @@map("auth_users")
 }
 
 model Organization {
-  id               String            @id @default(uuid()) @db.Uuid
-  name             String
-  slug             String            @unique
-  country          String
-  isDemo           Boolean           @default(false) @map("is_demo")
-  createdAt        DateTime          @default(now()) @map("created_at")
-  updatedAt        DateTime          @updatedAt @map("updated_at")
-  campaigns        Campaign[]
-  memberships      Membership[]
-  geographicLevels GeographicLevel[]
-  volunteers       Volunteer[]
-  aiConversations  AiConversation[]
+  id                       String                    @id @default(uuid()) @db.Uuid
+  name                     String
+  slug                     String                    @unique
+  country                  String
+  isDemo                   Boolean                   @default(false) @map("is_demo")
+  createdAt                DateTime                  @default(now()) @map("created_at")
+  updatedAt                DateTime                  @updatedAt @map("updated_at")
+  campaigns                Campaign[]
+  memberships              Membership[]
+  geographicLevels         GeographicLevel[]
+  volunteers               Volunteer[]
+  aiConversations          AiConversation[]
+  fundraisingGoals         FundraisingGoal[]
+  fundraisingContacts      FundraisingContact[]
+  fundraisingContributions FundraisingContribution[]
+  fundraisingActivities    FundraisingActivity[]
+  fundraisingFollowUps     FundraisingFollowUp[]
+  fundraisingHistory       FundraisingHistory[]
 
   @@index([country])
   @@map("organizations")
 }
 
 model Campaign {
-  id              String                @id @default(uuid()) @db.Uuid
-  tenantId        String                @map("tenant_id") @db.Uuid
-  name            String
-  slug            String
-  status          CampaignStatus        @default(DRAFT)
-  isDemo          Boolean               @default(false) @map("is_demo")
-  country         String
-  electionType    String                @map("election_type")
-  startsAt        DateTime?             @map("starts_at") @db.Date
-  endsAt          DateTime?             @map("ends_at") @db.Date
-  createdAt       DateTime              @default(now()) @map("created_at")
-  updatedAt       DateTime              @updatedAt @map("updated_at")
-  organization    Organization          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  leaders         CampaignLeader[]
-  initiatives     Initiative[]
-  activities      Activity[]
-  tasks           CampaignTask[]
-  events          CampaignEvent[]
-  geographicAreas GeographicArea[]
-  assignments     VolunteerAssignment[]
-  documents       KnowledgeDocument[]
-  aiConversations AiConversation[]
-  policyCases     PolicyCase[]
-  communications  Communication[]
-  mediaItems      MediaItem[]
+  id                       String                    @id @default(uuid()) @db.Uuid
+  tenantId                 String                    @map("tenant_id") @db.Uuid
+  name                     String
+  slug                     String
+  status                   CampaignStatus            @default(DRAFT)
+  isDemo                   Boolean                   @default(false) @map("is_demo")
+  country                  String
+  electionType             String                    @map("election_type")
+  startsAt                 DateTime?                 @map("starts_at") @db.Date
+  endsAt                   DateTime?                 @map("ends_at") @db.Date
+  createdAt                DateTime                  @default(now()) @map("created_at")
+  updatedAt                DateTime                  @updatedAt @map("updated_at")
+  organization             Organization              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leaders                  CampaignLeader[]
+  fundraisingGoals         FundraisingGoal[]
+  fundraisingContacts      FundraisingContact[]
+  fundraisingContributions FundraisingContribution[]
+  fundraisingActivities    FundraisingActivity[]
+  fundraisingFollowUps     FundraisingFollowUp[]
+  fundraisingHistory       FundraisingHistory[]
+  initiatives              Initiative[]
+  activities               Activity[]
+  tasks                    CampaignTask[]
+  events                   CampaignEvent[]
+  geographicAreas          GeographicArea[]
+  assignments              VolunteerAssignment[]
+  documents                KnowledgeDocument[]
+  aiConversations          AiConversation[]
+  policyCases              PolicyCase[]
+  communications           Communication[]
+  mediaItems               MediaItem[]
 
   @@unique([tenantId, slug])
   @@index([tenantId, status])
@@ -1115,4 +1150,130 @@ model AiErrorReport {
 
   @@index([tenantId, createdAt])
   @@map("ai_error_reports")
+}
+
+model FundraisingGoal {
+  id            String                    @id @default(uuid()) @db.Uuid
+  tenantId      String                    @map("tenant_id") @db.Uuid
+  campaignId    String                    @map("campaign_id") @db.Uuid
+  title         String
+  targetAmount  Decimal                   @map("target_amount") @db.Decimal(18, 2)
+  currency      String                    @db.VarChar(3)
+  startsAt      DateTime?                 @map("starts_at") @db.Date
+  endsAt        DateTime?                 @map("ends_at") @db.Date
+  status        FundraisingRecordStatus   @default(PLANNED)
+  archivedAt    DateTime?                 @map("archived_at")
+  createdAt     DateTime                  @default(now()) @map("created_at")
+  updatedAt     DateTime                  @updatedAt @map("updated_at")
+  organization  Organization              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaign      Campaign                  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contributions FundraisingContribution[]
+
+  @@index([tenantId, campaignId, status])
+  @@map("fundraising_goals")
+}
+
+model FundraisingContact {
+  id            String                    @id @default(uuid()) @db.Uuid
+  tenantId      String                    @map("tenant_id") @db.Uuid
+  campaignId    String                    @map("campaign_id") @db.Uuid
+  displayName   String                    @map("display_name")
+  email         String?
+  phone         String?
+  affiliation   String?
+  notes         String?
+  status        FundraisingRecordStatus   @default(ACTIVE)
+  archivedAt    DateTime?                 @map("archived_at")
+  createdAt     DateTime                  @default(now()) @map("created_at")
+  updatedAt     DateTime                  @updatedAt @map("updated_at")
+  organization  Organization              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaign      Campaign                  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contributions FundraisingContribution[]
+  followUps     FundraisingFollowUp[]
+
+  @@index([tenantId, campaignId, status])
+  @@map("fundraising_contacts")
+}
+
+model FundraisingContribution {
+  id                String              @id @default(uuid()) @db.Uuid
+  tenantId          String              @map("tenant_id") @db.Uuid
+  campaignId        String              @map("campaign_id") @db.Uuid
+  contactId         String?             @map("contact_id") @db.Uuid
+  goalId            String?             @map("goal_id") @db.Uuid
+  amount            Decimal             @db.Decimal(18, 2)
+  currency          String              @db.VarChar(3)
+  contributedAt     DateTime            @map("contributed_at") @db.Date
+  status            ContributionStatus  @default(PENDING)
+  externalReference String?             @map("external_reference")
+  sourceMethod      String?             @map("source_method")
+  archivedAt        DateTime?           @map("archived_at")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  organization      Organization        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaign          Campaign            @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contact           FundraisingContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  goal              FundraisingGoal?    @relation(fields: [goalId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, campaignId, status, contributedAt])
+  @@index([tenantId, contactId])
+  @@index([tenantId, goalId])
+  @@map("fundraising_contributions")
+}
+
+model FundraisingActivity {
+  id           String                  @id @default(uuid()) @db.Uuid
+  tenantId     String                  @map("tenant_id") @db.Uuid
+  campaignId   String                  @map("campaign_id") @db.Uuid
+  title        String
+  activityType String                  @map("activity_type")
+  occursAt     DateTime                @map("occurs_at")
+  status       FundraisingRecordStatus @default(PLANNED)
+  archivedAt   DateTime?               @map("archived_at")
+  createdAt    DateTime                @default(now()) @map("created_at")
+  updatedAt    DateTime                @updatedAt @map("updated_at")
+  organization Organization            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaign     Campaign                @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, campaignId, status, occursAt])
+  @@map("fundraising_activities")
+}
+
+model FundraisingFollowUp {
+  id           String              @id @default(uuid()) @db.Uuid
+  tenantId     String              @map("tenant_id") @db.Uuid
+  campaignId   String              @map("campaign_id") @db.Uuid
+  contactId    String?             @map("contact_id") @db.Uuid
+  title        String
+  dueAt        DateTime            @map("due_at")
+  status       FollowUpStatus      @default(OPEN)
+  archivedAt   DateTime?           @map("archived_at")
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+  organization Organization        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaign     Campaign            @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contact      FundraisingContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, campaignId, status, dueAt])
+  @@index([tenantId, contactId])
+  @@map("fundraising_follow_ups")
+}
+
+model FundraisingHistory {
+  id           String       @id @default(uuid()) @db.Uuid
+  tenantId     String       @map("tenant_id") @db.Uuid
+  campaignId   String       @map("campaign_id") @db.Uuid
+  actorId      String       @map("actor_id") @db.Uuid
+  entityType   String       @map("entity_type")
+  entityId     String       @map("entity_id") @db.Uuid
+  action       String
+  changes      Json
+  createdAt    DateTime     @default(now()) @map("created_at")
+  organization Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaign     Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  actor        AuthUser     @relation("FundraisingHistoryActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, campaignId, createdAt])
+  @@index([tenantId, entityType, entityId])
+  @@map("fundraising_history")
 }

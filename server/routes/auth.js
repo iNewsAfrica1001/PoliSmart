@@ -42,6 +42,10 @@ function publicUser(user) {
         canManagePolicy: hasPermission({ role }, PERMISSIONS.POLICY_MANAGE),
         canManageCommunications: hasPermission({ role }, PERMISSIONS.COMMUNICATIONS_MANAGE),
         canApproveKnowledge: hasPermission({ role }, PERMISSIONS.KNOWLEDGE_APPROVE),
+        canReadFundraising: hasPermission({ role }, PERMISSIONS.FUNDRAISING_READ),
+        canManageFundraising: hasPermission({ role }, PERMISSIONS.FUNDRAISING_MANAGE),
+        canArchiveFundraising: hasPermission({ role }, PERMISSIONS.FUNDRAISING_ARCHIVE),
+        canReadFundraisingHistory: hasPermission({ role }, PERMISSIONS.FUNDRAISING_HISTORY_READ),
         organization: {
           id: organization.id,
           name: organization.name,
