@@ -114,6 +114,9 @@ test("fundraising UI is permission-aware, accessible, campaign-scoped, and prese
   assert.match(page, /does not process contributions/);
   assert.match(page, /do not enter sensitive personal information/i);
   assert.match(page, /CurrencySelector/);
+  assert.match(page, /activities: "activity"/);
+  assert.match(page, /New \{singularLabels\[section\]\}/);
+  assert.doesNotMatch(page, /labels\[section\]\.slice\(0, -1\)/);
   assert.match(page, /SUPPORTED_FUNDRAISING_CURRENCIES/);
   assert.match(page, /PoliSmart does not convert currencies/);
   assert.doesNotMatch(page, /placeholder="USD"/);
