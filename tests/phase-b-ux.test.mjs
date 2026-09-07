@@ -82,6 +82,8 @@ test("knowledge approval is explicit, capability guarded, and not part of upload
   assert.match(source, /canApprove && document.processingStatus === "READY"/);
   assert.match(source, /window.confirm/);
   assert.match(source, /Awaiting approval before this document can be used by AI Assistant/);
+  assert.match(source, /READY does not mean APPROVED/);
+  assert.match(source, /Document approval is available to authorized administrators/);
   const upload = source.slice(source.indexOf("async function upload"), source.indexOf("return ("));
   assert.doesNotMatch(upload, /knowledgeApi.approve/);
 });

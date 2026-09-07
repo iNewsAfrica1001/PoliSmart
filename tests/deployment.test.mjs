@@ -488,9 +488,14 @@ test("Stage 2 onboarding guides a new organization without changing security bou
   assert.match(login, /12–128 characters with an uppercase letter, lowercase letter, and number/);
   assert.match(login, /open the time-limited link/);
   assert.match(login, /Resend verification email/);
-  assert.match(dashboard, /Create and select your first campaign/);
+  assert.match(dashboard, /Create or select a campaign/);
   assert.match(dashboard, /campaign-scoped intelligence/);
+  assert.match(dashboard, /READY means processed; it does not mean approved/);
+  assert.match(dashboard, /Available to authorized administrators/);
+  assert.match(dashboard, /document-approval authority/);
   assert.match(operations, /Campaigns scope intelligence, policy, events, and field work/);
+  assert.match(operations, /Events and field activity remain scoped to the selected campaign/);
+  assert.match(operations, /Organization volunteer roster/);
   assert.match(operations, /Open dashboard/);
   assert.match(operations, /No events yet/);
   assert.match(operations, /No volunteers yet/);
@@ -498,7 +503,9 @@ test("Stage 2 onboarding guides a new organization without changing security bou
   assert.match(assistant, /Observed Data/);
   assert.match(assistant, /AI Interpretation/);
   assert.match(assistant, /Citations/);
+  assert.match(assistant, /Questions and approved knowledge remain scoped to this campaign/);
   assert.match(workflows, /No policy projects yet/);
+  assert.match(workflows, /work remains scoped to the selected campaign/);
   assert.match(app, /onCreateCampaign=\{\(\) => setPage\("campaigns"\)\}/);
   assert.match(navigation, /label: "Reports"[\s\S]*enabled: false/);
   assert.match(navigation, /label: "Billing"[\s\S]*enabled: false/);

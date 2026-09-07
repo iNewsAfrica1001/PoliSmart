@@ -1,4 +1,4 @@
-import { FileText, Search, ShieldCheck, Trash2, Upload } from "lucide-react";
+import { FileText, Flag, Search, ShieldCheck, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import type { SessionUser } from "../lib/auth";
 import { knowledgeApi, type KnowledgeDocument } from "../lib/knowledge";
@@ -16,6 +16,7 @@ export function KnowledgePage({ user }: { user: SessionUser }) {
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const selectedCampaignName = campaigns.find((campaign) => campaign.id === campaignId)?.name;
   const load = useCallback(async () => {
     if (!campaignId) return;
     try {
@@ -70,6 +71,13 @@ export function KnowledgePage({ user }: { user: SessionUser }) {
         READY means processing is complete, not approved. Approved documents are eligible for AI
         retrieval when relevant to the question and permitted campaign context.
       </p>
+      <div className="campaign-context" role="status">
+        <Flag aria-hidden="true" />
+        <span>
+          <strong>Campaign context</strong>
+          {selectedCampaignName || "No campaign selected"}
+        </span>
+      </div>
       {notice && <p role="status">{notice}</p>}
       {error && (
         <p className="ops-error" role="alert">
@@ -238,7 +246,14 @@ export function KnowledgePage({ user }: { user: SessionUser }) {
               <div className="empty-state">
                 <FileText />
                 <h3>No documents found</h3>
-                <p>Upload a validated campaign document or adjust your search.</p>
+                <p>
+                  {campaignId
+                    ? "Upload material for this campaign, then follow: Processing → READY/DRAFT → Authorized Approval → APPROVED → AI Eligible. READY does not mean APPROVED."
+                    : "Create or select a campaign before adding campaign-scoped knowledge."}
+                </p>
+                {!canApprove && campaignId && (
+                  <small>Document approval is available to authorized administrators.</small>
+                )}
               </div>
             )}
           </div>

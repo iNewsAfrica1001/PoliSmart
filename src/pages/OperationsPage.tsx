@@ -161,9 +161,13 @@ export function OperationsPage({
         </div>
       )}
       {section !== "campaigns" && section !== "volunteers" && (
-        <label className="campaign-picker">
-          Campaign
+        <label className="campaign-picker campaign-context">
+          <span>
+            <strong>Campaign context</strong>
+            Events and field activity remain scoped to the selected campaign.
+          </span>
           <select
+            aria-label="Selected campaign"
             value={selected}
             onChange={(event) => setSelected(event.target.value)}
             disabled={!campaigns.length}
@@ -176,6 +180,15 @@ export function OperationsPage({
             ))}
           </select>
         </label>
+      )}
+      {section === "volunteers" && (
+        <div className="campaign-context">
+          <UsersRound aria-hidden="true" />
+          <span>
+            <strong>Organization volunteer roster</strong>
+            Campaign assignments are managed through authorized campaign operations.
+          </span>
+        </div>
       )}
       {showForm &&
         (section !== "events" || canCreateEvent) &&

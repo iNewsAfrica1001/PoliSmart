@@ -1,7 +1,7 @@
 import { Bot, CheckCircle2, FileClock, Newspaper, Plus, ShieldCheck } from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import type { SessionUser } from "../lib/auth";
-import { operationsApi } from "../lib/operations";
+import { operationsApi, type Campaign } from "../lib/operations";
 import {
   workflowApi,
   type Communication,
@@ -38,6 +38,7 @@ export function IntelligenceWorkflowsPage({
       ? membership?.canManagePolicy === true
       : module === "communications" && membership?.canManageCommunications === true;
   const [campaign, setCampaign] = useState("");
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [policies, setPolicies] = useState<PolicyCase[]>([]);
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [communications, setCommunications] = useState<Communication[]>([]);
@@ -58,7 +59,10 @@ export function IntelligenceWorkflowsPage({
   useEffect(() => {
     operationsApi
       .campaigns(tenant)
-      .then(({ campaigns }) => setCampaign(campaigns[0]?.id || ""))
+      .then(({ campaigns: items }) => {
+        setCampaigns(items);
+        setCampaign(items[0]?.id || "");
+      })
       .catch(() => setError("Unable to load campaigns."));
   }, [tenant]);
   useEffect(() => {
@@ -126,6 +130,21 @@ export function IntelligenceWorkflowsPage({
         <p className="ops-error" role="alert">
           {error}
         </p>
+      )}
+      {campaigns.length > 0 && (
+        <label className="campaign-context campaign-context--select">
+          <span>
+            <strong>Campaign context</strong>
+            {module === "media"
+              ? "Media intelligence remains scoped to the selected campaign."
+              : `${module === "policy" ? "Policy" : "Communications"} work remains scoped to the selected campaign.`}
+          </span>
+          <select value={campaign} onChange={(event) => setCampaign(event.target.value)}>
+            {campaigns.map((item) => (
+              <option key={item.id} value={item.id}>{item.name}</option>
+            ))}
+          </select>
+        </label>
       )}
       {module === "policy" && (
         <>

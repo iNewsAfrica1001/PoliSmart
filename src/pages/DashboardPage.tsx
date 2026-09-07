@@ -171,16 +171,28 @@ export function DashboardPage({
           </p>
           <ol className="onboarding-steps" aria-label="Getting started">
             <li>
-              <strong>1</strong>
-              <span>Organization account created</span>
+              <strong>1</strong><span><b>Create or select a campaign</b>Campaign-scoped work begins with an authorized campaign.</span>
             </li>
             <li>
-              <strong>2</strong>
-              <span>Email verified and signed in</span>
+              <strong>2</strong><span><b>Complete campaign information</b>Add the country, election type and working dates.</span>
             </li>
             <li>
-              <strong>3</strong>
-              <span>Create and select your first campaign</span>
+              <strong>3</strong><span><b>Add authorized team members</b>Available to authorized administrators.</span>
+            </li>
+            <li>
+              <strong>4</strong><span><b>Upload campaign knowledge</b>Add relevant source material to the selected campaign.</span>
+            </li>
+            <li>
+              <strong>5</strong><span><b>Review processing status</b>READY means processed; it does not mean approved.</span>
+            </li>
+            <li>
+              <strong>6</strong><span><b>Approve eligible documents</b>Available only to users with document-approval authority.</span>
+            </li>
+            <li>
+              <strong>7</strong><span><b>Ask a grounded AI question</b>Review observed data, interpretation and citations.</span>
+            </li>
+            <li>
+              <strong>8</strong><span><b>Explore campaign operations</b>Coordinate events, volunteers and field activity as permitted.</span>
             </li>
           </ol>
           <button type="button" className="primary-button" onClick={onCreateCampaign}>

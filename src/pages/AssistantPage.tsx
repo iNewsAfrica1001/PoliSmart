@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Bot, Send, ThumbsUp, TriangleAlert } from "lucide-react";
 import { assistantApi, type AssistantAnswer } from "../lib/assistant";
 import type { SessionUser } from "../lib/auth";
-import { operationsApi } from "../lib/operations";
+import { operationsApi, type Campaign } from "../lib/operations";
 
 export function AssistantPage({
   user,
@@ -13,6 +13,7 @@ export function AssistantPage({
 }) {
   const tenantId = user.memberships[0]?.tenantId ?? "";
   const [campaignId, setCampaignId] = useState("");
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<AssistantAnswer | null>(null);
   const [conversationId, setConversationId] = useState<string>();
@@ -29,7 +30,10 @@ export function AssistantPage({
   useEffect(() => {
     operationsApi
       .campaigns(tenantId)
-      .then(({ campaigns }) => setCampaignId(campaigns[0]?.id || ""))
+      .then(({ campaigns: items }) => {
+        setCampaigns(items);
+        setCampaignId(items[0]?.id || "");
+      })
       .catch(() => setError("Unable to load campaigns."))
       .finally(() => setCampaignsLoaded(true));
   }, [tenantId]);
@@ -92,6 +96,19 @@ export function AssistantPage({
         partnership. Available evidence represents only the cited countries, survey rounds, and
         safeguarded aggregate samples.
       </div>
+      {campaigns.length > 0 && (
+        <label className="campaign-context campaign-context--select">
+          <span>
+            <strong>Campaign context</strong>
+            Questions and approved knowledge remain scoped to this campaign.
+          </span>
+          <select value={campaignId} onChange={(event) => setCampaignId(event.target.value)}>
+            {campaigns.map((campaign) => (
+              <option key={campaign.id} value={campaign.id}>{campaign.name}</option>
+            ))}
+          </select>
+        </label>
+      )}
       <section className="assistant-guide" aria-label="How grounded answers work">
         <div>
           <strong>Observed Data</strong>
