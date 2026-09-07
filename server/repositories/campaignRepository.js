@@ -2,7 +2,19 @@ export function createCampaignRepository(database) {
   return {
     listForTenant(tenantId) {
       if (!tenantId) throw new TypeError("tenantId is required");
-      return database.campaign.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" } });
+      return database.campaign.findMany({
+        where: { tenantId },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          country: true,
+          electionType: true,
+          startsAt: true,
+          endsAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
     },
     findForTenant(tenantId, campaignId) {
       if (!tenantId || !campaignId) throw new TypeError("tenantId and campaignId are required");

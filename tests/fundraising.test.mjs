@@ -4,7 +4,9 @@ import { readFileSync } from "node:fs";
 import express from "express";
 import request from "supertest";
 import { createFundraisingRouter } from "../server/routes/fundraising.js";
+import { createCampaignRouter } from "../server/routes/campaigns.js";
 import { createFundraisingRepository } from "../server/repositories/fundraisingRepository.js";
+import { createCampaignRepository } from "../server/repositories/campaignRepository.js";
 import { hasPermission } from "../server/services/authorization.js";
 import { PERMISSIONS } from "../server/config/authorization.js";
 import {
@@ -131,6 +133,41 @@ test("African campaign countries resolve to their local ISO currencies", () => {
   assert.equal(currencyForCountry("Unknown"), "");
   assert.equal(isSupportedFundraisingCurrency("USD"), true);
   assert.equal(formatCurrencyAmount("NGN", 250000), "NGN 250,000");
+});
+
+test("the real campaign-list DTO includes country and drives the fundraising default", async () => {
+  let query;
+  const source = {
+    id: "campaign-manifestos",
+    name: "Manifestos",
+    status: "ACTIVE",
+    country: "Nigeria",
+    electionType: "General election",
+    startsAt: null,
+    endsAt: null,
+  };
+  const repository = createCampaignRepository({
+    campaign: {
+      findMany: async (options) => {
+        query = options;
+        return [Object.fromEntries(Object.keys(options.select).map((field) => [field, source[field]]))];
+      },
+    },
+  });
+  const campaigns = await repository.listForTenant("org-a");
+  assert.equal(query.select.country, true);
+  assert.deepEqual(campaigns, [source]);
+  assert.equal(currencyForCountry(campaigns[0].country), "NGN");
+
+  const app = express();
+  app.use((request, _response, next) => {
+    request.auth = { user: { id: "user-a", memberships: [{ tenantId: "org-a", role: "CAMPAIGN_MANAGER" }] } };
+    next();
+  });
+  app.use("/campaigns", createCampaignRouter(repository));
+  const response = await request(app).get("/campaigns").set("X-Organization-Id", "org-a").expect(200);
+  assert.equal(response.body.campaigns[0].country, "Nigeria");
+  assert.equal(currencyForCountry(response.body.campaigns[0].country), "NGN");
 });
 
 test("goal progress and totals never aggregate different currencies", async () => {

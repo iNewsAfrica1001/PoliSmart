@@ -5,12 +5,14 @@ import { PERMISSIONS, ROLES } from "../server/config/authorization.js";
 import { authorize, hasPermission } from "../server/services/authorization.js";
 
 const campaigns = [
-  { id: "campaign-a", tenantId: "org-a" },
-  { id: "campaign-b", tenantId: "org-b" },
+  { id: "campaign-a", tenantId: "org-a", name: "A", status: "ACTIVE", country: "Nigeria", electionType: "General", startsAt: null, endsAt: null },
+  { id: "campaign-b", tenantId: "org-b", name: "B", status: "ACTIVE", country: "Ghana", electionType: "General", startsAt: null, endsAt: null },
 ];
 const repository = createCampaignRepository({
   campaign: {
-    findMany: async ({ where }) => campaigns.filter((item) => item.tenantId === where.tenantId),
+    findMany: async ({ where, select }) => campaigns
+      .filter((item) => item.tenantId === where.tenantId)
+      .map((item) => Object.fromEntries(Object.keys(select).map((field) => [field, item[field]]))),
     findFirst: async ({ where }) =>
       campaigns.find((item) => item.id === where.id && item.tenantId === where.tenantId) ?? null,
     create: async ({ data }) => data,
@@ -18,7 +20,11 @@ const repository = createCampaignRepository({
 });
 
 test("tenant repository never returns another organization's campaigns", async () => {
-  assert.deepEqual(await repository.listForTenant("org-a"), [campaigns[0]]);
+  const expectedCampaign = Object.fromEntries(
+    ["id", "name", "status", "country", "electionType", "startsAt", "endsAt"]
+      .map((field) => [field, campaigns[0][field]]),
+  );
+  assert.deepEqual(await repository.listForTenant("org-a"), [expectedCampaign]);
   assert.equal(await repository.findForTenant("org-a", "campaign-b"), null);
 });
 
