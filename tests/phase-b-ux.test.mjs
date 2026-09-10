@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import vm from "node:vm";
 import express from "express";
 import request from "supertest";
 import { createAuthRouter } from "../server/routes/auth.js";
@@ -86,4 +87,47 @@ test("knowledge approval is explicit, capability guarded, and not part of upload
   assert.match(source, /Document approval is available to authorized administrators/);
   const upload = source.slice(source.indexOf("async function upload"), source.indexOf("return ("));
   assert.doesNotMatch(upload, /knowledgeApi.approve/);
+});
+
+function knowledgeApprovalHarness(confirmApproval, canApprove = true) {
+  const source = readFileSync("src/pages/KnowledgePage.tsx", "utf8");
+  const start = source.indexOf("onClick={async () => {") + "onClick={".length;
+  const end = source.indexOf("\n                        }}", start) + "\n                        }".length;
+  assert.ok(start > 0 && end > start);
+
+  const calls = [];
+  const context = {
+    canApprove,
+    approving: false,
+    tenantId: "fixture-tenant",
+    document: { id: "fixture-document", title: "Fictional document" },
+    window: { confirm: () => { calls.push("confirm"); return confirmApproval; } },
+    setApproving: (value) => { context.approving = value; },
+    setError: () => {},
+    setNotice: () => {},
+    knowledgeApi: { approve: async () => { calls.push("request"); } },
+    load: async () => { calls.push("reload"); },
+  };
+  return {
+    calls,
+    handler: vm.runInNewContext(`(${source.slice(start, end)})`, context),
+  };
+}
+
+test("cancelled knowledge approval confirmation never requests approval", async () => {
+  const harness = knowledgeApprovalHarness(false);
+  await harness.handler();
+  assert.deepEqual(harness.calls, ["confirm"]);
+});
+
+test("confirmed knowledge approval submits once while the request is in flight", async () => {
+  const harness = knowledgeApprovalHarness(true);
+  await Promise.all([harness.handler(), harness.handler()]);
+  assert.deepEqual(harness.calls, ["confirm", "request", "reload"]);
+});
+
+test("users without approval capability cannot confirm or request approval", async () => {
+  const harness = knowledgeApprovalHarness(true, false);
+  await harness.handler();
+  assert.deepEqual(harness.calls, []);
 });
