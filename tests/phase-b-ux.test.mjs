@@ -77,6 +77,29 @@ test("workflow UI gates every management entry point while retaining reads", () 
   assert.equal((source.match(/if \(!canManage\) return;/g) || []).length, 2);
 });
 
+test("media and communications empty and access states explain V1.1 behavior", () => {
+  const source = readFileSync("src/pages/IntelligenceWorkflowsPage.tsx", "utf8").replace(
+    /\s+/g,
+    " ",
+  );
+  assert.match(
+    source,
+    /No media records are available yet\. Media records are added through authorized, lawfully configured integrations\. Manual media uploads are not available\./,
+  );
+  assert.match(
+    source,
+    /You have view-only access\. Communications Directors and Super Administrators can create and manage communication work items\./,
+  );
+
+  const mediaSection = source.slice(
+    source.indexOf('{module === "media"'),
+    source.indexOf('{module === "communications"'),
+  );
+  assert.doesNotMatch(mediaSection, /<button[^>]*>[^<]*(?:Upload|Create Media)/i);
+  assert.doesNotMatch(mediaSection, /type="file"/i);
+  assert.match(source, /canManage && \( <CreateCard/);
+});
+
 test("knowledge approval is explicit, capability guarded, and not part of upload", () => {
   const source = readFileSync("src/pages/KnowledgePage.tsx", "utf8").replace(/\s+/g, " ");
   assert.match(source, /canApproveKnowledge === true/);

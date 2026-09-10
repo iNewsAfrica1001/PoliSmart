@@ -284,15 +284,17 @@ export function IntelligenceWorkflowsPage({
               </article>
             ))}
           </div>
-          {!media.length && <Empty text="No lawfully imported media items are available." />}
+          {!media.length && (
+            <Empty text="No media records are available yet. Media records are added through authorized, lawfully configured integrations. Manual media uploads are not available." />
+          )}
         </section>
       )}
       {module === "communications" && (
         <>
           {!canManage && (
-            <p>
-              You have read-only access. Communications management is restricted to authorized
-              users.
+            <p className="integration-notice" role="status">
+              You have view-only access. Communications Directors and Super Administrators can
+              create and manage communication work items.
             </p>
           )}
           {canManage && (
