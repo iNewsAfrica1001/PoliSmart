@@ -442,6 +442,18 @@ test("Stage 4 legal pages accurately describe V1 and remain owner-review drafts"
   assert.match(legal, /does not imply endorsement, sponsorship, or partnership/);
   assert.match(legal, /Payments and Billing are not implemented in V1/);
   assert.match(legal, /does not currently process\s+payments/);
+  assert.match(legal, /V1\.1 fundraising administrative data/);
+  assert.match(legal, /externally\s+handled contribution amounts, currencies, dates/);
+  assert.match(legal, /Fundraising contact or donor details are not used as AI grounding data/);
+  assert.match(legal, /excluded\s+from Workspace Search/);
+  assert.match(legal, /automatic model retraining from fundraising data/);
+  assert.match(legal, /Archived records are removed from active views but\s+remain stored/);
+  assert.match(legal, /not\s+established a universal jurisdiction-specific retention period/);
+  assert.match(legal, /PoliSmart is not a payment processor/);
+  assert.match(legal, /does not automatically determine whether a contribution is legally\s+permissible/);
+  assert.match(legal, /country setting provides product context such as local-currency defaults/);
+  assert.match(legal, /does not determine country-specific contribution limits/);
+  assert.match(legal, /campaign-finance\s+requirements, fundraising recordkeeping and reporting/);
   assert.match(legal, /SentinelAI LLC/);
   assert.match(legal, /3204 Pearsall Ave, Bronx, NY 10469/);
   assert.match(legal, /EFFECTIVE DATE: TO BE CONFIRMED AT PUBLIC RELEASE/);

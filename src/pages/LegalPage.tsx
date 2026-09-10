@@ -25,8 +25,10 @@ function LegalHeader({ title, summary }: { title: string; summary: string }) {
       <div className="legal-review" role="note">
         This production-ready draft requires qualified legal review before final approval.
         Jurisdiction-specific privacy provisions, cross-border transfer requirements, retention
-        schedules, intellectual-property terms, and liability provisions remain marked for review.
-        The effective date will be confirmed at public release.
+        schedules, intellectual-property terms, liability provisions, campaign-finance
+        requirements, fundraising recordkeeping and reporting, legal holds, and supported launch
+        jurisdictions remain marked for review. The effective date will be confirmed at public
+        release.
       </div>
     </header>
   );
@@ -113,7 +115,44 @@ function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2>3. How information is used</h2>
+          <h2>3. V1.1 fundraising administrative data</h2>
+          <p>
+            Authorized campaign organizations may use Fundraising to maintain campaign-scoped
+            administrative records, including fundraising goals; contact names; optional contact
+            email addresses, phone numbers, affiliations, and administrative notes; externally
+            handled contribution amounts, currencies, dates, optional external references, and
+            source or method descriptions; fundraising activities; follow-ups; statuses; and
+            history or audit information.
+          </p>
+          <p>
+            PoliSmart does not process campaign contributions or payments. Contribution entries
+            are administrative records of contributions handled outside PoliSmart. Fundraising
+            records are tenant- and campaign-scoped, protected by role-based permissions, and used
+            for authorized campaign administration, organizational recordkeeping, activity and
+            follow-up tracking, and auditability.
+          </p>
+          <p>
+            Fundraising is not designed to request card numbers, bank account credentials,
+            passwords, government identification numbers, health information, ethnicity, religion,
+            or other unnecessary sensitive personal information. Users and organizations should not
+            enter that information into free-text fields.
+          </p>
+          <p>
+            Fundraising contact or donor details are not used as AI grounding data and are excluded
+            from Workspace Search. V1.1 does not perform donor scoring, sensitive-trait profiling,
+            personalized political targeting, or automatic model retraining from fundraising data.
+          </p>
+          <p>
+            Fundraising records may be archived. Archived records are removed from active views but
+            remain stored, and fundraising history is retained for auditability. PoliSmart has not
+            established a universal jurisdiction-specific retention period. Retention, deletion,
+            legal-hold, recordkeeping, and reporting requirements may vary by jurisdiction and
+            remain subject to organizational requirements and qualified legal review.
+          </p>
+        </section>
+
+        <section>
+          <h2>4. How information is used</h2>
           <ul>
             <li>Provide secure accounts, organization workspaces, campaigns, and V1 workflows.</li>
             <li>
@@ -129,7 +168,7 @@ function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2>4. AI disclosure</h2>
+          <h2>5. AI disclosure</h2>
           <p>
             AI-generated content may contain errors. The product separates{" "}
             <strong>Observed Data</strong>, which is retrieved evidence, from{" "}
@@ -147,7 +186,7 @@ function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2>5. Public-opinion data</h2>
+          <h2>6. Public-opinion data</h2>
           <p>
             PoliSmart uses selected aggregate Afrobarometer survey results as an independent public
             research source. PoliSmart does not own Afrobarometer, and use of its public research
@@ -159,7 +198,7 @@ function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2>6. Cookies and sessions</h2>
+          <h2>7. Cookies and sessions</h2>
           <p>
             The service uses a necessary authentication session cookie. In production it is
             configured as Secure, HttpOnly, SameSite=Strict, and scoped to the application. The
@@ -170,7 +209,7 @@ function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2>7. Email verification and recovery</h2>
+          <h2>8. Email verification and recovery</h2>
           <p>
             Registration and password recovery use time-limited, single-use links sent from the
             authorized transactional mailbox through Microsoft Graph. Verification and reset tokens
@@ -180,7 +219,7 @@ function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2>8. Service providers and international processing</h2>
+          <h2>9. Service providers and international processing</h2>
           <p>
             V1 relies on Vercel for hosting/runtime and private object storage, Neon for PostgreSQL,
             Microsoft Graph/Microsoft 365 for transactional email, and OpenAI for server-side model
@@ -196,7 +235,7 @@ function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2>9. Security practices</h2>
+          <h2>10. Security practices</h2>
           <p>
             PoliSmart uses password hashing, hashed opaque tokens, protected session cookies,
             server-side authorization, tenant-scoped repositories, rate limits, input validation,
@@ -207,7 +246,7 @@ function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2>10. Retention</h2>
+          <h2>11. Retention</h2>
           <p>
             Information is retained for as long as reasonably necessary to provide the service,
             maintain security, meet legitimate operational requirements, resolve disputes, and
@@ -227,7 +266,7 @@ function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2>11. Account and privacy requests</h2>
+          <h2>12. Account and privacy requests</h2>
           <p>
             Authorized users may request account or privacy assistance at{" "}
             <a href="mailto:support@polismartafrica.ai">support@polismartafrica.ai</a>. Requests may
@@ -238,7 +277,7 @@ function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2>12. Children and minors</h2>
+          <h2>13. Children and minors</h2>
           <p>
             PoliSmart V1 is designed for authorized professional organization users, not children.
             Organizations should not create accounts for children or submit children's information
@@ -249,7 +288,7 @@ function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2>13. Changes and contact</h2>
+          <h2>14. Changes and contact</h2>
           <p>
             This policy may be updated as the service, providers, or legal requirements change.
             Material changes should be dated and communicated through an appropriate product or
@@ -350,7 +389,36 @@ function TermsOfService() {
         </section>
 
         <section>
-          <h2>6. AI limitations and human responsibility</h2>
+          <h2>6. Fundraising administration</h2>
+          <p>
+            V1.1 Fundraising provides tenant- and campaign-scoped administrative record-management
+            functionality for goals, contacts, externally handled contribution records, activities,
+            follow-ups, statuses, and history. PoliSmart is not a payment processor and does not
+            process, verify, accept, reject, transfer, or settle campaign contributions or payments.
+          </p>
+          <p>
+            Organizations are responsible for determining what information they may lawfully
+            collect, ensuring that entries are appropriate and accurate, and satisfying applicable
+            campaign-finance, fundraising, reporting, recordkeeping, retention, and deletion
+            obligations. Users must not enter payment credentials and should not enter unnecessary
+            sensitive personal information into free-text fields. These responsibilities are not
+            replaced by product notices or controls.
+          </p>
+          <p>
+            PoliSmart does not automatically determine whether a contribution is legally
+            permissible, determine reporting or disclosure obligations, or make automated legal or
+            compliance decisions. Campaign-finance, fundraising, privacy, reporting, and retention
+            requirements vary by jurisdiction and require qualified review.
+          </p>
+          <p>
+            A campaign country setting provides product context such as local-currency defaults. It
+            does not determine country-specific contribution limits, reporting rules, disclosure
+            requirements, or retention periods.
+          </p>
+        </section>
+
+        <section>
+          <h2>7. AI limitations and human responsibility</h2>
           <p>
             AI-generated content may be incomplete, incorrect, or unsuitable. Observed Data and AI
             Interpretation are distinct. Citations and underlying evidence, country coverage,
@@ -362,7 +430,7 @@ function TermsOfService() {
         </section>
 
         <section>
-          <h2>7. Intellectual property and submitted content</h2>
+          <h2>8. Intellectual property and submitted content</h2>
           <p>
             SentinelAI LLC and its licensors retain rights in the PoliSmart application, branding,
             and service materials. Organizations retain whatever rights they lawfully hold in
@@ -374,7 +442,7 @@ function TermsOfService() {
         </section>
 
         <section>
-          <h2>8. Third-party services and public data</h2>
+          <h2>9. Third-party services and public data</h2>
           <p>
             V1 relies on Vercel, Neon, Microsoft Graph/Microsoft 365, OpenAI, and Vercel Blob. Their
             service availability and applicable terms may affect PoliSmart. Afrobarometer is an
@@ -385,7 +453,7 @@ function TermsOfService() {
         </section>
 
         <section>
-          <h2>9. Availability and changes</h2>
+          <h2>10. Availability and changes</h2>
           <p>
             The service may experience maintenance, provider outages, rate limits, security
             restrictions, or errors. Continuous or error-free availability is not promised. Features
@@ -395,7 +463,7 @@ function TermsOfService() {
         </section>
 
         <section>
-          <h2>10. Suspension and termination principles</h2>
+          <h2>11. Suspension and termination principles</h2>
           <p>
             Access may be limited or suspended when reasonably necessary to address security risk,
             suspected unauthorized access, prohibited misuse, legal requirements, or material breach
@@ -406,7 +474,7 @@ function TermsOfService() {
         </section>
 
         <section>
-          <h2>11. Draft disclaimers and limitation concepts</h2>
+          <h2>12. Draft disclaimers and limitation concepts</h2>
           <p>
             PoliSmart is a decision-support and operations tool, not legal advice, an election
             prediction, or a substitute for professional judgment. Public data and third-party
@@ -419,7 +487,7 @@ function TermsOfService() {
         </section>
 
         <section>
-          <h2>12. Proposed governing law — draft for legal review</h2>
+          <h2>13. Proposed governing law — draft for legal review</h2>
           <p>
             These Terms are proposed to be governed by the laws of the State of New York, without
             regard to conflict-of-law principles, except to the extent that applicable law requires
@@ -430,7 +498,7 @@ function TermsOfService() {
         </section>
 
         <section>
-          <h2>13. Proposed dispute forum — draft for legal review</h2>
+          <h2>14. Proposed dispute forum — draft for legal review</h2>
           <p>
             Subject to applicable law, disputes arising from these Terms or the service are proposed
             to be brought in the state courts located in Bronx County, New York, or the United
@@ -443,7 +511,7 @@ function TermsOfService() {
         </section>
 
         <section>
-          <h2>14. Payments and billing</h2>
+          <h2>15. Payments and billing</h2>
           <p>
             Payments and Billing are not implemented in V1. PoliSmart does not currently process
             payments, connect a payment provider, collect payment credentials, or offer active paid
@@ -454,7 +522,7 @@ function TermsOfService() {
         </section>
 
         <section>
-          <h2>15. Changes to these terms and contact</h2>
+          <h2>16. Changes to these terms and contact</h2>
           <p>
             Draft terms may be updated to reflect service or legal changes. Final terms should show
             an effective date and provide appropriate notice before binding changes take effect.
