@@ -100,7 +100,7 @@ test("fundraising is excluded from AI and donor profiling and is permission filt
 });
 
 test("fundraising UI is permission-aware, accessible, campaign-scoped, and preserves deferred modules", () => {
-  const page = readFileSync("src/pages/FundraisingPage.tsx", "utf8");
+  const page = readFileSync("src/pages/FundraisingPage.tsx", "utf8").replace(/\s+/g, " ");
   const shell = readFileSync("src/components/layout/AppShell.tsx", "utf8");
   const navigation = readFileSync("src/config/navigation.ts", "utf8");
   const app = readFileSync("src/App.tsx", "utf8");
@@ -113,7 +113,12 @@ test("fundraising UI is permission-aware, accessible, campaign-scoped, and prese
   assert.match(page, /selectCampaign\(event\.target\.value\)/);
   assert.match(page, /setSelectedCurrency\(currencyForCountry\(nextCampaign\?\.country/);
   assert.match(page, /does not process contributions/);
-  assert.match(page, /do not enter sensitive personal information/i);
+  assert.match(page, /Use only the information needed for campaign/);
+  assert.match(page, /government identification numbers/);
+  assert.match(page, /health information, religion, ethnicity/);
+  assert.match(page, /Do not enter card numbers, bank account details, passwords/);
+  assert.match(page, /Administrative notes only\. Do not include sensitive personal information\./);
+  assert.match(page, /Archived records are removed from active views but remain stored\./);
   assert.match(page, /CurrencySelector/);
   assert.match(page, /fundraisingFormHeading\(section\)/);
   assert.doesNotMatch(page, /labels\[section\]\.slice\(0, -1\)/);
