@@ -1,9 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import express from "express";
 import request from "supertest";
 import { createKnowledgeRouter } from "../server/routes/knowledge.js";
-import { chunkDocument, validateDocumentFile } from "../server/services/documentProcessing.js";
+import {
+  chunkDocument,
+  MAX_FILE_BYTES,
+  validateDocumentFile,
+} from "../server/services/documentProcessing.js";
 import {
   createKnowledgeBaseService,
   parseDocumentMetadata,
@@ -13,7 +18,7 @@ function appFor(role, repository, service, tenantId = "org-a") {
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    req.auth = { user: { id: "user-a", memberships: [{ tenantId, role }] } };
+    if (role) req.auth = { user: { id: "user-a", memberships: [{ tenantId, role }] } };
     next();
   });
   app.use("/knowledge", createKnowledgeRouter({ repository, service }));
@@ -54,6 +59,74 @@ test("upload permissions deny readers and allow knowledge managers", async () =>
   assert.equal(uploads, 1);
 });
 
+test("knowledge upload rejects unauthenticated and foreign-tenant requests before parsing", async () => {
+  let uploads = 0;
+  const service = {
+    upload: async () => {
+      uploads += 1;
+      return { id: "doc-a" };
+    },
+  };
+  const upload = (app, tenantId) =>
+    request(app)
+      .post("/knowledge")
+      .set("X-Organization-Id", tenantId)
+      .attach("document", Buffer.from("safe text"), {
+        filename: "policy.txt",
+        contentType: "text/plain",
+      });
+
+  await upload(appFor(null, repositoryStub, service), "org-a").expect(401);
+  await upload(appFor("CAMPAIGN_MANAGER", repositoryStub, service), "org-b").expect(403);
+  assert.equal(uploads, 0);
+});
+
+test("multer enforces one file, file size, field count, and field size limits", async () => {
+  let uploads = 0;
+  const service = {
+    upload: async () => {
+      uploads += 1;
+      return { id: "doc-a" };
+    },
+  };
+  const app = appFor("CAMPAIGN_MANAGER", repositoryStub, service);
+  const begin = () => request(app).post("/knowledge").set("X-Organization-Id", "org-a");
+
+  await begin()
+    .attach("document", Buffer.from("first"), "first.txt")
+    .attach("document", Buffer.from("second"), "second.txt")
+    .expect(400);
+  await begin()
+    .attach("document", Buffer.alloc(MAX_FILE_BYTES + 1, 0x61), "large.txt")
+    .expect(413);
+
+  let tooManyFields = begin();
+  for (let index = 0; index < 21; index += 1) tooManyFields = tooManyFields.field(`field${index}`, "value");
+  await tooManyFields.attach("document", Buffer.from("safe text"), "policy.txt").expect(400);
+  await begin()
+    .field("title", "x".repeat(64 * 1024 + 1))
+    .attach("document", Buffer.from("safe text"), "policy.txt")
+    .expect(400);
+  assert.equal(uploads, 0);
+});
+
+test("malformed multipart input fails safely without invoking document processing", async () => {
+  let uploads = 0;
+  const app = appFor("CAMPAIGN_MANAGER", repositoryStub, {
+    upload: async () => {
+      uploads += 1;
+      return { id: "doc-a" };
+    },
+  });
+  await request(app)
+    .post("/knowledge")
+    .set("X-Organization-Id", "org-a")
+    .set("Content-Type", "multipart/form-data; boundary=unfinished")
+    .send("--unfinished\r\nContent-Disposition: form-data; name=\"document\"; filename=\"x.txt\"\r\n")
+    .expect(400);
+  assert.equal(uploads, 0);
+});
+
 test("tenant isolation rejects knowledge access through another organization header", async () => {
   let listed = false;
   const repository = {
@@ -89,6 +162,41 @@ test("invalid file extensions and spoofed signatures are rejected", () => {
       }),
     /not allowed/,
   );
+});
+
+test("permitted document types require matching extension, MIME type, and signature", () => {
+  for (const file of [
+    { originalname: "brief.pdf", mimetype: "application/pdf", buffer: Buffer.from("%PDF-1.7") },
+    { originalname: "notes.txt", mimetype: "text/plain", buffer: Buffer.from("safe text") },
+    { originalname: "data.csv", mimetype: "text/csv", buffer: Buffer.from("name,value\na,1") },
+    {
+      originalname: "brief.docx",
+      mimetype: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      buffer: Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+    },
+  ]) assert.doesNotThrow(() => validateDocumentFile(file));
+
+  assert.throws(
+    () => validateDocumentFile({
+      originalname: "brief.txt",
+      mimetype: "application/pdf",
+      buffer: Buffer.from("%PDF-1.7"),
+    }),
+    /not allowed/,
+  );
+});
+
+test("DOCX archive and private Blob safeguards remain configured", () => {
+  const processing = readFileSync("server/services/documentProcessing.js", "utf8");
+  const storage = readFileSync("server/services/documentStorage.js", "utf8");
+  assert.match(processing, /validateEntrySizes: true/);
+  assert.match(processing, /entries > 2000/);
+  assert.match(processing, /expanded > 25 \* 1024 \* 1024/);
+  assert.match(processing, /entry\.fileName\.includes\("\.\."\)/);
+  assert.match(processing, /entry\.fileName\.startsWith\("\/"\)/);
+  assert.match(processing, /\^\[A-Za-z\]:/);
+  assert.match(storage, /access: "private"/);
+  assert.doesNotMatch(storage, /access: "public"/);
 });
 
 test("metadata is normalized and chunks are embedding-ready", () => {
