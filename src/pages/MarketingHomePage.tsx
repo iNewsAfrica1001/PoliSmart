@@ -1,6 +1,5 @@
 import {
   ArrowRight,
-  BarChart3,
   BookOpenCheck,
   BrainCircuit,
   CalendarDays,
@@ -9,28 +8,21 @@ import {
   FileCheck2,
   Flag,
   Globe2,
-  Landmark,
   LockKeyhole,
-  MapPinned,
   Megaphone,
   Radio,
   ShieldCheck,
-  Users,
 } from "lucide-react";
 
 const capabilities = [
-  [Flag, "Campaign Management", "Coordinate campaign priorities, activity and team execution."],
-  [BarChart3, "Political & Public-Opinion Intelligence", "Explore safeguarded, campaign-relevant public evidence."],
-  [Database, "Afrobarometer-Supported Intelligence", "Use configured survey aggregates with source and sample context."],
-  [BookOpenCheck, "Knowledge Base", "Build an approved, campaign-scoped evidence library."],
-  [BrainCircuit, "AI Assistant", "Ask grounded questions and review cited observations separately from interpretation."],
-  [Landmark, "Policy Workflow", "Move policy work through evidence, options, drafting and human approval."],
-  [Megaphone, "Communications", "Develop controlled campaign communications with appropriate review."],
-  [Radio, "Media Monitoring", "Organize lawful media intelligence and aggregate sentiment signals."],
-  [CalendarDays, "Events", "Plan and manage campaign events within the authorized workspace."],
-  [Users, "Volunteers", "Coordinate volunteer records and field participation responsibly."],
-  [MapPinned, "Field Operations", "Connect campaign planning to structured field activity."],
-  [ShieldCheck, "Role-Based Administration", "Apply organization roles and server-enforced authorization boundaries."],
+  [Globe2, "Political Intelligence", "Grounded public-opinion and campaign intelligence supported by trusted data and citations."],
+  [BrainCircuit, "AI Assistant", "Evidence-aware AI support for campaign research and decision-making."],
+  [Flag, "Campaign Management", "Organize campaign work, teams, operations and activities in one workspace."],
+  [BookOpenCheck, "Knowledge Base", "Upload, review and approve organizational knowledge for grounded AI use."],
+  [LockKeyhole, "Workspace Search", "Find authorized campaign information quickly across supported workspace data."],
+  [Megaphone, "Policy & Communications", "Support structured policy and communications workflows with human oversight."],
+  [Radio, "Media Monitoring", "Review campaign-scoped media records from authorized integrations."],
+  [CalendarDays, "Events & Operations", "Coordinate campaign events and operational activities."],
 ] as const;
 
 export function MarketingHomePage() {
@@ -57,7 +49,7 @@ export function MarketingHomePage() {
       <main>
         <section className="marketing-hero">
           <div className="marketing-hero-copy">
-            <span className="marketing-kicker">BUILT FOR AFRICAN CAMPAIGN ENVIRONMENTS</span>
+            <span className="marketing-kicker">BUILT FOR AFRICAN POLITICAL AND GOVERNANCE ENVIRONMENTS</span>
             <h1>
               Grounded Intelligence.
               <br />
@@ -161,7 +153,7 @@ export function MarketingHomePage() {
           <article>
             <Globe2 aria-hidden="true" />
             <span className="marketing-kicker">AFRICAN CONTEXT</span>
-            <h2>Designed around the environments teams actually navigate</h2>
+            <h2>Built for African political and governance environments.</h2>
             <p>
               PoliSmart is shaped for African political, electoral, governance, public-opinion and
               campaign settings while respecting that countries, institutions and available evidence
@@ -188,17 +180,17 @@ export function MarketingHomePage() {
         <section id="security" className="security-section">
           <div>
             <span className="marketing-kicker">SECURITY & RESPONSIBLE AI</span>
-            <h2>Control where it matters</h2>
+            <h2>Designed for responsible political intelligence</h2>
             <p>
               Privacy-conscious workflows combine organization boundaries, role-based permissions,
               document approval and human oversight. Access and approvals remain server-enforced.
             </p>
           </div>
           <ul>
-            <li><LockKeyhole aria-hidden="true" /><span><strong>Organization-based access</strong>Campaign information stays scoped to authorized workspaces.</span></li>
-            <li><ShieldCheck aria-hidden="true" /><span><strong>Role-based permissions</strong>Administrative capabilities follow explicit authorization rules.</span></li>
-            <li><FileCheck2 aria-hidden="true" /><span><strong>Controlled knowledge</strong>Documents require authorized approval before grounded AI use.</span></li>
-            <li><BrainCircuit aria-hidden="true" /><span><strong>Responsible assistance</strong>Evidence, limitations and human accountability remain visible.</span></li>
+            <li><FileCheck2 aria-hidden="true" /><span><strong>Grounded responses</strong>Citations keep supporting evidence visible for review.</span></li>
+            <li><ShieldCheck aria-hidden="true" /><span><strong>Human review and approval</strong>Authorized people remain responsible for consequential decisions.</span></li>
+            <li><LockKeyhole aria-hidden="true" /><span><strong>Role-based access</strong>Campaign data stays scoped to authorized workspaces.</span></li>
+            <li><BrainCircuit aria-hidden="true" /><span><strong>Privacy safeguards</strong>No donor scoring, sensitive-trait profiling or personalized political targeting.</span></li>
           </ul>
         </section>
 
@@ -209,14 +201,17 @@ export function MarketingHomePage() {
             <p>Reserved future capabilities—clearly separated from the operational platform today.</p>
           </div>
           <article><span>COMING SOON</span><h3>Reports</h3><p>Structured reporting and export workflows for authorized campaign teams.</p></article>
-          <article><span>COMING SOON</span><h3>Fundraising Management</h3><p>Campaign fundraising management and workflow planning. No payment processing, donor profiling, scoring or sensitive-trait inference is currently provided.</p></article>
+          <article><span>COMING SOON</span><h3>Billing & Payments</h3><p>Future account billing capabilities. PoliSmart does not currently process payments.</p></article>
         </section>
 
         <section className="marketing-final-cta">
           <span className="marketing-kicker marketing-kicker--light">POLISMART AFRICA AI</span>
-          <h2>Turn grounded intelligence into coordinated campaign action.</h2>
-          <p>Authorized campaign teams and administrators can access their secure organization workspace.</p>
-          <a className="marketing-button marketing-button--gold" href="/login">Sign In <ArrowRight aria-hidden="true" /></a>
+          <h2>Prepare for smarter campaign decisions.</h2>
+          <p>Request early access or a guided demonstration during the PoliSmart Africa AI pre-launch period.</p>
+          <div className="prelaunch-actions" aria-label="Pre-launch opportunities">
+            <a className="marketing-button marketing-button--gold" href="/early-access">Request Early Access</a>
+            <a className="marketing-button marketing-button--outline" href="/request-demo">Request a Demo</a>
+          </div>
           <small>Need help? <a href="mailto:support@polismartafrica.ai">support@polismartafrica.ai</a></small>
         </section>
       </main>

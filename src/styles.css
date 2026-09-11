@@ -429,6 +429,7 @@
 }
 .marketing-final-cta h2 { max-width: 820px; color: white; }
 .marketing-final-cta > p { max-width: 620px; margin: 20px 0 30px; color: #b9d0c7; font-size: 14px; }
+.marketing-final-cta .prelaunch-actions { justify-content: center; margin-top: 0; }
 .marketing-final-cta small { margin-top: 24px; color: #a8c1b8; }
 .marketing-final-cta small a { color: white; font-weight: 800; }
 .marketing-footer {
