@@ -28,6 +28,7 @@
     "verify:running": "npm run smoke",
     "smoke": "node scripts/smoke-test.mjs",
     "diagnose:email:graph": "node scripts/diagnose-microsoft-graph-email.mjs",
+    "provision:preview-super-admin": "node scripts/provision-preview-super-admin.mjs",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:production": "node scripts/migrate-production.mjs",
