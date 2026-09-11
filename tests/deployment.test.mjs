@@ -411,7 +411,8 @@ test("public homepage presents accurate V1 marketing while login remains separat
   assert.match(homepage, /Request a Demo/);
   assert.match(homepage, /Early access is limited during our pre-launch period\./);
   assert.match(homepage, /className="prelaunch-actions"/);
-  assert.equal((homepage.match(/<button[^>]+disabled>/g) || []).length, 2);
+  assert.match(homepage, /href="\/early-access"/);
+  assert.match(homepage, /href="\/request-demo"/);
   assert.match(homepage, /href="\/login"/);
   assert.match(homepage, /id="capabilities"/);
   assert.match(homepage, /Observed Data/);
@@ -426,6 +427,27 @@ test("public homepage presents accurate V1 marketing while login remains separat
   assert.match(homepage, /href="\/privacy"/);
   assert.match(homepage, /href="\/terms"/);
   assert.doesNotMatch(homepage, /Stripe|PayPal|Paystack|Flutterwave/);
+});
+
+test("pre-launch public forms collect limited data with consent and privacy access", () => {
+  const app = fs.readFileSync(path.join(root, "src", "App.tsx"), "utf8");
+  const page = fs.readFileSync(path.join(root, "src", "pages", "PrelaunchRequestPage.tsx"), "utf8");
+  const route = fs.readFileSync(path.join(root, "server", "routes", "prelaunch.js"), "utf8");
+  assert.match(app, /currentUrl\.pathname === "\/early-access"/);
+  assert.match(app, /currentUrl\.pathname === "\/request-demo"/);
+  assert.match(page, /Full name/);
+  assert.match(page, /Work email/);
+  assert.match(page, /Primary area of interest/);
+  assert.match(page, /Preferred demo timing/);
+  assert.match(page, /Do not submit sensitive personal information/);
+  assert.match(page, /href="\/privacy"/);
+  assert.doesNotMatch(page, /card number|CVV|bank account|payment token/i);
+  assert.match(route, /response\.status\(202\)/);
+  assert.doesNotMatch(route, /router\.get/);
+  assert.match(
+    fs.readFileSync(path.join(root, "server", "config", "rateLimits.js"), "utf8"),
+    /prelaunchLead/,
+  );
 });
 
 test("Stage 4 legal pages accurately describe V1 and remain owner-review drafts", () => {

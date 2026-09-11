@@ -22,6 +22,7 @@ import { createIntelligenceWorkflowsRouter } from "./server/routes/intelligenceW
 import { createGovernanceRouter } from "./server/routes/governance.js";
 import { createWorkspaceSearchRouter } from "./server/routes/workspaceSearch.js";
 import { createFundraisingRouter } from "./server/routes/fundraising.js";
+import { createPrelaunchRouter } from "./server/routes/prelaunch.js";
 import {
   authenticateRequests,
   requireSession,
@@ -38,6 +39,7 @@ import { createGovernanceRepository } from "./server/repositories/governanceRepo
 import { createAiRepository } from "./server/repositories/aiRepository.js";
 import { createWorkspaceSearchRepository } from "./server/repositories/workspaceSearchRepository.js";
 import { createFundraisingRepository } from "./server/repositories/fundraisingRepository.js";
+import { createPrelaunchLeadRepository } from "./server/repositories/prelaunchLeadRepository.js";
 import { createAuthenticationService } from "./server/services/authentication.js";
 import { createAccountNotificationService } from "./server/services/accountNotifications.js";
 import { createKnowledgeBaseService } from "./server/services/knowledgeBase.js";
@@ -93,9 +95,10 @@ const authenticatedAiIdentifiers = (operation) => (request) => [
   operation,
 ];
 const organizationAiIdentifiers = (operation) => (request) => [request.tenant?.id, operation];
+const notifications = createAccountNotificationService(config);
 const authService = createAuthenticationService(prisma, {
   tokenSecret: config.sessionSecret,
-  notifications: createAccountNotificationService(config),
+  notifications,
 });
 const knowledgeRepository = createKnowledgeRepository(prisma);
 const knowledgeService = createKnowledgeBaseService(
@@ -219,6 +222,18 @@ app.use(
         identifiers: ipAndBodyHash("token"),
       }),
     },
+  }),
+);
+app.use(
+  "/api/prelaunch",
+  createPrelaunchRouter({
+    repository: createPrelaunchLeadRepository(prisma),
+    notifications,
+    rateLimiter: sharedLimiter({
+      purpose: "prelaunch-lead",
+      policy: RATE_LIMIT_POLICIES.prelaunchLead,
+      identifiers: ipAndBodyHash("email"),
+    }),
   }),
 );
 app.use("/api/campaigns", createCampaignRouter(createCampaignRepository(prisma)));

@@ -127,6 +127,41 @@ function accountEmailHtml({ heading, description, actionLabel, url }) {
   </div>`;
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function prelaunchLeadEmailHtml(lead) {
+  const rows = [
+    ["Request", lead.requestType === "DEMO" ? "Demo" : "Early access"],
+    ["Name", lead.name],
+    ["Work email", lead.email],
+    ["Organization", lead.organization],
+    ["Country", lead.country],
+    ["Role / job title", lead.role],
+    ["Interest", lead.interest],
+    ["Organization type", lead.organizationType],
+    ["Preferred timing", lead.timing],
+    ["Note", lead.note],
+  ].filter(([, value]) => value);
+  return `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#17352d;line-height:1.6">
+    <p style="font-size:13px;font-weight:700;letter-spacing:.08em;color:#276b4e">POLISMART AFRICA AI</p>
+    <h1 style="font-size:26px;line-height:1.2">New pre-launch request</h1>
+    <table style="width:100%;border-collapse:collapse">${rows
+      .map(
+        ([label, value]) =>
+          `<tr><th style="padding:8px;text-align:left;vertical-align:top;border-bottom:1px solid #dce5e1">${escapeHtml(label)}</th><td style="padding:8px;border-bottom:1px solid #dce5e1">${escapeHtml(value)}</td></tr>`,
+      )
+      .join("")}</table>
+    <p style="font-size:12px;color:#60736c">Handle this request according to approved privacy, access and retention procedures.</p>
+  </div>`;
+}
+
 export function createAccountNotificationService(config = {}, options = {}) {
   const usesSmtp = ["smtp", "microsoft365"].includes(config.emailProvider);
   const createTransport = options.createTransport || nodemailer.createTransport;
@@ -164,13 +199,15 @@ export function createAccountNotificationService(config = {}, options = {}) {
       })
     : null;
 
-  async function send({ email, subject, path, heading, description, actionLabel }) {
-    const html = accountEmailHtml({
-      heading,
-      description,
-      actionLabel,
-      url: `${config.publicUrl}${path}`,
-    });
+  async function send({ email, subject, path, heading, description, actionLabel, html: suppliedHtml }) {
+    const html =
+      suppliedHtml ||
+      accountEmailHtml({
+        heading,
+        description,
+        actionLabel,
+        url: `${config.publicUrl}${path}`,
+      });
     if (config.emailProvider === "console" || !config.emailProvider) {
       console.info(JSON.stringify({ event: "account-email-queued", delivery: "console", subject }));
       return;
@@ -354,6 +391,15 @@ export function createAccountNotificationService(config = {}, options = {}) {
         description: "Use the secure link below to choose a new account password.",
         actionLabel: "Reset password",
         path: `/reset-password?token=${encodeURIComponent(token)}`,
+      }),
+    sendPrelaunchLeadNotification: (lead) =>
+      send({
+        email: "support@polismartafrica.ai",
+        subject:
+          lead.requestType === "DEMO"
+            ? "New PoliSmart Demo Request"
+            : "New PoliSmart Early Access Request",
+        html: prelaunchLeadEmailHtml(lead),
       }),
   };
 }

@@ -156,10 +156,6 @@
   flex-wrap: wrap;
   gap: 12px;
 }
-.prelaunch-actions .marketing-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.72;
-}
 .prelaunch-actions .marketing-button {
   font-size: 12px;
 }
@@ -448,6 +444,107 @@
 .marketing-footer nav { justify-content: flex-end; }
 .marketing-footer .marketing-brand small { color: #91aaa1; }
 
+.prelaunch-page {
+  min-height: 100vh;
+  background: #f4f7f5;
+  color: var(--ink);
+}
+.prelaunch-header {
+  width: min(1120px, calc(100% - 40px));
+  min-height: 92px;
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.prelaunch-header .marketing-brand { color: var(--forest); }
+.prelaunch-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 800;
+}
+.prelaunch-back svg { width: 16px; }
+.prelaunch-main {
+  width: min(1120px, calc(100% - 40px));
+  margin-inline: auto;
+  padding: clamp(48px, 7vw, 88px) 0 90px;
+  display: grid;
+  grid-template-columns: minmax(0, .85fr) minmax(480px, 1.15fr);
+  gap: clamp(44px, 8vw, 110px);
+  align-items: start;
+}
+.prelaunch-introduction {
+  position: sticky;
+  top: 40px;
+}
+.prelaunch-introduction h1 {
+  margin: 16px 0 22px;
+  color: var(--forest);
+  font: 500 clamp(42px, 6vw, 68px)/1 Georgia, serif;
+  letter-spacing: -.04em;
+}
+.prelaunch-introduction p {
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.7;
+}
+.prelaunch-form-card {
+  padding: clamp(26px, 4vw, 48px);
+  border: 1px solid #dce5e1;
+  border-top: 5px solid var(--green);
+  background: white;
+  box-shadow: 0 18px 50px rgba(17, 57, 46, .08);
+}
+.prelaunch-form-card form { display: grid; gap: 10px; }
+.prelaunch-form-card label {
+  margin-top: 10px;
+  color: var(--forest);
+  font-size: 13px;
+  font-weight: 800;
+}
+.prelaunch-form-card label span { color: var(--muted); font-weight: 500; }
+.prelaunch-form-card input,
+.prelaunch-form-card select,
+.prelaunch-form-card textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 13px;
+  border: 1px solid #cbd8d3;
+  border-radius: 3px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+}
+.prelaunch-form-card textarea { min-height: 112px; resize: vertical; }
+.prelaunch-form-card input:focus-visible,
+.prelaunch-form-card select:focus-visible,
+.prelaunch-form-card textarea:focus-visible {
+  outline: 3px solid rgba(29, 121, 90, .22);
+  border-color: var(--green);
+}
+.prelaunch-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.prelaunch-form-grid > div { display: grid; gap: 10px; }
+.prelaunch-consent {
+  margin: 20px 0 8px;
+  padding: 16px;
+  border-left: 3px solid #d7aa50;
+  background: #fff8e9;
+  color: #5d5544;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.prelaunch-consent a { color: var(--green); font-weight: 800; }
+.prelaunch-form-card form > .marketing-button { width: 100%; margin-top: 8px; }
+.prelaunch-success { text-align: center; padding: 26px 0; }
+.prelaunch-success > svg { width: 52px; height: 52px; color: var(--green); }
+.prelaunch-success h2 { margin: 18px 0 10px; font: 500 32px Georgia, serif; }
+.prelaunch-success p { color: var(--muted); font-size: 16px; line-height: 1.7; }
+.prelaunch-success .marketing-button { margin-top: 20px; }
+
 @media (max-width: 980px) {
   .marketing-nav nav > a:not(.marketing-nav-cta) { display: none; }
   .marketing-hero { grid-template-columns: 1fr; }
@@ -458,6 +555,8 @@
   .security-section { padding: 54px; gap: 42px; }
   .coming-soon-section { grid-template-columns: 1fr 1fr; }
   .coming-soon-section > div { grid-column: 1 / -1; }
+  .prelaunch-main { grid-template-columns: 1fr; }
+  .prelaunch-introduction { position: static; max-width: 680px; }
 }
 @media (max-width: 720px) {
   .marketing-nav { width: min(100% - 28px, 1240px); }
@@ -480,6 +579,12 @@
   .marketing-footer { grid-template-columns: 1fr; justify-items: start; }
   .marketing-footer address { text-align: left; }
   .marketing-footer nav { justify-content: flex-start; flex-wrap: wrap; }
+  .prelaunch-header { min-height: 76px; }
+  .prelaunch-back { font-size: 0; }
+  .prelaunch-back svg { width: 22px; }
+  .prelaunch-main { width: min(100% - 28px, 1120px); padding-top: 44px; gap: 34px; }
+  .prelaunch-form-grid { grid-template-columns: 1fr; gap: 0; }
+  .prelaunch-form-card { padding: 24px 20px; }
 }
 @media (max-width: 440px) {
   .marketing-nav { min-height: 72px; }

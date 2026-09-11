@@ -75,12 +75,12 @@ export function MarketingHomePage() {
                 AI-powered political intelligence built for African realities.
               </p>
               <div className="prelaunch-actions" aria-label="Pre-launch opportunities">
-                <button type="button" className="marketing-button marketing-button--gold" disabled>
+                <a className="marketing-button marketing-button--gold" href="/early-access">
                   Request Early Access
-                </button>
-                <button type="button" className="marketing-button marketing-button--outline" disabled>
+                </a>
+                <a className="marketing-button marketing-button--outline" href="/request-demo">
                   Request a Demo
-                </button>
+                </a>
               </div>
               <small>Early access is limited during our pre-launch period.</small>
             </section>

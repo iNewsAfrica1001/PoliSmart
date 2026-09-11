@@ -28,6 +28,7 @@ test("database migrations are ordered, non-empty, and create every production mi
     "communications",
     "ai_usage_logs",
     "ai_error_reports",
+    "prelaunch_leads",
   ])
     assert.match(sql, new RegExp(`CREATE TABLE ["]?${table}`));
   assert.match(sql, /prevent_governance_log_mutation/);

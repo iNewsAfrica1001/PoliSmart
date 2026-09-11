@@ -13,6 +13,7 @@ import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { LegalPage } from "./pages/LegalPage";
 import { MarketingHomePage } from "./pages/MarketingHomePage";
 import { FundraisingPage } from "./pages/FundraisingPage";
+import { PrelaunchRequestPage } from "./pages/PrelaunchRequestPage";
 
 const pageTitles: Record<string, string> = {
   dashboard: "Dashboard",
@@ -34,6 +35,14 @@ export default function App() {
   if (currentUrl.pathname === "/") {
     document.title = "PoliSmart Africa AI | Grounded campaign intelligence";
     return <MarketingHomePage />;
+  }
+  if (currentUrl.pathname === "/early-access") {
+    document.title = "Request early access | PoliSmart Africa AI";
+    return <PrelaunchRequestPage requestType="EARLY_ACCESS" />;
+  }
+  if (currentUrl.pathname === "/request-demo") {
+    document.title = "Request a demo | PoliSmart Africa AI";
+    return <PrelaunchRequestPage requestType="DEMO" />;
   }
   if (currentUrl.pathname === "/privacy") {
     document.title = "Privacy Policy | PoliSmart Africa AI";
