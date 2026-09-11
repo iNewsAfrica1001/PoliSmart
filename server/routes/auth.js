@@ -39,6 +39,7 @@ function publicUser(user) {
         canCreateEvents: hasPermission({ role }, PERMISSIONS.EVENTS_CREATE),
         canCreateVolunteers: hasPermission({ role }, PERMISSIONS.VOLUNTEERS_CREATE),
         canReadCompliance: hasPermission({ role }, PERMISSIONS.PLATFORM_AUDIT_READ),
+        canReviewPrelaunchLeads: hasPermission({ role }, PERMISSIONS.PLATFORM_AUDIT_READ),
         canManagePolicy: hasPermission({ role }, PERMISSIONS.POLICY_MANAGE),
         canManageCommunications: hasPermission({ role }, PERMISSIONS.COMMUNICATIONS_MANAGE),
         canApproveKnowledge: hasPermission({ role }, PERMISSIONS.KNOWLEDGE_APPROVE),

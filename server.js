@@ -22,7 +22,7 @@ import { createIntelligenceWorkflowsRouter } from "./server/routes/intelligenceW
 import { createGovernanceRouter } from "./server/routes/governance.js";
 import { createWorkspaceSearchRouter } from "./server/routes/workspaceSearch.js";
 import { createFundraisingRouter } from "./server/routes/fundraising.js";
-import { createPrelaunchRouter } from "./server/routes/prelaunch.js";
+import { createPrelaunchReviewRouter, createPrelaunchRouter } from "./server/routes/prelaunch.js";
 import {
   authenticateRequests,
   requireSession,
@@ -235,6 +235,10 @@ app.use(
       identifiers: ipAndBodyHash("email"),
     }),
   }),
+);
+app.use(
+  "/api/admin/prelaunch-leads",
+  createPrelaunchReviewRouter(createPrelaunchLeadRepository(prisma)),
 );
 app.use("/api/campaigns", createCampaignRouter(createCampaignRepository(prisma)));
 app.use("/api/search", createWorkspaceSearchRouter(createWorkspaceSearchRepository(prisma)));

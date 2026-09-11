@@ -40,6 +40,7 @@ export const navigation: NavigationItem[] = [
   { label: "Reports", icon: FileBarChart, page: "reports", enabled: false },
   { label: "Billing", icon: WalletCards, page: "billing", enabled: false },
   { label: "Compliance", icon: ShieldCheck, page: "compliance", enabled: true },
+  { label: "Pre-launch Requests", icon: ClipboardCheck, page: "prelaunch-leads", enabled: true },
   { label: "Administration", icon: Settings, page: "administration", enabled: false },
 ];
 

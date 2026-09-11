@@ -14,6 +14,7 @@ import { LegalPage } from "./pages/LegalPage";
 import { MarketingHomePage } from "./pages/MarketingHomePage";
 import { FundraisingPage } from "./pages/FundraisingPage";
 import { PrelaunchRequestPage } from "./pages/PrelaunchRequestPage";
+import { PrelaunchLeadReviewPage } from "./pages/PrelaunchLeadReviewPage";
 
 const pageTitles: Record<string, string> = {
   dashboard: "Dashboard",
@@ -28,6 +29,7 @@ const pageTitles: Record<string, string> = {
   events: "Events",
   compliance: "Compliance",
   fundraising: "Fundraising Management",
+  "prelaunch-leads": "Pre-launch Requests",
 };
 
 export default function App() {
@@ -67,7 +69,11 @@ function WorkspaceApp() {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(
-    window.location.pathname === "/compliance" ? "compliance" : "dashboard",
+    window.location.pathname === "/compliance"
+      ? "compliance"
+      : window.location.pathname === "/admin/prelaunch-leads"
+        ? "prelaunch-leads"
+        : "dashboard",
   );
   useEffect(() => {
     authApi
@@ -105,6 +111,7 @@ function WorkspaceApp() {
       role={membership?.role || "MEMBER"}
       canReadCompliance={membership?.canReadCompliance === true}
       canReadFundraising={membership?.canReadFundraising === true}
+      canReviewPrelaunchLeads={membership?.canReviewPrelaunchLeads === true}
       tenantId={membership?.tenantId || ""}
       onNavigate={setPage}
       onSignOut={() => {
@@ -123,6 +130,10 @@ function WorkspaceApp() {
         <KnowledgePage user={user} />
       ) : page === "fundraising" ? (
         <FundraisingPage user={user} />
+      ) : page === "prelaunch-leads" ? (
+        membership?.canReviewPrelaunchLeads
+          ? <PrelaunchLeadReviewPage />
+          : <section className="restricted-state"><h1>Restricted access</h1><p>Pre-launch requests are available only to authorized internal administrators.</p></section>
       ) : (
         <OperationsPage
           user={user}

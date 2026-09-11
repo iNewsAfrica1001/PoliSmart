@@ -35,6 +35,7 @@ export type SessionUser = {
     canCreateEvents?: boolean;
     canCreateVolunteers?: boolean;
     canReadCompliance?: boolean;
+    canReviewPrelaunchLeads?: boolean;
     canManagePolicy?: boolean;
     canManageCommunications?: boolean;
     canApproveKnowledge?: boolean;

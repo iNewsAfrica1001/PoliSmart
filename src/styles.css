@@ -608,6 +608,29 @@
   display: grid;
   gap: 18px;
 }
+
+.lead-review-page { display: grid; gap: 22px; }
+.lead-review-page .page-heading { display: flex; justify-content: space-between; gap: 28px; align-items: end; }
+.lead-review-page .page-heading > p { max-width: 540px; color: #61716b; }
+.lead-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.lead-filters label, .lead-status-control { display: grid; gap: 7px; font-size: .78rem; font-weight: 800; }
+.lead-filters input, .lead-filters select, .lead-status-control select { min-height: 44px; padding: 8px 11px; border: 1px solid #cad7d1; border-radius: 7px; background: white; font: inherit; }
+.lead-list { display: grid; gap: 10px; }
+.lead-card { width: 100%; padding: 18px; display: grid; grid-template-columns: 1fr 1.2fr 1fr .8fr; gap: 20px; border: 1px solid var(--line); border-radius: 12px; background: white; color: inherit; text-align: left; cursor: pointer; }
+.lead-card:hover, .lead-card:focus-visible { border-color: var(--green); box-shadow: 0 8px 22px rgba(16,44,39,.08); }
+.lead-card span, .lead-card strong, .lead-card small { display: block; min-width: 0; }
+.lead-card small { margin-top: 5px; color: var(--muted); overflow-wrap: anywhere; }
+.lead-detail { padding: 24px; border: 1px solid #cbd9d2; border-top: 4px solid var(--green); border-radius: 12px; background: white; }
+.lead-detail-head { display: flex; justify-content: space-between; gap: 20px; }
+.lead-detail-head h2 { margin: 5px 0 0; font: 500 2rem Georgia, serif; }
+.lead-detail dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 24px 0; }
+.lead-detail dl div { padding-top: 12px; border-top: 1px solid var(--line); }
+.lead-detail dt { color: var(--muted); font-size: .72rem; font-weight: 800; text-transform: uppercase; }
+.lead-detail dd { margin: 7px 0 0; overflow-wrap: anywhere; }
+.lead-detail .lead-detail-note { grid-column: 1 / -1; }
+.lead-status-control { max-width: 280px; }
+@media (max-width: 820px) { .lead-review-page .page-heading { display: block; } .lead-filters, .lead-detail dl { grid-template-columns: 1fr; } .lead-card { grid-template-columns: 1fr 1fr; } .lead-detail .lead-detail-note { grid-column: auto; } }
+@media (max-width: 520px) { .lead-card { grid-template-columns: 1fr; } }
 .page-heading h1 {
   display: flex;
   align-items: center;

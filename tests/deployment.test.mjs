@@ -451,7 +451,8 @@ test("pre-launch public forms collect limited data with consent and privacy acce
   assert.match(page, /href="\/privacy"/);
   assert.doesNotMatch(page, /card number|CVV|bank account|payment token/i);
   assert.match(route, /response\.status\(202\)/);
-  assert.doesNotMatch(route, /router\.get/);
+  assert.match(route, /createPrelaunchReviewRouter/);
+  assert.match(route, /requireSession, requireMembershipPermission\(PERMISSIONS\.PLATFORM_AUDIT_READ\)/);
   assert.match(
     fs.readFileSync(path.join(root, "server", "config", "rateLimits.js"), "utf8"),
     /prelaunchLead/,

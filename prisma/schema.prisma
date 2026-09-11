@@ -1292,6 +1292,7 @@ model PrelaunchLead {
   note             String?  @db.VarChar(500)
   status           String   @default("NEW") @db.VarChar(20)
   createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   @@index([requestType, status, createdAt])
   @@map("prelaunch_leads")

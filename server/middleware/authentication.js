@@ -51,3 +51,14 @@ export function requireTenantPermission(permission) {
     next();
   };
 }
+
+export function requireMembershipPermission(permission) {
+  return (request, _response, next) => {
+    const authorized = request.auth?.user.memberships.some((membership) =>
+      hasPermission({ role: membership.role }, permission),
+    );
+    if (!authorized)
+      return next(Object.assign(new Error("Authorized administrator access is required."), { status: 403 }));
+    next();
+  };
+}

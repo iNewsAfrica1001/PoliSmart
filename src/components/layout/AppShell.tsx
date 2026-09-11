@@ -13,6 +13,7 @@ type AppShellProps = {
   role: string;
   canReadCompliance?: boolean;
   canReadFundraising?: boolean;
+  canReviewPrelaunchLeads?: boolean;
   tenantId: string;
 };
 
@@ -32,6 +33,7 @@ export function AppShell({
   role,
   canReadCompliance = false,
   canReadFundraising = false,
+  canReviewPrelaunchLeads = false,
   tenantId,
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -69,7 +71,8 @@ export function AppShell({
           {navigation
             .filter((item) =>
               (item.page !== "compliance" || canReadCompliance) &&
-              (item.page !== "fundraising" || canReadFundraising))
+              (item.page !== "fundraising" || canReadFundraising) &&
+              (item.page !== "prelaunch-leads" || canReviewPrelaunchLeads))
             .map(({ label, icon: Icon, page, enabled }) => (
               <button
                 className={activePage === page ? "nav-item nav-item--active" : "nav-item"}

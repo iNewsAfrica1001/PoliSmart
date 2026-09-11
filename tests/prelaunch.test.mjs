@@ -1,8 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import express from "express";
 import request from "supertest";
-import { createPrelaunchRouter } from "../server/routes/prelaunch.js";
+import { createPrelaunchReviewRouter, createPrelaunchRouter } from "../server/routes/prelaunch.js";
 import { createAccountNotificationService } from "../server/services/accountNotifications.js";
 
 const validEarlyAccess = {
@@ -140,4 +141,83 @@ test("lead notification reuses transactional delivery and escapes submitted cont
   assert.equal(messages[0].subject, "New PoliSmart Early Access Request");
   assert.doesNotMatch(messages[0].html, /<script>/);
   assert.match(messages[0].html, /&lt;script&gt;/);
+});
+
+function reviewApp(role, repository) {
+  const app = express();
+  app.use(express.json());
+  if (role)
+    app.use((request, _response, next) => {
+      request.auth = { user: { memberships: [{ role }] } };
+      next();
+    });
+  app.use("/admin/prelaunch-leads", createPrelaunchReviewRouter(repository));
+  app.use((error, _request, response, _next) =>
+    response.status(error.status || 500).json({ message: error.message }),
+  );
+  return app;
+}
+
+test("pre-launch review requires a Super Administrator and never calls repositories when denied", async () => {
+  let calls = 0;
+  const repository = { list: async () => { calls += 1; return []; } };
+  assert.equal((await request(reviewApp(null, repository)).get("/admin/prelaunch-leads")).status, 401);
+  assert.equal(
+    (await request(reviewApp("CAMPAIGN_ADMINISTRATOR", repository)).get("/admin/prelaunch-leads")).status,
+    403,
+  );
+  assert.equal(calls, 0);
+});
+
+test("authorized lead review supports validated filters, detail, and human status updates", async () => {
+  const id = "11111111-1111-4111-8111-111111111111";
+  const lead = {
+    id,
+    requestType: "DEMO",
+    name: "Synthetic Reviewer Test",
+    email: "review@example.test",
+    organization: "Example Organization",
+    country: "Ghana",
+    role: "Director",
+    interest: null,
+    organizationType: "PUBLIC_POLICY_ORGANIZATION",
+    timing: "WITHIN_2_WEEKS",
+    note: "Synthetic note",
+    status: "NEW",
+  };
+  const observed = {};
+  const repository = {
+    list: async (filters) => { observed.filters = filters; return [lead]; },
+    findById: async (receivedId) => { observed.detailId = receivedId; return lead; },
+    updateStatus: async (receivedId, status) => ({ ...lead, id: receivedId, status }),
+  };
+  const app = reviewApp("SUPER_ADMINISTRATOR", repository);
+  const list = await request(app).get(
+    "/admin/prelaunch-leads?requestType=demo&country=Ghana&status=new",
+  );
+  assert.equal(list.status, 200);
+  assert.deepEqual(observed.filters, { requestType: "DEMO", status: "NEW", country: "Ghana" });
+  assert.equal((await request(app).get(`/admin/prelaunch-leads/${id}`)).status, 200);
+  assert.equal(observed.detailId, id);
+  const updated = await request(app)
+    .patch(`/admin/prelaunch-leads/${id}/status`)
+    .send({ status: "qualified" });
+  assert.equal(updated.status, 200);
+  assert.equal(updated.body.lead.status, "QUALIFIED");
+  assert.equal(
+    (await request(app).patch(`/admin/prelaunch-leads/${id}/status`).send({ status: "SCORING" })).status,
+    400,
+  );
+});
+
+test("pre-launch review UI is capability-gated and contains no automated scoring or bulk email", () => {
+  const page = readFileSync("src/pages/PrelaunchLeadReviewPage.tsx", "utf8");
+  const app = readFileSync("src/App.tsx", "utf8");
+  const shell = readFileSync("src/components/layout/AppShell.tsx", "utf8");
+  assert.match(app, /\/admin\/prelaunch-leads/);
+  assert.match(shell, /canReviewPrelaunchLeads/);
+  assert.match(page, /NEW.*CONTACTED.*QUALIFIED.*CLOSED/);
+  assert.match(page, /Primary interest \/ organization type/);
+  assert.match(page, /Decisions and follow-up remain human-led/);
+  assert.doesNotMatch(page, /score|bulk email|automated campaign/i);
 });
