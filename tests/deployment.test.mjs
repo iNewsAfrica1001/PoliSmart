@@ -405,6 +405,13 @@ test("public homepage presents accurate V1 marketing while login remains separat
   assert.match(app, /currentUrl\.pathname === "\/"/);
   assert.match(app, /MarketingHomePage/);
   assert.match(homepage, /Grounded Intelligence\./);
+  assert.match(homepage, /PoliSmart Africa AI is coming soon\./);
+  assert.match(homepage, /AI-powered political intelligence built for African realities\./);
+  assert.match(homepage, /Request Early Access/);
+  assert.match(homepage, /Request a Demo/);
+  assert.match(homepage, /Early access is limited during our pre-launch period\./);
+  assert.match(homepage, /className="prelaunch-actions"/);
+  assert.equal((homepage.match(/<button[^>]+disabled>/g) || []).length, 2);
   assert.match(homepage, /href="\/login"/);
   assert.match(homepage, /id="capabilities"/);
   assert.match(homepage, /Observed Data/);

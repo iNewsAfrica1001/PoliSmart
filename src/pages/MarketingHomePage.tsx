@@ -68,6 +68,22 @@ export function MarketingHomePage() {
               public-opinion data, AI-assisted workflows and field operations into one secure
               platform for authorized teams.
             </p>
+            <section className="prelaunch-cta" aria-labelledby="prelaunch-heading">
+              <h2 id="prelaunch-heading">PoliSmart Africa AI is coming soon.</h2>
+              <p>
+                Be among the first campaign professionals and organizations to experience
+                AI-powered political intelligence built for African realities.
+              </p>
+              <div className="prelaunch-actions" aria-label="Pre-launch opportunities">
+                <button type="button" className="marketing-button marketing-button--gold" disabled>
+                  Request Early Access
+                </button>
+                <button type="button" className="marketing-button marketing-button--outline" disabled>
+                  Request a Demo
+                </button>
+              </div>
+              <small>Early access is limited during our pre-launch period.</small>
+            </section>
             <div className="marketing-actions">
               <a className="marketing-button marketing-button--gold" href="/login">
                 Sign In <ArrowRight aria-hidden="true" />
