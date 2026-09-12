@@ -158,6 +158,25 @@ function reviewApp(role, repository) {
   return app;
 }
 
+function statusRepository(initialStatus = "NEW", updateOutcome = "UPDATED") {
+  const lead = {
+    id: "11111111-1111-4111-8111-111111111111",
+    status: initialStatus,
+    updatedAt: "2026-09-11T12:00:00.000Z",
+  };
+  const calls = [];
+  return {
+    calls,
+    findById: async () => lead,
+    updateStatus: async (...args) => {
+      calls.push(args);
+      return updateOutcome === "UPDATED"
+        ? { outcome: "UPDATED", lead: { ...lead, status: args[2], updatedAt: "2026-09-11T12:01:00.000Z" } }
+        : { outcome: updateOutcome, lead: null };
+    },
+  };
+}
+
 test("pre-launch review requires a Super Administrator and never calls repositories when denied", async () => {
   let calls = 0;
   const repository = { list: async () => { calls += 1; return []; } };
@@ -189,7 +208,10 @@ test("authorized lead review supports validated filters, detail, and human statu
   const repository = {
     list: async (filters) => { observed.filters = filters; return [lead]; },
     findById: async (receivedId) => { observed.detailId = receivedId; return lead; },
-    updateStatus: async (receivedId, status) => ({ ...lead, id: receivedId, status }),
+    updateStatus: async (receivedId, expectedStatus, status) => ({
+      outcome: "UPDATED",
+      lead: { ...lead, id: receivedId, status, expectedStatus },
+    }),
   };
   const app = reviewApp("SUPER_ADMINISTRATOR", repository);
   const list = await request(app).get(
@@ -210,6 +232,65 @@ test("authorized lead review supports validated filters, detail, and human statu
   );
 });
 
+test("authorized lead status transitions succeed and prohibited transitions return conflict", async () => {
+  const id = "11111111-1111-4111-8111-111111111111";
+  for (const [current, requested] of [
+    ["NEW", "CONTACTED"], ["NEW", "QUALIFIED"], ["NEW", "CLOSED"],
+    ["CONTACTED", "QUALIFIED"], ["CONTACTED", "CLOSED"], ["QUALIFIED", "CLOSED"],
+  ]) {
+    const repository = statusRepository(current);
+    const response = await request(reviewApp("SUPER_ADMINISTRATOR", repository))
+      .patch(`/admin/prelaunch-leads/${id}/status`).send({ status: requested });
+    assert.equal(response.status, 200, `${current} -> ${requested}`);
+    assert.deepEqual(repository.calls, [[id, current, requested]]);
+  }
+  for (const [current, requested] of [
+    ["CONTACTED", "NEW"], ["QUALIFIED", "NEW"], ["QUALIFIED", "CONTACTED"],
+    ["CLOSED", "NEW"], ["CLOSED", "CONTACTED"], ["CLOSED", "QUALIFIED"],
+  ]) {
+    const repository = statusRepository(current);
+    const response = await request(reviewApp("SUPER_ADMINISTRATOR", repository))
+      .patch(`/admin/prelaunch-leads/${id}/status`).send({ status: requested });
+    assert.equal(response.status, 409, `${current} -> ${requested}`);
+    assert.match(response.body.message, /not permitted/i);
+    assert.equal(repository.calls.length, 0);
+  }
+});
+
+test("same-status update is a no-op and leaves updatedAt unchanged", async () => {
+  const id = "11111111-1111-4111-8111-111111111111";
+  const repository = statusRepository("CONTACTED");
+  const response = await request(reviewApp("SUPER_ADMINISTRATOR", repository))
+    .patch(`/admin/prelaunch-leads/${id}/status`).send({ status: "CONTACTED" });
+  assert.equal(response.status, 200);
+  assert.equal(response.body.lead.updatedAt, "2026-09-11T12:00:00.000Z");
+  assert.equal(repository.calls.length, 0);
+});
+
+test("concurrent status changes and concurrent deletion return controlled responses", async () => {
+  const id = "11111111-1111-4111-8111-111111111111";
+  for (const [outcome, expected] of [["CONFLICT", 409], ["NOT_FOUND", 404]]) {
+    const repository = statusRepository("NEW", outcome);
+    const response = await request(reviewApp("SUPER_ADMINISTRATOR", repository))
+      .patch(`/admin/prelaunch-leads/${id}/status`).send({ status: "CONTACTED" });
+    assert.equal(response.status, expected);
+    assert.doesNotMatch(response.body.message, /prisma|database|sql/i);
+  }
+});
+
+test("unknown lead status update remains a controlled 404", async () => {
+  let updates = 0;
+  const repository = {
+    findById: async () => null,
+    updateStatus: async () => { updates += 1; },
+  };
+  const response = await request(reviewApp("SUPER_ADMINISTRATOR", repository))
+    .patch("/admin/prelaunch-leads/11111111-1111-4111-8111-111111111111/status")
+    .send({ status: "CONTACTED" });
+  assert.equal(response.status, 404);
+  assert.equal(updates, 0);
+});
+
 test("pre-launch review UI is capability-gated and contains no automated scoring or bulk email", () => {
   const page = readFileSync("src/pages/PrelaunchLeadReviewPage.tsx", "utf8");
   const app = readFileSync("src/App.tsx", "utf8");
@@ -220,4 +301,8 @@ test("pre-launch review UI is capability-gated and contains no automated scoring
   assert.match(page, /Primary interest \/ organization type/);
   assert.match(page, /Decisions and follow-up remain human-led/);
   assert.doesNotMatch(page, /score|bulk email|automated campaign/i);
+  assert.match(page, /permittedPrelaunchLeadStatuses/);
+  assert.match(page, /No further status transition is available/);
+  assert.match(page, /status === 409/);
+  assert.match(page, /latest status has been loaded/);
 });

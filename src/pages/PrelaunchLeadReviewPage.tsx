@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { prelaunchAdminApi, type PrelaunchLead, type PrelaunchLeadFollowUp } from "../lib/prelaunchAdmin";
+import { permittedPrelaunchLeadStatuses } from "../../shared/prelaunchLeadStatus.js";
 
 const statuses: PrelaunchLead["status"][] = ["NEW", "CONTACTED", "QUALIFIED", "CLOSED"];
 const followUpStates = ["ALL", "OVERDUE", "UPCOMING", "NONE"] as const;
@@ -53,11 +54,21 @@ export function PrelaunchLeadReviewPage() {
   };
   const updateStatus = async (status: PrelaunchLead["status"]) => {
     if (!selected) return;
+    setError("");
     try {
       const updated = (await prelaunchAdminApi.updateStatus(selected.id, status)).lead;
       setSelected(updated);
       setLeads((current) => current.map((lead) => lead.id === updated.id ? { ...lead, ...updated } : lead));
-    } catch { setError("The request status could not be updated."); }
+    } catch (caught) {
+      if ((caught as { status?: number }).status === 409) {
+        setError("The request status changed. The latest status has been loaded.");
+        try {
+          const refreshed = (await prelaunchAdminApi.detail(selected.id)).lead;
+          setSelected(refreshed);
+          await load();
+        } catch { setError("The request status changed, but the latest request could not be loaded."); }
+      } else setError("The request status could not be updated.");
+    }
   };
   const createFollowUp = async () => {
     if (!selected || submittingFollowUp) return;
@@ -105,7 +116,7 @@ export function PrelaunchLeadReviewPage() {
     {selected && <section className="lead-detail" aria-labelledby="lead-detail-heading">
       <div className="lead-detail-head"><div><span>REQUEST DETAIL</span><h2 id="lead-detail-heading">{selected.name}</h2></div><button onClick={() => setSelected(null)}>Close</button></div>
       <dl><div><dt>Work email</dt><dd>{selected.email}</dd></div><div><dt>Organization</dt><dd>{selected.organization}</dd></div><div><dt>Country</dt><dd>{selected.country}</dd></div><div><dt>Role / job title</dt><dd>{selected.role}</dd></div><div><dt>Request type</dt><dd>{label(selected.requestType)}</dd></div><div><dt>Primary interest / organization type</dt><dd>{label(selected.interest ?? selected.organizationType)}</dd></div><div><dt>Preferred demo timing</dt><dd>{label(selected.timing)}</dd></div><div><dt>Created</dt><dd>{dateTime(selected.createdAt)}</dd></div><div className="lead-detail-note"><dt>Submitted note</dt><dd>{selected.note || "No note provided."}</dd></div></dl>
-      <label className="lead-status-control">Status<select value={selected.status} onChange={(event) => void updateStatus(event.target.value as PrelaunchLead["status"])}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label>
+      <div className="lead-status-control"><strong>Current status: {selected.status}</strong>{permittedPrelaunchLeadStatuses(selected.status).length > 0 ? <label>Change status<select value="" onChange={(event) => event.target.value && void updateStatus(event.target.value as PrelaunchLead["status"])}><option value="">Select next status</option>{permittedPrelaunchLeadStatuses(selected.status).map((status) => <option key={status} value={status}>{status}</option>)}</select></label> : <p>This lead is closed. No further status transition is available.</p>}</div>
       <section className="lead-follow-up" aria-labelledby="follow-up-heading"><div><span>HUMAN-LED OUTREACH</span><h3 id="follow-up-heading">Follow-up</h3></div>
         <div className="lead-follow-up-form"><label htmlFor="follow-up-note">Follow-up note</label><textarea id="follow-up-note" rows={4} maxLength={MAX_FOLLOW_UP_NOTE} value={followUpNote} onChange={(event) => setFollowUpNote(event.target.value)} disabled={submittingFollowUp} /><small>{MAX_FOLLOW_UP_NOTE - followUpNote.length} characters remaining</small><label htmlFor="follow-up-time">Next follow-up date and time</label><input id="follow-up-time" type="datetime-local" value={scheduledLocal} onChange={(event) => setScheduledLocal(event.target.value)} disabled={submittingFollowUp} /><button type="button" onClick={() => void createFollowUp()} disabled={submittingFollowUp}>{submittingFollowUp ? "Scheduling follow-up…" : "Schedule follow-up"}</button></div>
         <div className="lead-follow-up-history"><h4>Follow-up history</h4>{followUps.length === 0 ? <p>No follow-ups recorded.</p> : followUps.map((followUp) => <article key={followUp.id} className="follow-up-entry"><div><strong>{followUp.completedAt ? "COMPLETED" : "PENDING"}</strong><span>Scheduled {dateTime(followUp.scheduledAt)}</span></div><p>{followUp.note}</p><small>Created {dateTime(followUp.createdAt)} by {followUp.createdBy.displayName}</small>{followUp.completedAt && followUp.completedBy && <small>Completed {dateTime(followUp.completedAt)} by {followUp.completedBy.displayName}</small>}{!followUp.completedAt && <button type="button" onClick={() => void completeFollowUp(followUp.id)} disabled={completingFollowUpId === followUp.id}>{completingFollowUpId === followUp.id ? "Marking completed…" : "Mark completed"}</button>}</article>)}</div>

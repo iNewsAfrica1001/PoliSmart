@@ -26,6 +26,44 @@ function database(overrides = {}) {
   };
 }
 
+test("lead status update is atomic and bound to ID and expected current status", async () => {
+  const observed = {};
+  const updatedAt = new Date("2026-09-11T12:01:00.000Z");
+  const db = database({
+    prelaunchLead: {
+      updateMany: async (query) => { observed.update = query; return { count: 1 }; },
+      findUnique: async () => ({ id: leadId, status: "CONTACTED", updatedAt }),
+    },
+  });
+  const result = await createPrelaunchLeadRepository(db).updateStatus(leadId, "NEW", "CONTACTED");
+  assert.deepEqual(observed.update, {
+    where: { id: leadId, status: "NEW" },
+    data: { status: "CONTACTED" },
+  });
+  assert.equal(result.outcome, "UPDATED");
+  assert.equal(result.lead.updatedAt, updatedAt);
+});
+
+test("racing and missing lead status updates return controlled outcomes", async () => {
+  const racing = database({
+    prelaunchLead: {
+      updateMany: async () => ({ count: 0 }),
+      findUnique: async () => ({ id: leadId, status: "QUALIFIED" }),
+    },
+  });
+  assert.deepEqual(
+    await createPrelaunchLeadRepository(racing).updateStatus(leadId, "NEW", "CONTACTED"),
+    { outcome: "CONFLICT", lead: null },
+  );
+  const missing = database({
+    prelaunchLead: { updateMany: async () => ({ count: 0 }), findUnique: async () => null },
+  });
+  assert.deepEqual(
+    await createPrelaunchLeadRepository(missing).updateStatus(leadId, "NEW", "CONTACTED"),
+    { outcome: "NOT_FOUND", lead: null },
+  );
+});
+
 test("follow-up history confirms the lead, orders chronologically, and selects safe administrator fields", async () => {
   const observed = {};
   const db = database({

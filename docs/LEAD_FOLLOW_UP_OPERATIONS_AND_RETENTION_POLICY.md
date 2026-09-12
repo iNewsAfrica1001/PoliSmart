@@ -41,7 +41,7 @@ Use `NEW` when a valid Early Access or Demo request has been received but has no
 
 ### CONTACTED
 
-Use `CONTACTED` after an authorized administrator has made a genuine outreach attempt through an independently approved communication method. It must not imply that the requester responded. It may move to `QUALIFIED`, `CLOSED`, or back to `NEW` only to correct a documented operational mistake.
+Use `CONTACTED` after an authorized administrator has made a genuine outreach attempt through an independently approved communication method. It must not imply that the requester responded. It may move only to `QUALIFIED` or `CLOSED`.
 
 ### QUALIFIED
 
@@ -50,6 +50,21 @@ Use `QUALIFIED` only after human review determines that the request is appropria
 ### CLOSED
 
 Use `CLOSED` when active review and follow-up have ended, including withdrawal, duplication, invalidity, prolonged non-response, failure to meet approved criteria, completion, or another documented reason. Closing a lead does not permanently delete it; retention, anonymization, and deletion follow Section 8.
+
+### Controlled status transitions
+
+| Current status | Permitted next status | Operational requirement |
+|---|---|---|
+| `NEW` | `CONTACTED` | Genuine outreach occurred. |
+| `NEW` | `QUALIFIED` | Human review confirmed qualification without requiring prior outreach. |
+| `NEW` | `CLOSED` | The request is invalid, duplicate, withdrawn, unsuitable, or concluded. |
+| `CONTACTED` | `QUALIFIED` | Human review confirmed qualification. |
+| `CONTACTED` | `CLOSED` | No further action is appropriate. |
+| `QUALIFIED` | `CLOSED` | Active consideration or follow-up ended. |
+| `CLOSED` | None | Reopening is prohibited in V1.1. |
+| Same status | No transition | A harmless idempotent no-op that does not change `updated_at`. |
+
+Corrections must not use backward transitions. An incorrect follow-up note is corrected with a new factual follow-up entry. An incorrect lead status must be escalated to the Platform Owner and Technical Administrator. V1.1 does not provide status reopening or backward correction. Any future reopening process requires a separately reviewed design, authorization, audit trail, tests, and release approval.
 
 ## 4. Follow-up standards
 

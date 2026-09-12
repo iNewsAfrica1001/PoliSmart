@@ -3,6 +3,10 @@ import { PERMISSIONS } from "../config/authorization.js";
 import { requireMembershipPermission, requireSession } from "../middleware/authentication.js";
 import { asyncRoute } from "../middleware/http.js";
 import { requireString } from "../services/validation.js";
+import {
+  isPermittedPrelaunchLeadTransition,
+  PRELAUNCH_LEAD_STATUSES,
+} from "../../shared/prelaunchLeadStatus.js";
 
 export const EARLY_ACCESS_INTERESTS = Object.freeze([
   "POLITICAL_INTELLIGENCE",
@@ -38,7 +42,6 @@ const CONFIRMATIONS = Object.freeze({
   DEMO:
     "Thank you. Your demo request has been received. Our team will contact you to arrange the next step.",
 });
-const REVIEW_STATUSES = Object.freeze(["NEW", "CONTACTED", "QUALIFIED", "CLOSED"]);
 const REQUEST_TYPES = Object.freeze(["EARLY_ACCESS", "DEMO"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const RFC_3339 =
@@ -174,7 +177,7 @@ export function createPrelaunchReviewRouter(repository, { now = () => new Date()
       response.json({
         leads: await repository.list({
           requestType: filterValue(request.query.requestType, REQUEST_TYPES, "requestType"),
-          status: filterValue(request.query.status, REVIEW_STATUSES, "status"),
+          status: filterValue(request.query.status, PRELAUNCH_LEAD_STATUSES, "status"),
           country: country || undefined,
         }),
       });
@@ -193,11 +196,23 @@ export function createPrelaunchReviewRouter(repository, { now = () => new Date()
     "/:id/status",
     asyncRoute(async (request, response) => {
       validateId(request.params.id);
-      const status = filterValue(request.body?.status, REVIEW_STATUSES, "status");
+      const status = filterValue(request.body?.status, PRELAUNCH_LEAD_STATUSES, "status");
       if (!status) throw Object.assign(new Error("status is required."), { status: 400 });
-      const lead = await repository.updateStatus(request.params.id, status);
-      if (!lead) throw Object.assign(new Error("Lead not found."), { status: 404 });
-      response.json({ lead });
+      const currentLead = await repository.findById(request.params.id);
+      if (!currentLead) throw Object.assign(new Error("Lead not found."), { status: 404 });
+      if (!isPermittedPrelaunchLeadTransition(currentLead.status, status))
+        throw Object.assign(new Error("The requested status transition is not permitted."), {
+          status: 409,
+        });
+      if (currentLead.status === status) return response.json({ lead: currentLead });
+      const result = await repository.updateStatus(request.params.id, currentLead.status, status);
+      if (result.outcome === "NOT_FOUND")
+        throw Object.assign(new Error("Lead not found."), { status: 404 });
+      if (result.outcome === "CONFLICT")
+        throw Object.assign(new Error("The lead status changed. Refresh and try again."), {
+          status: 409,
+        });
+      response.json({ lead: result.lead });
     }),
   );
   router.get(

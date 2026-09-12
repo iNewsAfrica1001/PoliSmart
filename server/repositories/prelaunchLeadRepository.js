@@ -73,11 +73,23 @@ export function createPrelaunchLeadRepository(database, { now = () => new Date()
     findById(id) {
       return database.prelaunchLead.findUnique({ where: { id }, select: reviewFields });
     },
-    async updateStatus(id, status) {
-      const result = await database.prelaunchLead.updateMany({ where: { id }, data: { status } });
-      return result.count
-        ? database.prelaunchLead.findUnique({ where: { id }, select: reviewFields })
-        : null;
+    async updateStatus(id, expectedStatus, status) {
+      const result = await database.prelaunchLead.updateMany({
+        where: { id, status: expectedStatus },
+        data: { status },
+      });
+      if (result.count === 1)
+        return {
+          outcome: "UPDATED",
+          lead: await database.prelaunchLead.findUnique({ where: { id }, select: reviewFields }),
+        };
+      const existing = await database.prelaunchLead.findUnique({
+        where: { id },
+        select: { id: true, status: true },
+      });
+      return existing
+        ? { outcome: "CONFLICT", lead: null }
+        : { outcome: "NOT_FOUND", lead: null };
     },
     async listFollowUpsForLead(leadId) {
       if ((await database.prelaunchLead.count({ where: { id: leadId } })) !== 1)
