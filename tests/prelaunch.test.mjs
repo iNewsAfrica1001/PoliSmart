@@ -306,3 +306,28 @@ test("pre-launch review UI is capability-gated and contains no automated scoring
   assert.match(page, /status === 409/);
   assert.match(page, /latest status has been loaded/);
 });
+
+test("lead status transitions announce only server-confirmed changes accessibly", () => {
+  const page = readFileSync("src/pages/PrelaunchLeadReviewPage.tsx", "utf8");
+  const handler = page.slice(page.indexOf("const updateStatus"), page.indexOf("const createFollowUp"));
+  assert.match(handler, /const previousStatus = selected\.status/);
+  assert.match(handler, /setStatusMessage\(""\)/);
+  assert.match(handler, /const updated = \(await prelaunchAdminApi\.updateStatus/);
+  assert.match(handler, /updated\.status !== previousStatus/);
+  assert.match(handler, /setStatusMessage\(`Lead status changed to \$\{updated\.status\}\.`\)/);
+  assert.doesNotMatch(handler, /setStatusMessage\(`Lead status changed to \$\{status\}/);
+  assert.match(page, /role="status" aria-live="polite">\{statusMessage\}/);
+  assert.match(page, /Change status immediately<select/);
+});
+
+test("lead status failures and conflicts never announce stale success", () => {
+  const page = readFileSync("src/pages/PrelaunchLeadReviewPage.tsx", "utf8");
+  const handler = page.slice(page.indexOf("const updateStatus"), page.indexOf("const createFollowUp"));
+  const requestIndex = handler.indexOf("prelaunchAdminApi.updateStatus");
+  assert.ok(handler.indexOf('setStatusMessage("")') < requestIndex);
+  assert.match(handler, /status === 409/);
+  assert.match(handler, /status === 404/);
+  assert.match(handler, /The request could not be found/);
+  const catchBlock = handler.slice(handler.indexOf("} catch"));
+  assert.doesNotMatch(catchBlock, /setStatusMessage\([^"']/);
+});
