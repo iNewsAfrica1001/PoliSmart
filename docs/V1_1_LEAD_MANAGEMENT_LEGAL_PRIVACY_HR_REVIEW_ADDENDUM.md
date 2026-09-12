@@ -12,9 +12,11 @@
 | Status | Draft — Review Not Yet Completed |
 | Effective date | Not effective |
 | Production decision | NO-GO |
+| Accepted Preview URL | `https://poli-smart-nif96xj3d-poli-smart.vercel.app` |
+| Documentation-inclusive release HEAD | `c0219c7a487f4af2421b67a2b6f88d226503e94a` |
 | Intended reviewers | Qualified Legal Counsel, Privacy Reviewer, HR Reviewer, Platform Owner, and Technical Verifier |
 
-This addendum is a concise decision package. It does not provide legal advice, establish legally required retention periods, approve any jurisdiction, confirm completed training, or authorize Production. The latest candidate commit is not deployed, Vercel access remains unresolved, and Preview acceptance remains blocked.
+This addendum is a concise decision package. It does not provide legal advice, establish legally required retention periods, approve any jurisdiction, confirm completed training, or authorize Production. The accepted application functionality at commit `b3d472834f1c00d49dd77277a04f3749e30b4128` was deployed and accepted in Preview as deployment `dpl_CTfy95T3taEVfkxBByDZSUhDeUhR`. Vercel access is restored, Preview acceptance is PASS, and the final evidence is recorded in `docs/V1_1_PREVIEW_LEAD_MANAGEMENT_ACCEPTANCE_REPORT.md`. Production remains NO-GO; no Production deployment or migration is authorized.
 
 ## 1. Executive summary
 
@@ -206,7 +208,7 @@ An issue remains `OPEN` until a named reviewer records a written decision and ev
 | LHR-015 | Storage for acknowledgement records | HR Reviewer / Privacy Reviewer | Before collecting training records | OPEN | |
 | LHR-016 | Nigeria requirements and launch decision | Qualified Nigeria Counsel | Before Nigeria launch | OPEN | |
 | LHR-017 | Separation from future Fundraising | Legal Counsel / Platform Owner | Before Fundraising authorization | OPEN | |
-| LHR-018 | Vercel restoration and Preview acceptance | Technical Verifier | Before Production authorization | OPEN | |
+| LHR-018 | Record completed Vercel restoration and Preview acceptance, then confirm remaining release-governance prerequisites | Technical Verifier | Before Production authorization | OPEN | Preview prerequisites completed; governance decision remains open. |
 
 ## 10. Production gate
 
@@ -216,9 +218,9 @@ Production remains **NO-GO** until:
 - Retention periods and suppression requirements are approved.
 - A deletion/anonymization procedure is approved.
 - Training requirements are approved and completed.
-- Vercel access is restored.
-- The exact candidate commit is deployed to Preview.
-- Preview acceptance passes.
+- Vercel access remains available at the authorized release window; restoration is complete and 2FA is not a current access blocker.
+- The exact Production release commit is selected and approved; the accepted Preview application commit is not automatically the Production candidate.
+- Preview acceptance remains valid for the applicable application functionality; current status is PASS.
 - All remaining security, operational, recovery, jurisdiction, and release gates pass.
 - Explicit written Production authorization is issued.
 

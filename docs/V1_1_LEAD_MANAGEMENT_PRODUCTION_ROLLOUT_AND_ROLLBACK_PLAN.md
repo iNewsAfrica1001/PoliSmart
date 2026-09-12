@@ -12,7 +12,7 @@
 | Status | Draft — Not Authorized for Execution |
 | Production decision | NO-GO |
 | Effective date | Not effective |
-| Next review | After Vercel 2FA restoration, Preview acceptance, and legal review |
+| Next review | After governance-document alignment and legal, privacy, and HR review |
 
 This plan is a review artifact only. It does not authorize a Production deployment, database migration, environment change, user provisioning, email transmission, legal approval, or country enablement.
 
@@ -39,15 +39,17 @@ The release explicitly excludes:
 
 ## 2. Current release state
 
-- Local branch: `release/v1.1`.
-- Local commit: `4385d4a279803259aebd95357804b22ca11384c8`.
-- Remote `origin/release/v1.1`: `88096e520efa1305cee48994fa8949936a4c6667`.
-- The policy-only commit is local and unpushed.
+- Local and remote branch: `release/v1.1`.
+- Accepted application commit: `b3d472834f1c00d49dd77277a04f3749e30b4128`.
+- Accepted Preview deployment: `dpl_CTfy95T3taEVfkxBByDZSUhDeUhR` at `https://poli-smart-nif96xj3d-poli-smart.vercel.app`.
+- Current documentation-inclusive release HEAD: `c0219c7a487f4af2421b67a2b6f88d226503e94a`.
+- The documentation-inclusive HEAD is not automatically an approved Production release candidate.
 - Preview migrations 0012 and 0013 passed.
-- The Preview deployment for commit `88096e520efa1305cee48994fa8949936a4c6667` was reported READY.
-- Step 2B.9 browser acceptance remains incomplete because Vercel 2FA is unresolved.
+- Preview functional, security, privacy-boundary, observability, and accessibility acceptance completed with PASS. The final evidence is recorded in `docs/V1_1_PREVIEW_LEAD_MANAGEMENT_ACCEPTANCE_REPORT.md`.
+- Vercel access and sign-in are restored. Vercel 2FA is not a current access blocker. Recovery-code handling remains an operational security consideration; no recovery code belongs in release evidence.
 - Proposed retention periods remain pending qualified legal approval and are not effective.
-- Production code and the Production database remain unchanged.
+- Migration 0013 has been applied and verified only in Preview. It has not been applied to Production.
+- Production deployment, migrations, code, configuration, and database remain unchanged and unauthorized for this release.
 
 These facts do not constitute Production authorization.
 
@@ -55,8 +57,8 @@ These facts do not constitute Production authorization.
 
 The default status is **NO-GO**. All gates must be evidenced before release:
 
-- [ ] Vercel 2FA access is restored and independently verified.
-- [ ] Step 2B.9 Preview functional and security acceptance passes.
+- [x] Vercel access and sign-in restored and independently verified; 2FA is not a current access blocker.
+- [x] Preview functional, security, privacy-boundary, observability, and accessibility acceptance passed.
 - [ ] Qualified legal review is complete.
 - [ ] Retention periods and suppression-record rules are approved.
 - [ ] Administrator training is complete and recorded.
@@ -136,7 +138,7 @@ If a migration partially fails, stop. Do not retry blindly, edit migration histo
 
 ## 6. Application deployment sequence
 
-1. Resolve the Vercel 2FA case before any Production action.
+1. Reconfirm authorized Vercel access before Production action and apply approved recovery-code governance without recording recovery codes in release evidence.
 2. Push and review the documentation-only commit through the normal branch process.
 3. Identify one exact, immutable commit containing the approved runtime and policy documents.
 4. Confirm that exact commit is approved before merge or deployment.
@@ -252,8 +254,8 @@ Every stop condition results in **NO-GO**:
 - The worktree is dirty.
 - The commit differs from the approved release.
 - The local and remote histories unexpectedly diverge.
-- Preview acceptance remains incomplete.
-- Vercel 2FA access remains unresolved.
+- Preview acceptance evidence becomes invalid, materially incomplete, or inconsistent with the proposed release commit.
+- Authorized Vercel access is unavailable at execution time.
 - Legal approval or retention approval is incomplete.
 - Administrator training is incomplete.
 - The backup/recovery checkpoint is missing or unverified.
@@ -306,8 +308,8 @@ Retain the following without credentials, complete database URLs, or personal le
 
 The release remains **NO-GO** unless every item is checked:
 
-- [ ] Vercel 2FA restored.
-- [ ] Preview Step 2B.9 passed.
+- [x] Vercel access restored; 2FA is not a current access blocker.
+- [x] Preview functional, security, privacy-boundary, observability, and accessibility acceptance passed.
 - [ ] Legal/privacy review completed.
 - [ ] Retention periods approved.
 - [ ] Administrator training completed.

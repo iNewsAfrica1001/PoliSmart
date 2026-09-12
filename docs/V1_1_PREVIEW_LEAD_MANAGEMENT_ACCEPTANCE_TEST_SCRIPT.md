@@ -2,28 +2,32 @@
 
 ## V1.1 Preview Lead Management Acceptance Test Script and Evidence Record
 
-**Draft — Not Yet Executed**
+**Execution Complete — Evidence Reconciled**
 
 ## Document control
 
 | Field | Value |
 |---|---|
-| Document status | Draft — Not Yet Executed |
-| Overall acceptance status | **BLOCKED** |
+| Document status | Execution complete — evidence reconciled in the final acceptance report |
+| Overall acceptance status | **PASS** |
 | Production decision | **NO-GO** |
 | Target branch | `release/v1.1` |
-| Approved Preview candidate | `092618a61f5e4f132b4c73eb61baa6b184b4f090` |
-| Candidate state at creation | Local; not pushed or deployed |
-| Current remote release commit | `88096e520efa1305cee48994fa8949936a4c6667` |
-| Blocking prerequisite | Vercel access remains unresolved |
+| Accepted application commit | `b3d472834f1c00d49dd77277a04f3749e30b4128` |
+| Accepted Preview deployment | `dpl_CTfy95T3taEVfkxBByDZSUhDeUhR` |
+| Accepted Preview URL | `https://poli-smart-nif96xj3d-poli-smart.vercel.app` |
+| Current documentation-inclusive release HEAD | `c0219c7a487f4af2421b67a2b6f88d226503e94a` |
+| Final acceptance report | `docs/V1_1_PREVIEW_LEAD_MANAGEMENT_ACCEPTANCE_REPORT.md` |
+| Vercel access | Restored; 2FA is not a current access blocker |
 
-The approved candidate is one exact immutable commit. If another commit is added before execution, this record must be formally updated and the complete validation suite rerun. Documentation readiness does not authorize a push or deployment.
+This document remains the approved test procedure and historical testing instrument. Its individual test rows preserve their original `NOT RUN` placeholders and must not be interpreted as claims that all 91 test IDs were executed live. The final acceptance report is authoritative for the distinction between live execution, automated compensating evidence, configuration or source review, and items not verified live. Documentation readiness and Preview acceptance do not authorize Production deployment or migration.
+
+Campaign Administrator live testing was not performed because no approved safe account was available; automated authorization evidence passed. Live invalid-request API testing was not performed because credential-safe tooling was unavailable; automated validation passed. Live `updated_at` behavior was not verified because no valid pre-write baseline existed; repository and API tests passed. These are evidence limitations, not claims of live verification.
 
 ## Mandatory execution sequence
 
 Stop immediately on any failure.
 
-1. Restore and verify authorized Vercel access.
+1. Verify authorized Vercel access; access was restored for the completed acceptance run.
 2. Before pushing, record the sanitized current Production deployment ID and Production aliases; confirm the Production branch remains `main` and `release/v1.1` remains Preview-only.
 3. Confirm the local branch, exact approved commit, and clean worktree.
 4. Push only `release/v1.1` to `origin/release/v1.1`, without force.
@@ -225,17 +229,17 @@ Use only a separately approved, secure Preview verification method. Never substi
 
 | Area | Decision | Evidence/reference | Outstanding item |
 |---|---|---|---|
-| Release identity | NOT RUN | | Restore Vercel access and deploy the exact candidate to Preview. |
-| Health and routing | NOT RUN | | |
-| Authentication and authorization | NOT RUN | | |
-| Public submissions | NOT RUN | | |
-| Lead review | NOT RUN | | |
-| Controlled status transitions | NOT RUN | | |
-| Follow-up workflow | NOT RUN | | |
-| Privacy boundaries | NOT RUN | | |
-| Database verification | NOT RUN | | |
-| Regression validation | NOT RUN | | |
-| Overall Preview acceptance | BLOCKED | | Candidate is not pushed or deployed; Vercel access is unresolved. |
+| Release identity | PASS | Final acceptance report | Live and deployment-metadata evidence reconciled. |
+| Health and routing | PASS | Final acceptance report | Live and automated evidence reconciled. |
+| Authentication and authorization | PASS | Final acceptance report | Campaign Administrator live test not performed; automated denial passed. |
+| Public submissions | PASS | Final acceptance report | Synthetic Preview evidence only. |
+| Lead review | PASS | Final acceptance report | Live and automated evidence reconciled. |
+| Controlled status transitions | PASS | Final acceptance report | Live invalid requests not run; automated validation passed. |
+| Follow-up workflow | PASS | Final acceptance report | Live `updated_at` not verified; repository/API evidence passed. |
+| Privacy boundaries | PASS | Final acceptance report | Raw logs and telemetry payloads were not exported. |
+| Database verification | PASS | Final acceptance report and Step 2B.8B evidence | Preview-only evidence reused; no Production migration occurred. |
+| Regression validation | PASS | Final acceptance report | 223/223 automated tests and all required static gates passed. |
+| Overall Preview acceptance | PASS | `docs/V1_1_PREVIEW_LEAD_MANAGEMENT_ACCEPTANCE_REPORT.md` | Production remains NO-GO. |
 
 ## L. Evidence rules and index
 
