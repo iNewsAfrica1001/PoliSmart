@@ -244,6 +244,8 @@ model AuthUser {
   communicationRevisions CommunicationRevision[]  @relation("CommunicationRevisionAuthor")
   communicationApprovals CommunicationApproval[]  @relation("CommunicationReviewer")
   fundraisingHistory     FundraisingHistory[]     @relation("FundraisingHistoryActor")
+  createdLeadFollowUps   PrelaunchLeadFollowUp[]  @relation("PrelaunchLeadFollowUpCreator")
+  completedLeadFollowUps PrelaunchLeadFollowUp[]  @relation("PrelaunchLeadFollowUpCompleter")
 
   @@map("auth_users")
 }
@@ -1279,21 +1281,42 @@ model FundraisingHistory {
 }
 
 model PrelaunchLead {
-  id               String   @id @default(uuid()) @db.Uuid
-  requestType      String   @map("request_type") @db.VarChar(20)
-  name             String   @db.VarChar(120)
-  email            String   @db.VarChar(254)
-  organization     String   @db.VarChar(160)
-  country          String   @db.VarChar(100)
-  role             String   @db.VarChar(120)
-  interest         String?  @db.VarChar(80)
-  organizationType String?  @map("organization_type") @db.VarChar(80)
-  timing           String?  @db.VarChar(40)
-  note             String?  @db.VarChar(500)
-  status           String   @default("NEW") @db.VarChar(20)
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id               String                  @id @default(uuid()) @db.Uuid
+  requestType      String                  @map("request_type") @db.VarChar(20)
+  name             String                  @db.VarChar(120)
+  email            String                  @db.VarChar(254)
+  organization     String                  @db.VarChar(160)
+  country          String                  @db.VarChar(100)
+  role             String                  @db.VarChar(120)
+  interest         String?                 @db.VarChar(80)
+  organizationType String?                 @map("organization_type") @db.VarChar(80)
+  timing           String?                 @db.VarChar(40)
+  note             String?                 @db.VarChar(500)
+  status           String                  @default("NEW") @db.VarChar(20)
+  createdAt        DateTime                @default(now()) @map("created_at")
+  updatedAt        DateTime                @updatedAt @map("updated_at")
+  followUps        PrelaunchLeadFollowUp[]
 
   @@index([requestType, status, createdAt])
   @@map("prelaunch_leads")
+}
+
+model PrelaunchLeadFollowUp {
+  id            String        @id @default(uuid()) @db.Uuid
+  leadId        String        @map("lead_id") @db.Uuid
+  note          String        @db.VarChar(2000)
+  scheduledAt   DateTime      @map("scheduled_at")
+  createdById   String        @map("created_by_id") @db.Uuid
+  createdAt     DateTime      @default(now()) @map("created_at")
+  completedAt   DateTime?     @map("completed_at")
+  completedById String?       @map("completed_by_id") @db.Uuid
+  lead          PrelaunchLead @relation(fields: [leadId], references: [id], onDelete: Restrict)
+  createdBy     AuthUser      @relation("PrelaunchLeadFollowUpCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  completedBy   AuthUser?     @relation("PrelaunchLeadFollowUpCompleter", fields: [completedById], references: [id], onDelete: Restrict)
+
+  @@index([leadId, createdAt])
+  @@index([completedAt, scheduledAt])
+  @@index([createdById])
+  @@index([completedById])
+  @@map("prelaunch_lead_follow_ups")
 }

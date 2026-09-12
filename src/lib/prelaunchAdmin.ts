@@ -17,6 +17,19 @@ export type PrelaunchLead = {
   status: "NEW" | "CONTACTED" | "QUALIFIED" | "CLOSED";
   createdAt: string;
   updatedAt: string;
+  nextFollowUp: { id: string; scheduledAt: string } | null;
+  followUpState: "OVERDUE" | "UPCOMING" | "NONE";
+};
+
+export type PrelaunchLeadFollowUp = {
+  id: string;
+  leadId: string;
+  note: string;
+  scheduledAt: string;
+  createdAt: string;
+  completedAt: string | null;
+  createdBy: { id: string; displayName: string };
+  completedBy: { id: string; displayName: string } | null;
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -27,7 +40,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!response.ok) {
     const payload = (await response.json().catch(() => ({}))) as { message?: string; code?: string };
-    throw new ApiError(payload.message ?? "Request failed.", payload.code);
+    const error = new ApiError(payload.message ?? "Request failed.", payload.code) as ApiError & {
+      status?: number;
+    };
+    error.status = response.status;
+    throw error;
   }
   return response.json() as Promise<T>;
 }
@@ -44,4 +61,18 @@ export const prelaunchAdminApi = {
       method: "PATCH",
       body: JSON.stringify({ status }),
     }),
+  listFollowUps: (leadId: string) =>
+    request<{ followUps: PrelaunchLeadFollowUp[] }>(
+      `/api/admin/prelaunch-leads/${leadId}/follow-ups`,
+    ),
+  createFollowUp: (leadId: string, input: { note: string; scheduledAt: string }) =>
+    request<{ followUp: PrelaunchLeadFollowUp }>(
+      `/api/admin/prelaunch-leads/${leadId}/follow-ups`,
+      { method: "POST", body: JSON.stringify(input) },
+    ),
+  completeFollowUp: (leadId: string, followUpId: string) =>
+    request<{ followUp: PrelaunchLeadFollowUp }>(
+      `/api/admin/prelaunch-leads/${leadId}/follow-ups/${followUpId}/complete`,
+      { method: "PATCH" },
+    ),
 };
