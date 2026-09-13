@@ -10,8 +10,8 @@
 
 | Field | Value |
 |---|---|
-| Version | V1.1 Draft 1 |
-| Document date | 12 September 2026 |
+| Version | V1.1 Draft 2 |
+| Document date | 13 September 2026 |
 | Owner | Platform Owner |
 | Status | Draft for external review |
 | Confidentiality | Confidential legal, privacy, HR, security, and operational review draft |
@@ -26,7 +26,7 @@ This package is not legally approved, privacy-approved, or HR-approved. It does 
 
 ## 1. Executive cover memorandum
 
-PoliSmart Africa AI V1.1 includes public Early Access and Demo request forms and a protected internal workflow for human review. Authorized Super Administrators can review submissions, move leads through the controlled statuses `NEW`, `CONTACTED`, `QUALIFIED`, and `CLOSED`, schedule internal follow-ups, and record their completion. Follow-up history is append-only through the ordinary application workflow.
+PoliSmart Africa AI V1.1 includes public Early Access and Demo request forms, a configurable user-initiated WhatsApp homepage chat link, and a protected internal workflow for human review. Authorized Super Administrators can review submissions, move leads through the controlled statuses `NEW`, `CONTACTED`, `QUALIFIED`, and `CLOSED`, schedule internal follow-ups, and record their completion. Follow-up history is append-only through the ordinary application workflow.
 
 Preview functional and security acceptance is complete. That evidence establishes tested product behavior only; it does not establish a lawful basis, approve a privacy practice, complete HR training, approve a jurisdiction, or authorize Production.
 
@@ -70,6 +70,8 @@ Preview acceptance does not equal Production approval, legal approval, privacy a
 - Protected lead list responses and list views exclude follow-up-note text. Follow-up notes are available only within the protected lead-detail workflow to authorized users.
 - Lead status changes do not send email. Follow-up creation and completion do not send email or change lead status. Follow-up-note text is not sent through email.
 - Lead contact details and follow-up notes are excluded from AI grounding, model training, and Workspace Search.
+- Preview verification confirmed that a valid configured international WhatsApp number displays an accessible homepage chat link, while an absent or invalid value keeps the control hidden. Selecting the link opens WhatsApp with a fixed draft greeting addressed to the configured number. The user decides whether to send the message in WhatsApp; PoliSmart does not send a message automatically.
+- V1.1 has no WhatsApp API, webhook, chatbot, contact import, bulk messaging, payment, fundraising, or political-targeting integration. PoliSmart does not receive or store the resulting WhatsApp conversation through this feature.
 - V1.1 does not process payments or collect payment credentials.
 - The ordinary application has no lead or follow-up deletion endpoint and no delete control.
 - Retention, suppression, rights handling, and deletion or anonymization remain proposed governance processes requiring approval.
@@ -84,7 +86,8 @@ Preview acceptance does not equal Production approval, legal approval, privacy a
 6. The administrator may create and complete append-only internal follow-up records.
 7. Lead and follow-up content remains excluded from AI grounding and Workspace Search.
 8. Status changes and follow-up creation or completion generate no email. Follow-up-note text is not transmitted through email.
-9. Retention, suppression, rights requests, legal holds, and deletion or anonymization follow approved governance once established.
+9. If the configured WhatsApp chat link is displayed, the individual may select it to open a WhatsApp destination containing a fixed draft greeting and the configured business number. No message is sent unless the individual chooses to send it within WhatsApp. Any resulting conversation occurs outside PoliSmart and is subject to WhatsApp/Meta and user-account handling.
+10. Retention, suppression, rights requests, legal holds, and deletion or anonymization follow approved governance once established.
 
 | Flow element | Source | Recipient | Storage category | Exit or disposition point |
 |---|---|---|---|---|
@@ -92,6 +95,7 @@ Preview acceptance does not equal Production approval, legal approval, privacy a
 | Internal submission notification | Validated public submission | Authorized internal recipient through the configured transactional-email provider | Transactional notification content; provider retention requires review | Provider and organizational retention or deletion rules, subject to reviewer decision |
 | Administrative review | Authorized Super Administrator | Protected administration workflow | Status and audit metadata | Approved retention or lawful disposition |
 | Follow-up record | Authorized Super Administrator | Authorized reviewers | Append-only operational history | Disposed with the lead or under an approved shorter rule |
+| User-initiated WhatsApp chat | Public homepage visitor | WhatsApp/Meta after the visitor activates the link | Fixed draft greeting, configured business number, and provider-generated communications metadata; no conversation content is returned to or stored by PoliSmart through this feature | User controls whether to send; subsequent handling, rights, retention, deletion, and transfer rules require provider and jurisdiction review |
 | Security evidence | Application and operators | Authorized security and technical personnel | Restricted security/audit evidence | Approved security retention or legal hold |
 | Training acknowledgement | Administrator and verifier | Authorized HR and governance personnel | Separate restricted training record | Approved personnel/training schedule |
 
@@ -112,6 +116,7 @@ Preview acceptance does not equal Production approval, legal approval, privacy a
 | Lifecycle timestamps | Creation, update, schedule, completion times | Application | Workflow integrity and evidence | Counsel decision required | Authorized reviewers | Hosting and database providers | Operational metadata | Related record category | OPEN |
 | Authentication and security metadata | Account, session, and security-event metadata | Application | Authenticate authorized users, protect access, and investigate misuse | Counsel decision required | Authorized security and technical personnel | Vercel hosting/runtime and Neon database | Security-sensitive | Security and audit records | OPEN |
 | Analytics and performance telemetry | Web usage and performance metadata; lead-submission and follow-up content is excluded based on accepted repository evidence | Application hosting and browser performance instrumentation | Measure application usage and performance without lead or follow-up content | Counsel decision required | Authorized technical and operations personnel | Vercel Web Analytics and Speed Insights | Operational metadata; exact fields require verification | Security and audit records or a separately approved telemetry category | OPEN |
+| User-initiated WhatsApp chat data | Fixed draft greeting, configured business number, message content if the user sends or changes it, and provider-generated communications metadata | Public homepage visitor and WhatsApp/Meta | Enable the visitor to initiate an external conversation after an affirmative user action | Counsel decision required | No PoliSmart recipient or storage through the homepage-link feature; any later human recipient and handling require an approved process | WhatsApp/Meta after link activation | Personal communications data if sent; content is outside PoliSmart through this feature | Provider/user-account category; period and controls require review | OPEN |
 | Audit, logging, and incident evidence | Event metadata and sanitized evidence | Application and operators | Accountability, reliability, and incident response | Counsel decision required | Authorized security, legal, privacy, and operations personnel | Vercel hosting/runtime and Neon database as applicable | Restricted | Security and audit records | OPEN |
 | Minimal suppression record, if approved | Minimum matching information | Approved rights process | Honor an objection or prevent renewed contact | Counsel decision required | Strictly authorized privacy and operations personnel | Hosting and database providers if implemented | Restricted personal | Suppression category | OPEN |
 | Training acknowledgement | Completion, acknowledgement, verifier, and date | Administrator and verifier | Evidence of required training | Counsel decision required | Authorized HR and governance personnel | Approved storage provider | Personnel record | Approved training-record schedule | OPEN |
@@ -127,6 +132,7 @@ No actual record values are included in this inventory.
 | Neon | Managed relational database | Lead, follow-up, attribution, timestamps, authentication account and session records, and related application records | Verification required | Review required | Review required | Review required | OPEN |
 | Microsoft Graph / Microsoft 365 | Transactional account-message delivery and internal lead-submission notification | Recipient and necessary message content for configured account workflows; a lead notification may include the submitted request type, identity and contact details, organization and professional-role details, country, interest or organization type, preferred Demo timing, and submitted message when present | Verification required | Review required | Review required | Review required | OPEN |
 | OpenAI | Server-side model inference for authorized AI features | Authorized AI inputs; lead and follow-up data are excluded by design | Verification required | Review required | Review required | Review required | OPEN |
+| WhatsApp / Meta | External user-initiated messaging destination | The configured business number and fixed draft greeting are placed in the outbound link; if the visitor elects to send or edit the message, WhatsApp/Meta may process message content, account identifiers, device/network information, and communications metadata under its own service handling | Processing locations, international transfers, and applicable transfer safeguards require verification | Review required | Provider and user-account retention/deletion behavior requires review | Review required | OPEN |
 
 No contract status, hosting region, transfer mechanism, retention commitment, or subprocessor commitment is asserted here.
 
@@ -142,6 +148,16 @@ No contract status, hosting region, transfer mechanism, retention commitment, or
 
 Technical availability does not constitute legal availability. No jurisdiction is approved. Nigeria Fundraising remains disabled. Any future fundraising capability requires a separate legal review and explicit authorization.
 
+### WhatsApp communications, notice, and jurisdiction review
+
+- The V1.1 homepage control is optional and hidden when the configured number is absent or invalid. It becomes available only through configuration and an affirmative visitor action.
+- Selecting the control opens an external WhatsApp destination with the fixed draft text: “Hello PoliSmart Africa AI, I would like to learn more about your platform.” No message is sent automatically, and the visitor can abandon or change the draft before sending within WhatsApp.
+- V1.1 has no WhatsApp API, webhook, chatbot, contact import, bulk messaging, payment, fundraising, or political-targeting integration. The feature does not return WhatsApp conversation content to PoliSmart, create a lead record, trigger email, or add content to AI grounding or Workspace Search.
+- The public Privacy Notice and collection-point disclosure must be reviewed before any authorized Production use to explain the voluntary external handoff, WhatsApp/Meta processing, potential cross-border processing, message and metadata handling, applicable rights channels, and the separation between PoliSmart-controlled data and provider-controlled communications. Required wording and placement remain `OPEN` under LHR-003.
+- Qualified reviewers must determine whether a user-initiated WhatsApp message is an electronic communication, how any human reply may be made, what consent/notice/opt-out rules apply, and whether later contact may occur. These decisions remain `OPEN` under LHR-002 and LHR-004.
+- WhatsApp/Meta processor or independent-controller characterization, contractual terms, transfer mechanisms, processing locations, subprocessors, security obligations, retention/deletion controls, and rights-routing responsibilities remain unverified and `OPEN` under LHR-005, LHR-006, LHR-010, LHR-011, LHR-016, and applicable DEL issues.
+- Nigeria and every other proposed jurisdiction require written jurisdiction-specific review before Production enablement. Technical configuration or Preview verification does not approve WhatsApp use in any jurisdiction.
+
 ## 9. Proposed retention schedule
 
 Every entry is **PROPOSED — NOT APPROVED** and remains subject to qualified Legal and Privacy review.
@@ -153,6 +169,7 @@ Every entry is **PROPOSED — NOT APPROVED** and remains subject to qualified Le
 | Closed or unqualified leads | Closure | 90 days after closure | Delete or irreversibly anonymize through an approved procedure | Approved hold, dispute, or security requirement may control | Approved suppression need may retain only minimum information | Approved expiry and restoration safeguards apply | Legal, Privacy, Platform Owner | PROPOSED — NOT APPROVED |
 | Qualified leads | Last meaningful interaction | 12 months, followed by documented review | Delete, irreversibly anonymize, or approve continued retention for a current lawful purpose | Approved hold or dispute may control | Approved suppression need may retain only minimum information | Approved expiry and restoration safeguards apply | Legal, Privacy, Platform Owner | PROPOSED — NOT APPROVED |
 | Follow-up history | Associated lead lifecycle; shorter approved lead-category period ordinarily controls | Retain during active administration and up to 12 months after closure unless a shorter lead-category period applies | Dispose with the lead, or delete or irreversibly anonymize earlier when required | Approved hold, dispute, security, or audit need may control | Follow-up-note content must not enter a suppression record | Approved expiry and post-restoration treatment apply | Legal, Privacy, Platform Owner, Technical | PROPOSED — NOT APPROVED |
+| WhatsApp conversation and communications metadata | Visitor affirmatively elects to send the prefilled or edited draft in WhatsApp | No PoliSmart application retention through this feature; provider and user-account retention periods are unverified and require qualified review | User/provider rights and deletion controls apply as determined by qualified review; any later PoliSmart record requires a separately approved purpose and schedule | Applicable provider, legal-hold, dispute, or security rules require review | Any approved do-not-contact handling must use only the minimum authorized suppression record and must not copy message content | Provider backup and restoration behavior requires review | Legal, Privacy, Platform Owner | PROPOSED — NOT APPROVED |
 | Security and audit records | Record creation | 12 months | Delete or irreversibly anonymize when the approved period ends | Investigation, legal hold, dispute, or regulatory duty may justify longer retention | Retain only evidence necessary for the approved purpose | Approved expiry and restoration safeguards apply | Legal, Privacy, Security/Technical | PROPOSED — NOT APPROVED |
 | Minimal suppression records | Valid objection, withdrawal, or do-not-contact request | To be determined | Retain only approved minimum information, then review or dispose under the approved trigger | A lawful hold may control | This is the suppression category; no marketing, profiling, AI, or Search use | Restoration must preserve the suppression decision | Legal, Privacy, Platform Owner | PROPOSED — NOT APPROVED |
 
@@ -165,12 +182,12 @@ Where source wording differs in emphasis, the shorter approved privacy-minimizin
 3. Perform proportionate identity and authority verification without excessive documentation.
 4. Determine applicable jurisdiction, lawful response period, and counsel requirements.
 5. Check legal holds, disputes, security investigations, suppression needs, and conflicting obligations.
-6. Identify the relevant lead, follow-up, audit, logging, message metadata, backup, and training records without crossing environment or organizational boundaries.
+6. Identify the relevant lead, follow-up, audit, logging, transactional-message metadata, WhatsApp/Meta-controlled communication where applicable, backup, and training records without crossing environment, provider, or organizational boundaries.
 7. Record the authorized Legal/Privacy decision and any partial fulfillment or exception.
 8. Rehearse a technical procedure with synthetic non-Production information where appropriate.
 9. Execute only under separate written authorization using the minimum necessary privilege.
 10. Independently verify scope, outcome, unaffected records, and retained exceptions.
-11. Send an approved response through the approved channel.
+11. Send an approved response through the approved channel. Where the request concerns a WhatsApp/Meta-controlled conversation, provide or coordinate the applicable provider rights route without claiming PoliSmart can directly alter provider-controlled data.
 12. Retain only approved case and decision evidence.
 13. Ensure backup expiration and restoration safeguards preserve the decision.
 14. Escalate unexpected disclosure, scope, or execution outcomes through the incident process.
@@ -233,21 +250,21 @@ Training is not complete, and no acknowledgement is represented as signed.
 | Issue ID | Decision area | Primary reviewer | Supporting reviewers | Required decision | Required evidence | Counsel mandatory | Blocks Production | Training impact | Jurisdiction/Nigeria impact | Status | Decision/conditions | Owner | Due date |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | LHR-001 | Lawful basis for collection | Legal | Privacy | Approve basis and conditions | Data inventory and collection disclosure | Yes | Yes | Yes | All jurisdictions | OPEN | | | |
-| LHR-002 | Lawful basis and consent for follow-up | Legal | Privacy, Operations | Approve basis, consent, withdrawal, and objection rules | Workflow and communications summary | Yes | Yes | Yes | Jurisdiction-specific | OPEN | | | |
-| LHR-003 | Privacy Notice wording | Legal | Privacy | Approve general and collection-point wording | Privacy Notice and form disclosure | Yes | Yes | Yes | All jurisdictions | OPEN | | | |
-| LHR-004 | Electronic communications restrictions | Legal | Privacy, Operations | Classify communications and approve restrictions | Follow-up workflow and disclosure | Yes | Yes | Yes | Jurisdiction-specific | OPEN | | | |
+| LHR-002 | Lawful basis and consent for follow-up | Legal | Privacy, Operations | Approve basis, consent, withdrawal, and objection rules | Workflow, email, and user-initiated WhatsApp communications summary | Yes | Yes | Yes | Jurisdiction-specific | OPEN | | | |
+| LHR-003 | Privacy Notice wording | Legal | Privacy | Approve general and collection-point wording, including the external WhatsApp handoff | Privacy Notice, form disclosure, and WhatsApp data-flow summary | Yes | Yes | Yes | All jurisdictions | OPEN | | | |
+| LHR-004 | Electronic communications restrictions | Legal | Privacy, Operations | Classify email, user-initiated WhatsApp, and any later human communications and approve restrictions | Follow-up workflow, WhatsApp boundary, and disclosure | Yes | Yes | Yes | Jurisdiction-specific | OPEN | | | |
 | LHR-005 | Rights, timing, and identity verification | Privacy | Legal, Operations | Approve rights process, deadlines, and verification | Rights workflow and deletion procedure | Yes | Yes | Yes | Jurisdiction-specific | OPEN | | | |
 | LHR-006 | Final retention periods | Privacy | Legal, Operations | Approve periods, triggers, and outcomes | Proposed retention schedule | Yes | Yes | Yes | Jurisdiction-specific | OPEN | | | |
 | LHR-007 | Suppression scope and duration | Privacy | Legal, Security, Operations | Approve fields, purpose, access, and period | Suppression specification | Yes | Yes | Yes | Jurisdiction-specific | OPEN | | | |
 | LHR-008 | Deletion or anonymization procedure and tooling | Platform Owner | Legal, Privacy, Technical | Approve prerequisite, process, and authority | Procedure and synthetic rehearsal design | Yes for legal criteria | Yes | Yes | All jurisdictions | OPEN | | | |
 | LHR-009 | Holds, disputes, backups, and restoration | Legal | Privacy, Technical, Operations | Approve holds, expiry, and restoration treatment | Rights procedure and recovery summary | Yes | Yes | Yes | Jurisdiction-specific | OPEN | | | |
-| LHR-010 | Transfers and processors | Privacy | Legal, Security | Approve provider, contract, transfer, and disclosure controls | Processor and data-flow inventories | Yes | Yes | Yes | All jurisdictions | OPEN | | | |
+| LHR-010 | Transfers and processors | Privacy | Legal, Security | Approve provider, contract, transfer, and disclosure controls, including WhatsApp/Meta | Processor, cross-border, and data-flow inventories | Yes | Yes | Yes | All jurisdictions | OPEN | | | |
 | LHR-011 | Incident and breach duties | Security/Technical | Legal, Privacy, Operations | Approve escalation and notification requirements | Incident summary | Yes for legal duties | Yes | Yes | Jurisdiction-specific | OPEN | | | |
 | LHR-012 | Training population and verifier qualifications | HR | Platform Owner, Privacy | Approve population, trainer, and verifier | Training decision sheet | As applicable | Yes | Direct | All enabled jurisdictions | OPEN | | | |
 | LHR-013 | Electronic acknowledgement and retention | HR | Privacy, Legal | Approve validity and retention | Training decision sheet | Yes | Yes | Direct | Employment-law dependent | OPEN | | | |
 | LHR-014 | Departure, role change, and recertification | HR | Security/Technical, Platform Owner | Approve revocation and recertification | Access and training controls | As applicable | Yes | Direct | All enabled jurisdictions | OPEN | | | |
 | LHR-015 | Acknowledgement-record storage | HR | Privacy, Security | Approve storage, access, separation, and disposal | Training decision sheet | As applicable | Yes | Direct | Employment/privacy dependent | OPEN | | | |
-| LHR-016 | Nigeria requirements and launch | Legal | Privacy, Platform Owner, Operations | Approve or reject Nigeria scope and conditions | Nigeria-specific legal analysis | Yes; qualified Nigeria counsel | Yes for Nigeria | Yes | Direct Nigeria impact | OPEN | | | |
+| LHR-016 | Nigeria requirements and launch | Legal | Privacy, Platform Owner, Operations | Approve or reject Nigeria scope and conditions, including user-initiated WhatsApp communications | Nigeria-specific legal, privacy, electronic-communications, and transfer analysis | Yes; qualified Nigeria counsel | Yes for Nigeria | Yes | Direct Nigeria impact | OPEN | | | |
 | LHR-017 | Separation from future Fundraising | Legal | Platform Owner, Privacy | Confirm separate review and authorization requirements | Scope and product-boundary summary | Yes | Yes for fundraising | Yes | Nigeria Fundraising remains disabled | OPEN | | | |
 | LHR-018 | Preview prerequisites and remaining governance | Security/Technical | Platform Owner, Operations | Record completed Preview prerequisites and verify remaining gates | Accepted Preview evidence and governance registers | No for technical evidence | Yes | Indirect | No jurisdiction approval | OPEN | Preview access and prerequisites complete; governance approval remains open. | | |
 
@@ -303,7 +320,7 @@ Technical feasibility is not legal approval. All DEL issues remain open.
 3. What notices, consent evidence, withdrawal, objection, rights, deadlines, exemptions, and holds apply?
 4. Which retention and disposition outcomes are lawful?
 5. What transfer, processor, incident, and notification duties apply?
-6. What Nigeria-specific political, campaign, privacy, communications, and launch limits apply?
+6. What Nigeria-specific political, campaign, privacy, WhatsApp/electronic-communications, cross-border, and launch limits apply?
 7. Must tested deletion or anonymization tooling exist before launch?
 8. What conditions, jurisdiction limits, expiry, and re-review triggers apply?
 
@@ -315,6 +332,7 @@ Technical feasibility is not legal approval. All DEL issues remain open.
 4. How must rights, notes, attribution, logs, backups, and restored data be treated?
 5. Are AI, Search, profiling, telemetry, and logging exclusions adequate?
 6. What processor, transfer, breach, access, and minimization controls remain required?
+7. Does the Privacy Notice accurately explain the voluntary WhatsApp/Meta handoff, message and metadata handling, retention boundaries, rights routes, and cross-border uncertainty?
 
 ### HR reviewer
 
@@ -452,5 +470,6 @@ Date: __________________________________
 | Production decision | NO-GO |
 | Payments in V1.1 | NO |
 | Nigeria Fundraising enabled | NO |
+| WhatsApp automated sending, API, webhook, chatbot, contact import, or bulk messaging | NO |
 
 This draft does not provide legal advice or record any legal, privacy, HR, jurisdictional, operational, security, deployment, migration, payment, or fundraising approval.
