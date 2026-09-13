@@ -9,10 +9,12 @@ import {
   Flag,
   Globe2,
   LockKeyhole,
+  MessageCircle,
   Megaphone,
   Radio,
   ShieldCheck,
 } from "lucide-react";
+import { buildWhatsAppChatUrl } from "../../shared/whatsapp.js";
 
 const capabilities = [
   [Globe2, "Political Intelligence", "Grounded public-opinion and campaign intelligence supported by trusted data and citations."],
@@ -26,6 +28,8 @@ const capabilities = [
 ] as const;
 
 export function MarketingHomePage() {
+  const whatsappUrl = buildWhatsAppChatUrl(import.meta.env.VITE_WHATSAPP_NUMBER);
+
   return (
     <div className="marketing-page">
       <header className="marketing-nav">
@@ -224,6 +228,19 @@ export function MarketingHomePage() {
         <address>3204 Pearsall Ave<br />Bronx, NY 10469<br />United States</address>
         <nav aria-label="Footer navigation"><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a><a href="/login">Login</a></nav>
       </footer>
+
+      {whatsappUrl ? (
+        <a
+          className="whatsapp-chat-button"
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Chat with PoliSmart Africa AI on WhatsApp (opens in a new tab)"
+        >
+          <MessageCircle aria-hidden="true" />
+          <span>Chat on WhatsApp</span>
+        </a>
+      ) : null}
     </div>
   );
 }
