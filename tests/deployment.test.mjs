@@ -347,7 +347,7 @@ test("Version 1 reserves Billing without enabling payment processing", () => {
   const environmentExample = fs.readFileSync(path.join(root, ".env.example"), "utf8");
   const prismaSchema = fs.readFileSync(path.join(root, "prisma", "schema.prisma"), "utf8");
 
-  assert.match(navigationSource, /label: "Billing"[\s\S]*page: "billing"[\s\S]*enabled: false/);
+  assert.match(navigationSource, /label: "Billing"[\s\S]*page: "billing"[\s\S]*feature: "billing"/);
   assert.match(checklist, /Billing and payment processing are intentionally deferred/);
   assert.match(billingDocs, /does not[\s\S]*process payments/);
   assert.match(billingDocs, /must never store raw card numbers/);
@@ -405,7 +405,9 @@ test("public homepage presents accurate V1 marketing while login remains separat
   assert.match(app, /currentUrl\.pathname === "\/"/);
   assert.match(app, /MarketingHomePage/);
   assert.match(homepage, /Grounded Intelligence\./);
-  assert.match(homepage, /PoliSmart Africa AI is coming soon\./);
+  assert.match(homepage, /Free Early Access/);
+  assert.match(homepage, /currently available to approved organizations during our[\s\S]*early-access period/);
+  assert.match(homepage, /Paid plans will be introduced in a future release/);
   assert.match(homepage, /AI-powered political intelligence built for African realities\./);
   assert.match(homepage, /Request Early Access/);
   assert.match(homepage, /Request a Demo/);
@@ -558,7 +560,7 @@ test("Stage 2 onboarding guides a new organization without changing security bou
   assert.match(workflows, /work remains scoped to the selected campaign/);
   assert.match(app, /onCreateCampaign=\{\(\) => setPage\("campaigns"\)\}/);
   assert.match(navigation, /label: "Reports"[\s\S]*enabled: false/);
-  assert.match(navigation, /label: "Billing"[\s\S]*enabled: false/);
+  assert.match(navigation, /label: "Billing"[\s\S]*feature: "billing"/);
   assert.doesNotMatch(operations, /SUPER_ADMINISTRATOR|Super Administrator/);
 });
 

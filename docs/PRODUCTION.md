@@ -58,3 +58,19 @@ npm run smoke
 The smoke suite expects a running application at `SMOKE_BASE_URL` or `http://127.0.0.1:4000`. It checks health/readiness, unauthenticated rejection on representative protected V1 routes, absence of the removed classroom, assessment, training, and demo-user APIs, and the application shell. It does not create production data.
 
 Reports and Payments/Billing remain clearly marked **Coming Soon** and are not operational V1 features.
+
+## Free Early Access release controls
+
+Approved organizations may use currently supported non-financial V1.1 functionality as **Free
+Early Access**. PoliSmart Africa AI is currently available to approved organizations during the
+early-access period. Paid plans will be introduced in a future release; this is not a promise of
+permanent free access.
+
+Billing and Fundraising are disabled by the server-authoritative `BILLING_ENABLED=false` and
+`FUNDRAISING_ENABLED=false` controls. Their navigation entries, direct pages, APIs, mutations,
+payment initiation, contribution processing, and Fundraising search results must remain
+unavailable while disabled. These controls do not delete reserved code or historical schema.
+
+Billing and Fundraising disabled for proposed Free Early Production Access. External
+legal/privacy/human-rights review remains pending. Production remains NO-GO until the separate
+release-governance process authorizes it.

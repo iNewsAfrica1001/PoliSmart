@@ -117,8 +117,9 @@ function PrivacyPolicy() {
         <section>
           <h2>3. V1.1 fundraising administrative data</h2>
           <p>
-            Authorized campaign organizations may use Fundraising to maintain campaign-scoped
-            administrative records, including fundraising goals; contact names; optional contact
+            Fundraising is disabled during Free Early Access and is not currently available to
+            campaign organizations. If separately reviewed and enabled in a future release, the
+            existing administrative module can maintain campaign-scoped records, including fundraising goals; contact names; optional contact
             email addresses, phone numbers, affiliations, and administrative notes; externally
             handled contribution amounts, currencies, dates, optional external references, and
             source or method descriptions; fundraising activities; follow-ups; statuses; and
@@ -391,8 +392,8 @@ function TermsOfService() {
         <section>
           <h2>6. Fundraising administration</h2>
           <p>
-            V1.1 Fundraising provides tenant- and campaign-scoped administrative record-management
-            functionality for goals, contacts, externally handled contribution records, activities,
+            V1.1 Fundraising is disabled during Free Early Access and is Coming Soon. The reserved
+            module contains tenant- and campaign-scoped administrative record-management functionality for goals, contacts, externally handled contribution records, activities,
             follow-ups, statuses, and history. PoliSmart is not a payment processor and does not
             process, verify, accept, reject, transfer, or settle campaign contributions or payments.
           </p>

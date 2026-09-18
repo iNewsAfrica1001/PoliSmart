@@ -23,6 +23,7 @@ export type NavigationItem = {
   icon: LucideIcon;
   page: string;
   enabled: boolean;
+  feature?: "billing" | "fundraising";
 };
 
 export const navigation: NavigationItem[] = [
@@ -36,9 +37,9 @@ export const navigation: NavigationItem[] = [
   { label: "Field Operations", icon: BriefcaseBusiness, page: "field", enabled: true },
   { label: "Volunteers", icon: UsersRound, page: "volunteers", enabled: true },
   { label: "Events", icon: CalendarDays, page: "events", enabled: true },
-  { label: "Fundraising", icon: HandCoins, page: "fundraising", enabled: true },
+  { label: "Fundraising", icon: HandCoins, page: "fundraising", enabled: true, feature: "fundraising" },
   { label: "Reports", icon: FileBarChart, page: "reports", enabled: false },
-  { label: "Billing", icon: WalletCards, page: "billing", enabled: false },
+  { label: "Billing", icon: WalletCards, page: "billing", enabled: true, feature: "billing" },
   { label: "Compliance", icon: ShieldCheck, page: "compliance", enabled: true },
   { label: "Pre-launch Requests", icon: ClipboardCheck, page: "prelaunch-leads", enabled: true },
   { label: "Administration", icon: Settings, page: "administration", enabled: false },

@@ -2,6 +2,7 @@ import { Bell, ChevronDown, Menu, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { navigation } from "../../config/navigation";
 import { WorkspaceSearch } from "./WorkspaceSearch";
+import type { FeatureAvailability } from "../../lib/features";
 
 type AppShellProps = {
   children: ReactNode;
@@ -15,6 +16,7 @@ type AppShellProps = {
   canReadFundraising?: boolean;
   canReviewPrelaunchLeads?: boolean;
   tenantId: string;
+  features: FeatureAvailability;
 };
 
 const roleLabel = (role: string) =>
@@ -35,6 +37,7 @@ export function AppShell({
   canReadFundraising = false,
   canReviewPrelaunchLeads = false,
   tenantId,
+  features,
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const initials =
@@ -72,7 +75,8 @@ export function AppShell({
             .filter((item) =>
               (item.page !== "compliance" || canReadCompliance) &&
               (item.page !== "fundraising" || canReadFundraising) &&
-              (item.page !== "prelaunch-leads" || canReviewPrelaunchLeads))
+              (item.page !== "prelaunch-leads" || canReviewPrelaunchLeads) &&
+              (!item.feature || features[item.feature] === true))
             .map(({ label, icon: Icon, page, enabled }) => (
               <button
                 className={activePage === page ? "nav-item nav-item--active" : "nav-item"}
@@ -91,6 +95,7 @@ export function AppShell({
             ))}
         </nav>
         <div className="sidebar-footer">
+          <span className="free-access-label">Free Early Access</span>
           <span>Workspace</span>
           <strong>{workspaceName}</strong>
           <small>Secure organization workspace</small>

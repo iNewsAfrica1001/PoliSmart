@@ -4,6 +4,7 @@ import { requireSession, requireTenantPermission } from "../middleware/authentic
 import { asyncRoute } from "../middleware/http.js";
 import { requireString } from "../services/validation.js";
 import { isSupportedFundraisingCurrency } from "../../shared/currencies.js";
+import { requireFeatureEnabled } from "../middleware/features.js";
 
 const recordStatuses = new Set(["PLANNED", "ACTIVE", "COMPLETED", "CANCELLED"]);
 const contributionStatuses = new Set(["PENDING", "CONFIRMED", "REVERSED"]);
@@ -66,8 +67,9 @@ function dataFor(kind, body) {
   throw Object.assign(new Error("Unsupported fundraising record type."), { status: 404 });
 }
 
-export function createFundraisingRouter(repository) {
+export function createFundraisingRouter(repository, { enabled = false } = {}) {
   const router = Router();
+  router.use(requireFeatureEnabled("fundraising", enabled));
   router.use(requireSession);
   router.get("/:campaignId", requireTenantPermission(PERMISSIONS.FUNDRAISING_READ), asyncRoute(async (request, response) =>
     response.json(await repository.overview(request.tenant.id, request.params.campaignId))));

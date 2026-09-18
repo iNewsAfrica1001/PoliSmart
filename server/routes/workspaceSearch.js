@@ -4,7 +4,7 @@ import { requireSession, requireTenantPermission } from "../middleware/authentic
 import { asyncRoute } from "../middleware/http.js";
 import { hasPermission } from "../services/authorization.js";
 
-export function createWorkspaceSearchRouter(repository) {
+export function createWorkspaceSearchRouter(repository, { fundraisingEnabled = false } = {}) {
   const router = Router();
   router.get(
     "/",
@@ -26,7 +26,8 @@ export function createWorkspaceSearchRouter(repository) {
           media: permitted(PERMISSIONS.ANALYTICS_READ),
           policy: permitted(PERMISSIONS.CAMPAIGN_READ),
           communications: permitted(PERMISSIONS.CAMPAIGN_READ),
-          fundraising: permitted(PERMISSIONS.FUNDRAISING_READ),
+          fundraising:
+            fundraisingEnabled === true && permitted(PERMISSIONS.FUNDRAISING_READ),
         },
       });
       response.json({ results });

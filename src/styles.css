@@ -139,6 +139,19 @@
   border: 1px solid rgba(225, 180, 86, 0.3);
   background: rgba(5, 27, 22, 0.36);
 }
+
+.free-access-label {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  background: #e9f7ef;
+  color: #17633a;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 0.35rem 0.65rem;
+  text-transform: uppercase;
+}
 .prelaunch-cta h2 {
   margin: 0;
   color: white;

@@ -65,10 +65,15 @@ export function MarketingHomePage() {
               platform for authorized teams.
             </p>
             <section className="prelaunch-cta" aria-labelledby="prelaunch-heading">
-              <h2 id="prelaunch-heading">PoliSmart Africa AI is coming soon.</h2>
+              <span className="free-access-label">Free Early Access</span>
+              <h2 id="prelaunch-heading">PoliSmart Africa AI is currently available to approved organizations.</h2>
               <p>
-                Be among the first campaign professionals and organizations to experience
-                AI-powered political intelligence built for African realities.
+                PoliSmart Africa AI is currently available to approved organizations during our
+                early-access period. Paid plans will be introduced in a future release.
+              </p>
+              <p>
+                Experience AI-powered political intelligence built for African realities. Free
+                Early Access includes currently supported non-financial V1.1 features.
               </p>
               <div className="prelaunch-actions" aria-label="Pre-launch opportunities">
                 <a className="marketing-button marketing-button--gold" href="/early-access">
@@ -206,6 +211,7 @@ export function MarketingHomePage() {
           </div>
           <article><span>COMING SOON</span><h3>Reports</h3><p>Structured reporting and export workflows for authorized campaign teams.</p></article>
           <article><span>COMING SOON</span><h3>Billing & Payments</h3><p>Future account billing capabilities. PoliSmart does not currently process payments.</p></article>
+          <article><span>COMING SOON</span><h3>Fundraising</h3><p>Future fundraising administration capabilities. Campaign contribution processing is not currently available.</p></article>
         </section>
 
         <section className="marketing-final-cta">

@@ -15,6 +15,11 @@ import { MarketingHomePage } from "./pages/MarketingHomePage";
 import { FundraisingPage } from "./pages/FundraisingPage";
 import { PrelaunchRequestPage } from "./pages/PrelaunchRequestPage";
 import { PrelaunchLeadReviewPage } from "./pages/PrelaunchLeadReviewPage";
+import {
+  disabledFeatures,
+  loadFeatureAvailability,
+  type FeatureAvailability,
+} from "./lib/features";
 
 const pageTitles: Record<string, string> = {
   dashboard: "Dashboard",
@@ -29,6 +34,7 @@ const pageTitles: Record<string, string> = {
   events: "Events",
   compliance: "Compliance",
   fundraising: "Fundraising Management",
+  billing: "Billing",
   "prelaunch-leads": "Pre-launch Requests",
 };
 
@@ -68,19 +74,26 @@ export default function App() {
 function WorkspaceApp() {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [features, setFeatures] = useState<FeatureAvailability>(disabledFeatures);
   const [page, setPage] = useState(
     window.location.pathname === "/compliance"
       ? "compliance"
       : window.location.pathname === "/admin/prelaunch-leads"
         ? "prelaunch-leads"
+        : window.location.pathname === "/fundraising"
+          ? "fundraising"
+          : window.location.pathname === "/billing"
+            ? "billing"
         : "dashboard",
   );
   useEffect(() => {
-    authApi
-      .me()
-      .then(({ user: current }) => setUser(current))
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+    Promise.allSettled([authApi.me(), loadFeatureAvailability()]).then(([session, availability]) => {
+      setUser(session.status === "fulfilled" ? session.value.user : null);
+      setFeatures(
+        availability.status === "fulfilled" ? availability.value : disabledFeatures,
+      );
+      setLoading(false);
+    });
   }, []);
   useEffect(() => {
     document.title = user
@@ -113,6 +126,7 @@ function WorkspaceApp() {
       canReadFundraising={membership?.canReadFundraising === true}
       canReviewPrelaunchLeads={membership?.canReviewPrelaunchLeads === true}
       tenantId={membership?.tenantId || ""}
+      features={features}
       onNavigate={setPage}
       onSignOut={() => {
         void authApi.logout().finally(() => setUser(null));
@@ -128,8 +142,13 @@ function WorkspaceApp() {
         <GovernancePage user={user} />
       ) : page === "knowledge" ? (
         <KnowledgePage user={user} />
-      ) : page === "fundraising" ? (
+      ) : page === "fundraising" && features.fundraising ? (
         <FundraisingPage user={user} />
+      ) : page === "fundraising" || page === "billing" ? (
+        <section className="restricted-state" aria-labelledby="feature-unavailable-title">
+          <h1 id="feature-unavailable-title">Feature unavailable</h1>
+          <p>{page === "billing" ? "Billing" : "Fundraising"} is Coming Soon and is disabled during Free Early Access.</p>
+        </section>
       ) : page === "prelaunch-leads" ? (
         membership?.canReviewPrelaunchLeads
           ? <PrelaunchLeadReviewPage />

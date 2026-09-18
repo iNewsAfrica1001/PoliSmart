@@ -15,6 +15,10 @@ function parseNumber(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+export function parseFeatureFlag(value) {
+  return String(value || "").trim().toLowerCase() === "true";
+}
+
 function mailboxAddress(value) {
   return (
     String(value || "")
@@ -91,6 +95,10 @@ export function loadConfig(rootDir) {
     aiProvider: process.env.AI_PROVIDER || "openai",
     aiRateLimitWindowMs: parseNumber(process.env.AI_RATE_LIMIT_WINDOW_MS, 60_000),
     aiRateLimitMaxRequests: parseNumber(process.env.AI_RATE_LIMIT_MAX_REQUESTS, 12),
+    features: Object.freeze({
+      billing: parseFeatureFlag(process.env.BILLING_ENABLED),
+      fundraising: parseFeatureFlag(process.env.FUNDRAISING_ENABLED),
+    }),
     persistenceMode: process.env.PERSISTENCE_MODE || (isProduction ? "postgresql" : "memory"),
     documentStoragePath:
       process.env.DOCUMENT_STORAGE_PATH || path.join(rootDir, "storage", "documents"),

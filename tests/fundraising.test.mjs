@@ -23,7 +23,7 @@ function appFor(role, repository, tenantId = "org-a") {
     if (role) req.auth = { user: { id: "user-a", memberships: [{ tenantId, role }] } };
     next();
   });
-  app.use("/fundraising", createFundraisingRouter(repository));
+  app.use("/fundraising", createFundraisingRouter(repository, { enabled: true }));
   app.use((error, _req, response, _next) => response.status(error.status || 500).json({ message: error.message }));
   return app;
 }
@@ -128,7 +128,7 @@ test("fundraising UI is permission-aware, accessible, campaign-scoped, and prese
   assert.match(shell, /canReadFundraising/);
   assert.match(app, /FundraisingPage/);
   assert.match(navigation, /label: "Reports"[\s\S]*enabled: false/);
-  assert.match(navigation, /label: "Billing"[\s\S]*enabled: false/);
+  assert.match(navigation, /label: "Billing"[\s\S]*feature: "billing"/);
 });
 
 test("the rendered fundraising activity form heading is exact", () => {

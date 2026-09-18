@@ -22,6 +22,10 @@ import { createIntelligenceWorkflowsRouter } from "./server/routes/intelligenceW
 import { createGovernanceRouter } from "./server/routes/governance.js";
 import { createWorkspaceSearchRouter } from "./server/routes/workspaceSearch.js";
 import { createFundraisingRouter } from "./server/routes/fundraising.js";
+import {
+  createFeatureAvailabilityRouter,
+  createReservedBillingRouter,
+} from "./server/routes/features.js";
 import { createPrelaunchReviewRouter, createPrelaunchRouter } from "./server/routes/prelaunch.js";
 import {
   authenticateRequests,
@@ -143,6 +147,9 @@ app.get("/api/health", (_request, response) => {
   response.json({ status: "ok" });
 });
 
+app.use("/api/features", createFeatureAvailabilityRouter(config.features));
+app.use("/api/billing", createReservedBillingRouter(config.features.billing));
+
 app.get("/api/ready", async (_request, response) => {
   let databaseReachable = false;
   if (config.databaseUrl) {
@@ -241,8 +248,18 @@ app.use(
   createPrelaunchReviewRouter(createPrelaunchLeadRepository(prisma)),
 );
 app.use("/api/campaigns", createCampaignRouter(createCampaignRepository(prisma)));
-app.use("/api/search", createWorkspaceSearchRouter(createWorkspaceSearchRepository(prisma)));
-app.use("/api/fundraising", createFundraisingRouter(createFundraisingRepository(prisma)));
+app.use(
+  "/api/search",
+  createWorkspaceSearchRouter(createWorkspaceSearchRepository(prisma), {
+    fundraisingEnabled: config.features.fundraising,
+  }),
+);
+app.use(
+  "/api/fundraising",
+  createFundraisingRouter(createFundraisingRepository(prisma), {
+    enabled: config.features.fundraising,
+  }),
+);
 app.use("/api/operations", createOperationsRouter(createOperationsRepository(prisma)));
 app.use("/api/command-center", createCommandCenterRouter(createCommandCenterRepository(prisma)));
 app.use(
