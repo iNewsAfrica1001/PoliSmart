@@ -45,12 +45,13 @@ operator using the protected owner identity must:
    directed by `DATABASE_OPERATIONS.md`. It checks that both role names are absent before either
    is created and rolls back the complete transaction if any role, privilege, or password step
    fails. Never alter, reuse, skip, or automatically drop an unexpectedly existing role.
-3. Supply unique generated credentials only through the procedure's hidden `psql` `\prompt -s`
-   prompts. The procedure uses safely quoted SQL-literal interpolation for Neon's required
-   plaintext password input and unsets both psql variables before commit. Run without query echo
-   or tracing, retain no expanded-SQL transcript, and place credentials only in the appropriate
-   secret scopes. Do not put credentials in the repository, command arguments, environment files,
-   logs, or documentation.
+3. Supply unique generated credentials only through `scripts/bootstrap-production-roles.ps1`.
+   The wrapper uses `Read-Host -AsSecureString` for the protected owner connection and both role
+   passwords, then safely escapes and streams the in-memory SQL transaction to `psql` through
+   standard input. No password is placed in a process argument or persistent generated SQL file.
+   Run without query echo, tracing, or transcript capture, and place credentials only in the
+   appropriate secret scopes. Do not put credentials in the repository, command arguments,
+   environment files, logs, or documentation.
 4. Give both roles `CONNECT` on `neondb` and `USAGE` on `public`.
 5. Revoke `CREATE` on `public` from `PUBLIC`, then give only `polismart_migrator` database-level
    `CREATE`, plus `CREATE` on `public`, and the
@@ -81,8 +82,9 @@ The first authorized Production bootstrap attempt reached the two password assig
 Neon rejected psql's `\password` representation because Neon requires plaintext password input.
 `ON_ERROR_STOP` stopped the file before `COMMIT`; the atomic transaction rolled back successfully.
 Read-only verification confirmed that both target roles remained absent, no migration ran, and no
-extension or application table was created. The repository procedure now uses the hidden-prompt,
-safely quoted Neon-compatible mechanism described above. This remediation changes no approval,
+extension or application table was created. PostgreSQL 18 `psql` does not support hidden input
+through `\prompt`; the repository procedure now uses the protected external wrapper and safely
+escaped Neon-compatible mechanism described above. This remediation changes no approval,
 jurisdiction, financial-feature boundary, migration, or Production deployment.
 
 ## 3. Migration and recovery sequence

@@ -3,16 +3,17 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const sql = readFileSync("scripts/bootstrap-production-roles.sql", "utf8");
+const wrapper = readFileSync("scripts/bootstrap-production-roles.ps1", "utf8");
 const operations = readFileSync("DATABASE_OPERATIONS.md", "utf8");
 
 const precheckEnd = sql.indexOf("$bootstrap_precheck$;");
 const runtimeCreate = sql.indexOf("CREATE ROLE polismart_runtime");
 const migratorCreate = sql.indexOf("CREATE ROLE polismart_migrator");
 const runtimePasswordAssignment = sql.indexOf(
-  "ALTER ROLE polismart_runtime PASSWORD :'runtime_password';",
+  "ALTER ROLE polismart_runtime PASSWORD __POLISMART_RUNTIME_PASSWORD_SQL_LITERAL__;",
 );
 const migratorPasswordAssignment = sql.indexOf(
-  "ALTER ROLE polismart_migrator PASSWORD :'migrator_password';",
+  "ALTER ROLE polismart_migrator PASSWORD __POLISMART_MIGRATOR_PASSWORD_SQL_LITERAL__;",
 );
 
 test("atomic bootstrap checks both role names before creating either", () => {
@@ -58,10 +59,8 @@ test("role and privilege failures remain inside the all-or-nothing transaction",
     "CREATE ROLE polismart_migrator",
     "GRANT CONNECT ON DATABASE neondb TO polismart_runtime",
     "GRANT CONNECT, CREATE ON DATABASE neondb TO polismart_migrator",
-    "\\prompt -s 'Enter password for polismart_runtime: ' runtime_password",
-    "\\prompt -s 'Enter password for polismart_migrator: ' migrator_password",
-    "ALTER ROLE polismart_runtime PASSWORD :'runtime_password';",
-    "ALTER ROLE polismart_migrator PASSWORD :'migrator_password';",
+    "ALTER ROLE polismart_runtime PASSWORD __POLISMART_RUNTIME_PASSWORD_SQL_LITERAL__;",
+    "ALTER ROLE polismart_migrator PASSWORD __POLISMART_MIGRATOR_PASSWORD_SQL_LITERAL__;",
   ]) {
     const position = sql.indexOf(statement);
     assert.ok(position > begin && position < commit, `${statement} must be transactional`);
@@ -94,10 +93,12 @@ test("bootstrap preserves the least-privilege runtime and migrator designs", () 
 
 test("credentials are collected securely and never embedded", () => {
   assert.doesNotMatch(sql, /\\password\b/);
-  assert.match(sql, /\\prompt -s 'Enter password for polismart_runtime: ' runtime_password/);
-  assert.match(sql, /\\prompt -s 'Enter password for polismart_migrator: ' migrator_password/);
-  assert.match(sql, /ALTER ROLE polismart_runtime PASSWORD :'runtime_password';/);
-  assert.match(sql, /ALTER ROLE polismart_migrator PASSWORD :'migrator_password';/);
+  assert.doesNotMatch(sql, /\\prompt\s+-s\b|\\prompt\s+-pw\b/);
+  assert.doesNotMatch(wrapper, /\\prompt\s+-s\b|\\prompt\s+-pw\b|\\password\b/);
+  assert.match(wrapper, /Read-Host "Enter password for polismart_runtime" -AsSecureString/);
+  assert.match(wrapper, /Read-Host "Enter password for polismart_migrator" -AsSecureString/);
+  assert.match(sql, /ALTER ROLE polismart_runtime PASSWORD __POLISMART_RUNTIME_PASSWORD_SQL_LITERAL__;/);
+  assert.match(sql, /ALTER ROLE polismart_migrator PASSWORD __POLISMART_MIGRATOR_PASSWORD_SQL_LITERAL__;/);
   assert.doesNotMatch(sql, /PASSWORD\s+'[^:]/i);
   assert.doesNotMatch(sql, /generated-(?:runtime|migrator)-password/i);
   assert.ok(runtimePasswordAssignment > runtimeCreate);
@@ -106,9 +107,26 @@ test("credentials are collected securely and never embedded", () => {
   assert.ok(runtimePasswordAssignment < sql.lastIndexOf("COMMIT;"));
   assert.ok(migratorPasswordAssignment < sql.lastIndexOf("COMMIT;"));
   assert.equal((sql.match(/ALTER ROLE\s+\w+\s+PASSWORD/gi) ?? []).length, 2);
-  assert.match(sql, /\\unset runtime_password/);
-  assert.match(sql, /\\unset migrator_password/);
-  assert.match(operations, /safe SQL-literal interpolation/);
+  assert.match(wrapper, /\.Replace\("'", "''"\)/);
+  assert.match(wrapper, /RedirectStandardInput = \$true/);
+  assert.match(wrapper, /StandardInput\.Write\(\$sql\)/);
+  assert.doesNotMatch(wrapper, /ArgumentList\.Add\([^\r\n]*(?:Password|Connection)/i);
+  assert.match(wrapper, /\$runtimePassword -ceq \$migratorPassword/);
+  assert.match(wrapper, /SecureStringToBSTR/);
+  assert.match(wrapper, /ZeroFreeBSTR/);
+  assert.match(wrapper, /\$runtimePassword = \$null/);
+  assert.match(wrapper, /\$migratorPassword = \$null/);
+  assert.match(wrapper, /Environment\["PGPASSWORD"\] = ""/);
+  assert.match(wrapper, /Environment\.Clear\(\)/);
+  assert.match(operations, /safe SQL\s+string-literal escaping/);
+});
+
+test("wrapper protects connection input and redacts subprocess failures", () => {
+  assert.match(wrapper, /Read-Host "Enter the protected owner PostgreSQL connection URL" -AsSecureString/);
+  assert.match(wrapper, /Environment\["PGPASSWORD"\] = \$connection\.Password/);
+  assert.match(wrapper, /Protect-DiagnosticText/);
+  assert.doesNotMatch(wrapper, /Write-(?:Host|Output)[^\r\n]*(?:Password|Connection)/i);
+  assert.doesNotMatch(wrapper, /Out-File|Set-Content|Add-Content|New-TemporaryFile/);
 });
 
 test("password and grant failures roll back both newly created roles", () => {

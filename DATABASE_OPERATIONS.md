@@ -5,9 +5,10 @@ The running application uses `DATABASE_URL`, while reviewed migrations use `MIGR
 ## Required production roles
 
 Role creation is a separately authorized operator action. The sole authoritative bootstrap is
-`scripts/bootstrap-production-roles.sql`. Before the first migration, run that file from a
-protected owner session using `psql -X --file scripts/bootstrap-production-roles.sql`. Never run
-it through the application runtime or an interactive `\i`, and never store the generated
+`scripts/bootstrap-production-roles.sql`, executed only through
+`scripts/bootstrap-production-roles.ps1`. Before the first migration, run the wrapper from a
+protected Windows PowerShell session. Never run the SQL template directly, through the application
+runtime, or through an interactive `\i`, and never store the generated
 credentials in source control, command arguments, environment files, shell history, or logs.
 
 The script sets `ON_ERROR_STOP`, opens one explicit transaction, and checks that both role names
@@ -17,12 +18,14 @@ role, privilege, or password-setting failure stops the file before `COMMIT`; clo
 failed `psql` session rolls back every bootstrap statement, so a single-role partial state cannot
 remain. Do not continue an errored session or issue a manual commit.
 
-The two `\prompt -s` prompts run before `COMMIT` and suppress terminal echo. The resulting psql
-variables are passed to `ALTER ROLE ... PASSWORD` using safe SQL-literal interpolation (`:'name'`),
-which supplies the plaintext form Neon requires without embedding credentials in this file or
-placing them in command arguments or shell history. The variables are unset before `COMMIT`. Run
-the file without psql query-echo or tracing options, and retain no session transcript containing
-expanded SQL.
+The wrapper collects the protected owner connection URL and the two distinct role passwords using
+`Read-Host -AsSecureString`. It converts them only in memory for execution, applies safe SQL
+string-literal escaping, substitutes the two audited template placeholders, and streams the
+complete transaction to `psql` over redirected standard input. No credential is a process argument
+or persistent generated SQL file. Connection components are supplied only in the child process
+environment, subprocess output is captured and redacted on failure, and sensitive variables and
+secure strings are cleared or disposed in `finally`. Run without psql query echo, tracing, or
+transcript capture.
 The reviewed procedure is logically equivalent to:
 
 ```text
@@ -32,14 +35,14 @@ BEGIN
   revoke public schema CREATE from PUBLIC
   grant runtime CONNECT and schema USAGE only
   grant migrator CONNECT/database CREATE and schema USAGE/CREATE
-  collect both passwords using hidden psql prompts
-  assign both passwords using safely quoted SQL literals
-  unset both password variables
+  assign both wrapper-supplied passwords using safely escaped SQL literals
 COMMIT
 ```
 
 The first authorized Production attempt used psql's `\password` meta-command. Neon rejected its
-password representation because Neon requires plaintext input. `ON_ERROR_STOP` halted execution
+password representation because Neon requires plaintext input. A later `\prompt -s` proposal was
+also rejected because PostgreSQL 18 `psql` has no hidden-input option for `\prompt`. The protected
+PowerShell wrapper is therefore the only authorized entry point. `ON_ERROR_STOP` halted execution
 before `COMMIT`, the transaction rolled back, and read-only verification confirmed that both
 target roles remained absent. That attempt executed no migration and created no extension or
 application table; the Production deployment remained unchanged.
