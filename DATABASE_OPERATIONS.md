@@ -4,27 +4,53 @@ The running application uses `DATABASE_URL`, while reviewed migrations use `MIGR
 
 ## Required production roles
 
-Create two separate Neon roles in the Neon console or with an existing protected owner connection:
+Role creation is a separately authorized operator action. Before the first migration, create two
+separate Neon roles in a protected owner session. Never run the following through the application
+runtime, and never store the generated credentials in source control or shell history:
 
 ```sql
 CREATE ROLE polismart_runtime LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS PASSWORD '<generated-runtime-password>';
 GRANT CONNECT ON DATABASE neondb TO polismart_runtime;
 GRANT USAGE ON SCHEMA public TO polismart_runtime;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO polismart_runtime;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO polismart_runtime;
-ALTER DEFAULT PRIVILEGES FOR ROLE <migration_role> IN SCHEMA public
-  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO polismart_runtime;
-ALTER DEFAULT PRIVILEGES FOR ROLE <migration_role> IN SCHEMA public
-  GRANT USAGE, SELECT ON SEQUENCES TO polismart_runtime;
+REVOKE CREATE ON SCHEMA public FROM polismart_runtime;
+
+CREATE ROLE polismart_migrator LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS PASSWORD '<generated-migrator-password>';
+GRANT CONNECT ON DATABASE neondb TO polismart_migrator;
+GRANT USAGE, CREATE ON SCHEMA public TO polismart_migrator;
 ```
 
-Replace placeholders inside a protected SQL session. Do not store generated passwords in shell history. Set `DATABASE_URL` to the pooled `polismart_runtime` connection. Set `MIGRATION_DATABASE_URL` to a protected direct connection for a separate migration role that owns or can alter application schema objects. Do not grant the runtime role `CREATE` on the schema, `CREATEDB`, `CREATEROLE`, `BYPASSRLS`, or superuser.
+The protected owner must also arrange ownership or the narrowly required alteration rights for any
+pre-existing application objects before the migrator is used. For an empty initialization, the
+migrator creates and owns the migration-created objects. It must be able to create the reviewed
+`pgcrypto` and `vector` extensions available on the target Neon project; do not pre-create them.
+Do not grant either role superuser, `CREATEDB`, `CREATEROLE`, or `BYPASSRLS`. Do not grant the
+runtime role schema `CREATE`, role membership in the migrator, or access to migrator credentials.
+
+Set `DATABASE_URL` only to the pooled `polismart_runtime` connection and
+`MIGRATION_DATABASE_URL` only to the protected direct `polismart_migrator` connection. The
+application runtime must never receive `MIGRATION_DATABASE_URL`.
+
+Do not grant blanket table privileges or blanket default table privileges to the runtime role.
+In particular, never grant table-level `UPDATE` or `DELETE`, and never configure default
+privileges that could restore them. Migrations grant only the operations required by each table.
+Migration `0014_prelaunch_runtime_privilege_hardening` revokes all earlier privileges on the two
+pre-launch tables before establishing this final matrix:
+
+| Table                       | Runtime privileges                                                       |
+| --------------------------- | ------------------------------------------------------------------------ |
+| `prelaunch_leads`           | `SELECT`, `INSERT`, `UPDATE(status, updated_at)`; no `DELETE`            |
+| `prelaunch_lead_follow_ups` | `SELECT`, `INSERT`, `UPDATE(completed_at, completed_by_id)`; no `DELETE` |
 
 Verify the runtime role with `npm run db:validate:production`. The validator fails if dangerous role attributes are present.
 
 ## Preflight and migration review
 
-All migrations in `prisma/migrations` must be reviewed in order before every production release. The current eight migrations are additive: they create types, tables, indexes, constraints, extensions, functions, and triggers. They contain no `DROP TABLE`, `DROP COLUMN`, `TRUNCATE`, bulk `DELETE`, or data-replacement statements.
+All migrations in `prisma/migrations` must be reviewed in order before every production release.
+Migrations `0001` through `0013` establish the schema. Migration `0014` is a forward-only security
+correction that changes privileges without changing data or schema objects. It intentionally uses
+`REVOKE ALL PRIVILEGES` only against `polismart_runtime` on the two pre-launch tables and then
+regrants the exact matrix above. It contains no `DROP TABLE`, `DROP COLUMN`, `TRUNCATE`, data
+`DELETE`, or data-replacement statement.
 
 Run the read-only status and validation checks:
 
@@ -60,6 +86,11 @@ npm run db:validate:production
 ```
 
 `prisma migrate deploy` applies only pending checked-in migrations. Do not use `prisma db push`, `migrate reset`, or `migrate dev` against production.
+
+For an empty Production database with no `_prisma_migrations` table, initialization/migration is
+required. Complete the separately authorized role bootstrap, verify the authoritative Neon branch
+identity and a recovery checkpoint, then run the normal migration sequence once. Do not manually
+create `_prisma_migrations`, mark migrations applied, or edit migration history.
 
 ## Rollback
 

@@ -73,7 +73,15 @@ Billing, Payments, or Fundraising.
 
 **Automated tests:** 234/234 PASS
 
-**Database migration required:** NO
+**Historical preflight statement:** Database migration required: NO
+
+**Corrected technical status:** DATABASE INITIALIZATION/MIGRATION REQUIRED: YES
+
+The historical statement above predated the operator's final read-only inspection of the
+authoritative empty Production database. The correction is documented in
+`V1_1_PRODUCTION_DATABASE_INITIALIZATION_AND_BOOTSTRAP_ADDENDUM.md`. It does not alter the original
+reviewer decisions, Nigeria-only authorization, or disabled financial-feature boundary, and it is
+not authorization to create roles, initialize the database, run migrations, or deploy Production.
 
 ## 7. Platform Owner approval and reconciliation confirmation
 

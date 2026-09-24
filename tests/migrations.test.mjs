@@ -37,10 +37,7 @@ test("database migrations are ordered, non-empty, and create every production mi
 });
 
 test("lead follow-up migration is additive, append-preserving, and narrowly privileged", () => {
-  const sql = readFileSync(
-    "prisma/migrations/0013_lead_follow_up_workflow/migration.sql",
-    "utf8",
-  );
+  const sql = readFileSync("prisma/migrations/0013_lead_follow_up_workflow/migration.sql", "utf8");
 
   assert.match(sql, /CREATE TABLE "prelaunch_lead_follow_ups"/);
   assert.match(sql, /"note" VARCHAR\(2000\) NOT NULL/);
@@ -65,7 +62,10 @@ test("lead follow-up migration is additive, append-preserving, and narrowly priv
     /GRANT UPDATE \("completed_at", "completed_by_id"\)[\s\S]*TO "polismart_runtime"/,
   );
   const roleGuard = sql.slice(sql.indexOf("DO $$"));
-  assert.match(roleGuard, /IF EXISTS \(SELECT 1 FROM pg_roles WHERE rolname = 'polismart_runtime'\) THEN/);
+  assert.match(
+    roleGuard,
+    /IF EXISTS \(SELECT 1 FROM pg_roles WHERE rolname = 'polismart_runtime'\) THEN/,
+  );
   assert.match(roleGuard, /EXECUTE 'GRANT SELECT, INSERT ON TABLE/);
   assert.match(roleGuard, /EXECUTE 'GRANT UPDATE \("completed_at", "completed_by_id"\) ON TABLE/);
   assert.match(roleGuard, /END IF;/);
@@ -75,6 +75,37 @@ test("lead follow-up migration is additive, append-preserving, and narrowly priv
   assert.doesNotMatch(sql, /\b(?:DROP|TRUNCATE|DELETE\s+FROM)\b/i);
   assert.doesNotMatch(sql, /ALTER\s+TABLE[\s\S]*\b(?:DROP|ALTER\s+COLUMN)\b/i);
   assert.doesNotMatch(sql, /\bUPDATE\s+"?prelaunch_leads"?\s+SET\b/i);
+});
+
+test("runtime privilege hardening revokes broad access before exact lead grants", () => {
+  const sql = readFileSync(
+    "prisma/migrations/0014_prelaunch_runtime_privilege_hardening/migration.sql",
+    "utf8",
+  );
+
+  assert.match(sql, /IF NOT EXISTS \(SELECT 1 FROM pg_roles WHERE rolname = 'polismart_runtime'\)/);
+  assert.doesNotMatch(sql, /\bCREATE\s+(?:USER|ROLE)\s+"?polismart_runtime"?/i);
+  for (const table of ["prelaunch_leads", "prelaunch_lead_follow_ups"])
+    assert.match(
+      sql,
+      new RegExp(`REVOKE ALL PRIVILEGES ON TABLE "${table}" FROM "polismart_runtime"`),
+    );
+  assert.match(sql, /GRANT SELECT, INSERT ON TABLE "prelaunch_leads" TO "polismart_runtime"/);
+  assert.match(
+    sql,
+    /GRANT UPDATE \("status", "updated_at"\) ON TABLE "prelaunch_leads" TO "polismart_runtime"/,
+  );
+  assert.match(
+    sql,
+    /GRANT SELECT, INSERT ON TABLE "prelaunch_lead_follow_ups" TO "polismart_runtime"/,
+  );
+  assert.match(
+    sql,
+    /GRANT UPDATE \("completed_at", "completed_by_id"\) ON TABLE "prelaunch_lead_follow_ups" TO "polismart_runtime"/,
+  );
+  assert.doesNotMatch(sql, /GRANT\s+(?:[^;]*,\s*)?DELETE\b/i);
+  assert.doesNotMatch(sql, /GRANT\s+UPDATE\s+ON\s+(?:TABLE\s+)?"prelaunch_/i);
+  assert.doesNotMatch(sql, /\b(?:DROP|TRUNCATE|DELETE\s+FROM|UPDATE\s+"?prelaunch_)\b/i);
 });
 
 test("every migration contains a substantive schema change", () => {
@@ -88,8 +119,8 @@ test("every migration contains a substantive schema change", () => {
     assert.ok(sql.trim().length > 100, `${directory.name} is unexpectedly empty`);
     assert.match(
       sql,
-      /(?:CONSTRAINT|CREATE (?:UNIQUE )?INDEX|CREATE TABLE|CREATE TYPE|ALTER TYPE|CREATE (?:OR REPLACE )?FUNCTION|CREATE TRIGGER)/,
-      `${directory.name} lacks a substantive schema operation`,
+      /(?:CONSTRAINT|CREATE (?:UNIQUE )?INDEX|CREATE TABLE|CREATE TYPE|ALTER TYPE|CREATE (?:OR REPLACE )?FUNCTION|CREATE TRIGGER|REVOKE ALL PRIVILEGES)/,
+      `${directory.name} lacks a substantive schema or security operation`,
     );
   }
 });
