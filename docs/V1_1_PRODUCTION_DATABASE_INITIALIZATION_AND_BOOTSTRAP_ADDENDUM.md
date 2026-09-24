@@ -38,12 +38,14 @@ operator using the protected owner identity must:
 2. Create `polismart_runtime` and `polismart_migrator` with unique generated credentials held only
    in the appropriate secret scopes.
 3. Give both roles `CONNECT` on `neondb` and `USAGE` on `public`.
-4. Give only `polismart_migrator` `CREATE` on `public` and the ownership/alteration capability
-   needed for migration-created objects.
+4. Give only `polismart_migrator` database-level `CREATE`, plus `CREATE` on `public`, and the
+   ownership/alteration capability needed for migration-created objects. Database-level `CREATE`
+   is not the `CREATEDB` role attribute and does not permit creating another database.
 5. Give neither role superuser, `CREATEDB`, `CREATEROLE`, or `BYPASSRLS`.
 6. Explicitly deny `polismart_runtime` schema `CREATE`; do not make it a member of the migrator.
 7. Confirm the migrator can create the reviewed available extensions through migrations `0001`
-   and `0004`; do not pre-create either extension.
+   and `0004` by first reproducing the role design on an isolated Neon branch from the same
+   project. Do not pre-create either extension in Production.
 8. Put only the pooled runtime credential in Production `DATABASE_URL`. Put only the direct
    migrator credential in the separately controlled migration environment as
    `MIGRATION_DATABASE_URL`. Never expose the latter to the running application.
@@ -52,6 +54,12 @@ Migration `0011` contains an unguarded grant to `polismart_runtime`; the runtime
 before initialization begins. Migration `0014` fails closed if the role is absent and replaces
 earlier broad lead-table privileges with the approved column-limited matrix. No blanket or default
 runtime table grant is permitted.
+
+Migration `0015_runtime_privilege_catalog` revokes every runtime table privilege before granting
+the repository-derived table and column policy documented in
+`V1_1_RUNTIME_DATABASE_PRIVILEGE_CATALOG.md`. Fundraising tables and unused legacy/import tables
+receive no runtime access. The migration chain creates no application sequence, so no runtime
+sequence privilege is required.
 
 ## 3. Migration and recovery sequence
 
@@ -62,7 +70,8 @@ Under a future, separate execution authorization, the operator must:
 3. Bootstrap and verify the two roles as described above.
 4. Reconfirm `BILLING_ENABLED=false` and `FUNDRAISING_ENABLED=false` without exposing values for
    unrelated secrets.
-5. Apply the checked-in migrations in their normal order using only `prisma migrate deploy` via the
+5. Apply checked-in migrations `0001` through `0015` in their normal order using only
+   `prisma migrate deploy` via the
    guarded Production migration command and the direct migrator identity.
 6. Verify migration history, required schema objects, extensions, constraints, indexes, tenant
    boundaries, and the final runtime privilege matrix.

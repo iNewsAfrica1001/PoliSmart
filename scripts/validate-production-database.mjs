@@ -3,6 +3,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PrismaClient } from "@prisma/client";
+import {
+  RUNTIME_DATABASE_PRIVILEGES,
+  RUNTIME_SEQUENCE_PRIVILEGES,
+} from "../server/config/databasePrivileges.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const migrations = fs
@@ -17,6 +21,14 @@ if (!process.env.DATABASE_URL) {
 }
 
 const prisma = new PrismaClient();
+const sqlString = (value) => `'${String(value).replaceAll("'", "''")}'`;
+const privilegeRows = Object.keys(RUNTIME_DATABASE_PRIVILEGES)
+  .flatMap((table) =>
+    ["SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"].map(
+      (privilege) => `(${sqlString(table)}, ${sqlString(privilege)})`,
+    ),
+  )
+  .join(",\n");
 try {
   const [connection] = await prisma.$queryRaw`
     SELECT
@@ -58,12 +70,38 @@ try {
     FROM information_schema.columns c
     WHERE table_schema = 'public' AND column_name = 'tenant_id'
   `;
-  const tablePermissions = await prisma.$queryRaw`
-    SELECT
-      has_table_privilege(current_user, 'organizations', 'SELECT') AS can_select,
-      has_table_privilege(current_user, 'organizations', 'INSERT') AS can_insert,
-      has_table_privilege(current_user, 'organizations', 'UPDATE') AS can_update,
-      has_table_privilege(current_user, 'organizations', 'DELETE') AS can_delete
+  const tablePermissions = await prisma.$queryRawUnsafe(`
+    SELECT expected.table_name, expected.privilege,
+      has_table_privilege(
+        current_user,
+        format('%I.%I', 'public', expected.table_name),
+        expected.privilege
+      ) AS granted
+    FROM (VALUES ${privilegeRows}) AS expected(table_name, privilege)
+    ORDER BY expected.table_name, expected.privilege
+  `);
+  const columnUpdatePermissions = await prisma.$queryRaw`
+    SELECT c.table_name, c.column_name,
+      has_column_privilege(
+        current_user,
+        format('%I.%I', c.table_schema, c.table_name),
+        c.column_name,
+        'UPDATE'
+      ) AS granted
+    FROM information_schema.columns c
+    WHERE c.table_schema = 'public'
+    ORDER BY c.table_name, c.ordinal_position
+  `;
+  const sequencePermissions = await prisma.$queryRaw`
+    SELECT sequence_name,
+      has_sequence_privilege(
+        current_user,
+        format('%I.%I', sequence_schema, sequence_name),
+        'USAGE'
+      ) AS usage
+    FROM information_schema.sequences
+    WHERE sequence_schema = 'public'
+    ORDER BY sequence_name
   `;
   const isolationChecks = await prisma.$queryRaw`
     SELECT
@@ -96,16 +134,34 @@ try {
     0,
   );
   const vector = extensions.find((extension) => extension.extname === "vector");
+  const tablePrivilegeErrors = tablePermissions.flatMap(({ table_name, privilege, granted }) => {
+    const expected = RUNTIME_DATABASE_PRIVILEGES[table_name].tablePrivileges.includes(privilege);
+    return Boolean(granted) === expected ? [] : [`${table_name}:${privilege}`];
+  });
+  const columnPrivilegeErrors = columnUpdatePermissions.flatMap(
+    ({ table_name, column_name, granted }) => {
+      const expected =
+        RUNTIME_DATABASE_PRIVILEGES[table_name]?.updateColumns.includes(column_name) ?? false;
+      return Boolean(granted) === expected ? [] : [`${table_name}.${column_name}:UPDATE`];
+    },
+  );
+  const sequencePrivilegeErrors = sequencePermissions.flatMap(({ sequence_name, usage }) => {
+    const expected = RUNTIME_SEQUENCE_PRIVILEGES[sequence_name]?.includes("USAGE") ?? false;
+    return Boolean(usage) === expected ? [] : [`${sequence_name}:USAGE`];
+  });
   const permissionWarnings = [
     ...(connection.is_superuser ? ["Application role is a superuser."] : []),
     ...(connection.can_create_database ? ["Application role can create databases."] : []),
     ...(connection.can_create_role ? ["Application role can create roles."] : []),
     ...(connection.can_bypass_rls ? ["Application role can bypass row-level security."] : []),
+    ...(connection.can_create_in_schema ? ["Application role can create objects in public."] : []),
   ];
   const valid =
     connection.can_connect &&
     connection.can_use_schema &&
-    Object.values(tablePermissions[0]).every(Boolean) &&
+    tablePrivilegeErrors.length === 0 &&
+    columnPrivilegeErrors.length === 0 &&
+    sequencePrivilegeErrors.length === 0 &&
     Boolean(vector) &&
     missingMigrations.length === 0 &&
     failedMigrations.length === 0 &&
@@ -142,7 +198,10 @@ try {
           connect: connection.can_connect,
           schemaUsage: connection.can_use_schema,
           schemaCreate: connection.can_create_in_schema,
-          applicationTables: tablePermissions[0],
+          catalogTables: Object.keys(RUNTIME_DATABASE_PRIVILEGES).length,
+          tablePrivilegeErrors,
+          columnPrivilegeErrors,
+          sequencePrivilegeErrors,
           leastPrivilegeWarnings: permissionWarnings,
         },
         publicData: publicData[0],

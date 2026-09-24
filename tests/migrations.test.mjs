@@ -108,6 +108,19 @@ test("runtime privilege hardening revokes broad access before exact lead grants"
   assert.doesNotMatch(sql, /\b(?:DROP|TRUNCATE|DELETE\s+FROM|UPDATE\s+"?prelaunch_)\b/i);
 });
 
+test("complete runtime privilege migration is forward-only and role guarded", () => {
+  const sql = readFileSync(
+    "prisma/migrations/0015_runtime_privilege_catalog/migration.sql",
+    "utf8",
+  );
+  assert.match(sql, /IF NOT EXISTS \(SELECT 1 FROM pg_roles WHERE rolname = 'polismart_runtime'\)/);
+  assert.match(sql, /REVOKE ALL PRIVILEGES ON TABLE/);
+  assert.doesNotMatch(sql, /\bCREATE\s+(?:ROLE|USER)\b/i);
+  assert.doesNotMatch(sql, /\b(?:DROP|TRUNCATE|DELETE\s+FROM)\b/i);
+  assert.doesNotMatch(sql, /ALTER\s+TABLE[\s\S]*\b(?:DROP|ALTER\s+COLUMN)\b/i);
+  assert.doesNotMatch(sql, /\bUPDATE\s+"?\w+"?\s+SET\b/i);
+});
+
 test("every migration contains a substantive schema change", () => {
   for (const directory of readdirSync("prisma/migrations", { withFileTypes: true }).filter((item) =>
     item.isDirectory(),

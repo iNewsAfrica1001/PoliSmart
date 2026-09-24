@@ -16,6 +16,7 @@ REVOKE CREATE ON SCHEMA public FROM polismart_runtime;
 
 CREATE ROLE polismart_migrator LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS PASSWORD '<generated-migrator-password>';
 GRANT CONNECT ON DATABASE neondb TO polismart_migrator;
+GRANT CREATE ON DATABASE neondb TO polismart_migrator;
 GRANT USAGE, CREATE ON SCHEMA public TO polismart_migrator;
 ```
 
@@ -41,6 +42,11 @@ pre-launch tables before establishing this final matrix:
 | `prelaunch_leads`           | `SELECT`, `INSERT`, `UPDATE(status, updated_at)`; no `DELETE`            |
 | `prelaunch_lead_follow_ups` | `SELECT`, `INSERT`, `UPDATE(completed_at, completed_by_id)`; no `DELETE` |
 
+Migration `0015_runtime_privilege_catalog` revokes all runtime table privileges and establishes
+the complete explicit policy in `docs/V1_1_RUNTIME_DATABASE_PRIVILEGE_CATALOG.md`. No application
+sequence is created by migrations `0001`–`0015`, so the runtime receives no sequence privileges.
+Fundraising tables receive no runtime access while Fundraising is disabled.
+
 Verify the runtime role with `npm run db:validate:production`. The validator fails if dangerous role attributes are present.
 
 ## Preflight and migration review
@@ -51,6 +57,15 @@ correction that changes privileges without changing data or schema objects. It i
 `REVOKE ALL PRIVILEGES` only against `polismart_runtime` on the two pre-launch tables and then
 regrants the exact matrix above. It contains no `DROP TABLE`, `DROP COLUMN`, `TRUNCATE`, data
 `DELETE`, or data-replacement statement.
+Migration `0015` is the forward-only complete runtime privilege catalog and likewise changes no
+application data.
+
+Database-level `CREATE` is granted only to `polismart_migrator` because PostgreSQL requires it for
+trusted extension installation. Before Production execution, prove on an isolated Neon branch
+from the same project that a role with the documented attributes can run the exact idempotent
+`CREATE EXTENSION` statements from migrations `0001` and `0004`. Record only pass/fail and
+non-secret role attributes; do not retain credentials. Revoke the test role and delete the
+isolated branch through the approved Neon process after evidence is retained.
 
 Run the read-only status and validation checks:
 
