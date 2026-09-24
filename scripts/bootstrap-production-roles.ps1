@@ -20,6 +20,36 @@ function ConvertTo-PostgresStringLiteral {
   return "'" + $Value.Replace("'", "''") + "'"
 }
 
+function Expand-RolePasswordTemplate {
+  param(
+    [Parameter(Mandatory)][string]$Template,
+    [Parameter(Mandatory)][string]$RuntimePassword,
+    [Parameter(Mandatory)][string]$MigratorPassword
+  )
+  $runtimePlaceholder = "__POLISMART_RUNTIME_PASSWORD_SQL_LITERAL__"
+  $migratorPlaceholder = "__POLISMART_MIGRATOR_PASSWORD_SQL_LITERAL__"
+  $runtimeCount = [regex]::Matches(
+    $Template,
+    [regex]::Escape($runtimePlaceholder),
+    [Text.RegularExpressions.RegexOptions]::CultureInvariant
+  ).Count
+  $migratorCount = [regex]::Matches(
+    $Template,
+    [regex]::Escape($migratorPlaceholder),
+    [Text.RegularExpressions.RegexOptions]::CultureInvariant
+  ).Count
+  if ($runtimeCount -ne 1 -or $migratorCount -ne 1) {
+    throw "The authoritative SQL template does not contain exactly one placeholder per role."
+  }
+  return $Template.Replace(
+    $runtimePlaceholder,
+    (ConvertTo-PostgresStringLiteral $RuntimePassword)
+  ).Replace(
+    $migratorPlaceholder,
+    (ConvertTo-PostgresStringLiteral $MigratorPassword)
+  )
+}
+
 function ConvertFrom-UriComponent {
   param([Parameter(Mandatory)][string]$Value)
   if ($Value -match '%(?![0-9A-Fa-f]{2})') {
@@ -149,14 +179,7 @@ try {
 
   $templatePath = Join-Path $PSScriptRoot "bootstrap-production-roles.sql"
   $sql = [IO.File]::ReadAllText($templatePath)
-  $runtimePlaceholder = "__POLISMART_RUNTIME_PASSWORD_SQL_LITERAL__"
-  $migratorPlaceholder = "__POLISMART_MIGRATOR_PASSWORD_SQL_LITERAL__"
-  if (($sql.Split($runtimePlaceholder).Count - 1) -ne 1 -or
-      ($sql.Split($migratorPlaceholder).Count - 1) -ne 1) {
-    throw "The authoritative SQL template does not contain exactly one placeholder per role."
-  }
-  $sql = $sql.Replace($runtimePlaceholder, (ConvertTo-PostgresStringLiteral $runtimePassword))
-  $sql = $sql.Replace($migratorPlaceholder, (ConvertTo-PostgresStringLiteral $migratorPassword))
+  $sql = Expand-RolePasswordTemplate $sql $runtimePassword $migratorPassword
 
   $startInfo = [Diagnostics.ProcessStartInfo]::new()
   $startInfo.FileName = $PsqlPath

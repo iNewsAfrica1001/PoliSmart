@@ -122,6 +122,65 @@ test("credentials are collected securely and never embedded", () => {
   assert.match(operations, /safe SQL\s+string-literal escaping/);
 });
 
+test("wrapper and SQL template share an exact fail-closed password placeholder contract", () => {
+  const runtimePlaceholder = "__POLISMART_RUNTIME_PASSWORD_SQL_LITERAL__";
+  const migratorPlaceholder = "__POLISMART_MIGRATOR_PASSWORD_SQL_LITERAL__";
+  assert.equal(sql.split(runtimePlaceholder).length - 1, 1);
+  assert.equal(sql.split(migratorPlaceholder).length - 1, 1);
+  assert.equal(wrapper.split(`"${runtimePlaceholder}"`).length - 1, 1);
+  assert.equal(wrapper.split(`"${migratorPlaceholder}"`).length - 1, 1);
+  assert.match(wrapper, /\[regex\]::Matches\(/);
+  assert.match(wrapper, /\[regex\]::Escape\(\$runtimePlaceholder\)/);
+  assert.match(wrapper, /\[regex\]::Escape\(\$migratorPlaceholder\)/);
+  assert.doesNotMatch(wrapper, /\.Split\(\$runtimePlaceholder\)|\.Split\(\$migratorPlaceholder\)/);
+
+  const functionStart = wrapper.indexOf("function ConvertTo-PostgresStringLiteral");
+  const functionEnd = wrapper.indexOf("function ConvertFrom-UriComponent");
+  assert.ok(functionStart >= 0 && functionEnd > functionStart);
+  const templateFunctions = wrapper.slice(functionStart, functionEnd);
+  const encodedTemplate = Buffer.from(sql, "utf8").toString("base64");
+  const script = `${templateFunctions}
+$template = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${encodedTemplate}'))
+$runtime = "runtime'example"
+$migrator = "migrator'example"
+$expanded = Expand-RolePasswordTemplate $template $runtime $migrator
+$zeroRejected = $false
+$duplicateRejected = $false
+try {
+  $null = Expand-RolePasswordTemplate ($template.Replace('${runtimePlaceholder}', '')) $runtime $migrator
+} catch { $zeroRejected = $true }
+try {
+  $duplicate = $template.Replace('${migratorPlaceholder}', '${migratorPlaceholder}${migratorPlaceholder}')
+  $null = Expand-RolePasswordTemplate $duplicate $runtime $migrator
+} catch { $duplicateRejected = $true }
+@{
+  placeholdersRemoved = (!$expanded.Contains('${runtimePlaceholder}') -and !$expanded.Contains('${migratorPlaceholder}'))
+  runtimeExact = ([regex]::Matches($expanded, "ALTER ROLE polismart_runtime PASSWORD 'runtime''example';").Count -eq 1)
+  migratorExact = ([regex]::Matches($expanded, "ALTER ROLE polismart_migrator PASSWORD 'migrator''example';").Count -eq 1)
+  runtimeOccurrences = ([regex]::Matches($expanded, "runtime''example").Count)
+  migratorOccurrences = ([regex]::Matches($expanded, "migrator''example").Count)
+  zeroRejected = $zeroRejected
+  duplicateRejected = $duplicateRejected
+} | ConvertTo-Json -Compress
+`;
+  const result = spawnSync(
+    "powershell.exe",
+    ["-NoProfile", "-NonInteractive", "-Command", "$input | Out-String | Invoke-Expression"],
+    { input: script, encoding: "utf8" },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout.trim()), {
+    runtimeOccurrences: 1,
+    migratorExact: true,
+    zeroRejected: true,
+    runtimeExact: true,
+    duplicateRejected: true,
+    migratorOccurrences: 1,
+    placeholdersRemoved: true,
+  });
+  assert.doesNotMatch(result.stdout, /runtime'example|migrator'example/);
+});
+
 test("wrapper protects connection input and redacts subprocess failures", () => {
   assert.match(wrapper, /Read-Host "Enter the protected owner PostgreSQL connection URL" -AsSecureString/);
   assert.match(wrapper, /EnvironmentVariables\["PGPASSWORD"\] = \$connection\.Password/);
