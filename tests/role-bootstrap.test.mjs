@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 
 const sql = readFileSync("scripts/bootstrap-production-roles.sql", "utf8");
 const wrapper = readFileSync("scripts/bootstrap-production-roles.ps1", "utf8");
@@ -127,6 +128,109 @@ test("wrapper protects connection input and redacts subprocess failures", () => 
   assert.match(wrapper, /Protect-DiagnosticText/);
   assert.doesNotMatch(wrapper, /Write-(?:Host|Output)[^\r\n]*(?:Password|Connection)/i);
   assert.doesNotMatch(wrapper, /Out-File|Set-Content|Add-Content|New-TemporaryFile/);
+});
+
+test("connection URLs parse under Windows PowerShell without Web.HttpUtility", () => {
+  assert.doesNotMatch(wrapper, /Web\.HttpUtility/);
+  const parserStart = wrapper.indexOf("function ConvertFrom-UriComponent");
+  const parserEnd = wrapper.indexOf("function Protect-DiagnosticText");
+  assert.ok(parserStart >= 0 && parserEnd > parserStart);
+  const parserFunctions = wrapper.slice(parserStart, parserEnd);
+  const syntheticPassword = "p@:/%#?&='word";
+  const script = `${parserFunctions}
+$results = @(
+  Get-ConnectionParts 'postgresql://user%40ops:p%40%3A%2F%25%23%3F%26%3D%27word@example.test:6543/tenant%2Fdb?sslmode=verify-full&channel_binding=require'
+  Get-ConnectionParts 'postgres://second:synthetic@example.test/sample?sslmode=require'
+)
+$results | ConvertTo-Json -Compress
+`;
+  const result = spawnSync(
+    "powershell.exe",
+    ["-NoProfile", "-NonInteractive", "-Command", "$input | Out-String | Invoke-Expression"],
+    { input: script, encoding: "utf8" },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.notEqual(result.stdout.trim(), "", result.stderr);
+  const parsed = JSON.parse(result.stdout.trim());
+  assert.deepEqual(parsed[0], {
+    Host: "example.test",
+    Database: "tenant/db",
+    SslMode: "verify-full",
+    User: "user@ops",
+    Port: "6543",
+    ChannelBinding: "require",
+    Password: syntheticPassword,
+  });
+  assert.deepEqual(parsed[1], {
+    Host: "example.test",
+    Database: "sample",
+    SslMode: "require",
+    User: "second",
+    Port: "5432",
+    ChannelBinding: "require",
+    Password: "synthetic",
+  });
+  assert.doesNotMatch(result.stderr, /user%40ops|p%40|syntheticPassword/);
+});
+
+test("connection URL parser fails closed on malformed encoding and insecure parameters", () => {
+  const parserStart = wrapper.indexOf("function ConvertFrom-UriComponent");
+  const parserEnd = wrapper.indexOf("function Protect-DiagnosticText");
+  const parserFunctions = wrapper.slice(parserStart, parserEnd);
+  const script = `${parserFunctions}
+function Test-Rejected([string]$Url) {
+  try { $null = Get-ConnectionParts $Url; return $false }
+  catch { return $true }
+}
+$result = @{
+  malformed = @(
+    Test-Rejected 'postgresql://user%ZZ:synthetic@example.test/db'
+    Test-Rejected 'postgresql://user:synthetic%G1@example.test/db'
+    Test-Rejected 'postgresql://user:synthetic@example.test/db%1G'
+    Test-Rejected 'postgresql://user:synthetic@example.test/db?%25=valid&%=bad'
+    Test-Rejected 'postgresql://user:synthetic@example.test/db?name=%A'
+    Test-Rejected 'postgresql://user:synthetic@example.test/db?name=%2'
+  )
+  duplicates = @(
+    Test-Rejected 'postgresql://user:synthetic@example.test/db?application_name=one&application_name=two'
+    Test-Rejected 'postgresql://user:synthetic@example.test/db?sslmode=require&sslmode=disable'
+    Test-Rejected 'postgresql://user:synthetic@example.test/db?channel_binding=require&channel_binding=disable'
+    Test-Rejected 'postgresql://user:synthetic@example.test/db?sslmode=require&SSLMODE=disable'
+    Test-Rejected 'postgresql://user:synthetic@example.test/db?channel_binding=require&CHANNEL_BINDING=disable'
+  )
+  insecureSsl = @(
+    Test-Rejected 'postgresql://user:synthetic@example.test/db?sslmode=disable'
+    Test-Rejected 'postgresql://user:synthetic@example.test/db?sslmode=allow'
+    Test-Rejected 'postgresql://user:synthetic@example.test/db?sslmode=prefer'
+  )
+  weakChannelBinding = @(
+    Test-Rejected 'postgresql://user:synthetic@example.test/db?channel_binding=disable'
+    Test-Rejected 'postgresql://user:synthetic@example.test/db?channel_binding=prefer'
+    Test-Rejected 'postgresql://user:synthetic@example.test/db?channel_binding='
+  )
+  secureSsl = @(
+    (Get-ConnectionParts 'postgresql://user:synthetic@example.test/db?sslmode=require').SslMode
+    (Get-ConnectionParts 'postgresql://user:synthetic@example.test/db?sslmode=verify-ca').SslMode
+    (Get-ConnectionParts 'postgresql://user:synthetic@example.test/db?sslmode=verify-full').SslMode
+  )
+  defaults = Get-ConnectionParts 'postgresql://user:synthetic@example.test/db'
+}
+$result | ConvertTo-Json -Compress
+`;
+  const result = spawnSync(
+    "powershell.exe",
+    ["-NoProfile", "-NonInteractive", "-Command", "$input | Out-String | Invoke-Expression"],
+    { input: script, encoding: "utf8" },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  const parsed = JSON.parse(result.stdout.trim());
+  assert.deepEqual(parsed.malformed, [true, true, true, true, true, true]);
+  assert.deepEqual(parsed.duplicates, [true, true, true, true, true]);
+  assert.deepEqual(parsed.insecureSsl, [true, true, true]);
+  assert.deepEqual(parsed.weakChannelBinding, [true, true, true]);
+  assert.deepEqual(parsed.secureSsl, ["require", "verify-ca", "verify-full"]);
+  assert.equal(parsed.defaults.SslMode, "require");
+  assert.equal(parsed.defaults.ChannelBinding, "require");
 });
 
 test("password and grant failures roll back both newly created roles", () => {

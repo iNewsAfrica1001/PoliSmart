@@ -17,8 +17,36 @@ function ConvertTo-PostgresStringLiteral {
   return "'" + $Value.Replace("'", "''") + "'"
 }
 
+function ConvertFrom-UriComponent {
+  param([Parameter(Mandatory)][string]$Value)
+  if ($Value -match '%(?![0-9A-Fa-f]{2})') {
+    throw "The protected connection value contains malformed percent encoding."
+  }
+  return [Uri]::UnescapeDataString($Value.Replace("+", " "))
+}
+
+function Get-ConnectionQueryParameters {
+  param([AllowEmptyString()][string]$Query)
+  $parameters = New-Object 'System.Collections.Generic.Dictionary[string,string]' (
+    [StringComparer]::OrdinalIgnoreCase
+  )
+  foreach ($pair in $Query.TrimStart("?").Split("&", [StringSplitOptions]::RemoveEmptyEntries)) {
+    $parts = $pair.Split("=", 2)
+    $name = ConvertFrom-UriComponent $parts[0]
+    $value = if ($parts.Count -eq 2) { ConvertFrom-UriComponent $parts[1] } else { "" }
+    if ($parameters.ContainsKey($name)) {
+      throw "The protected connection value contains a duplicate query parameter."
+    }
+    $parameters.Add($name, $value)
+  }
+  return $parameters
+}
+
 function Get-ConnectionParts {
   param([Parameter(Mandatory)][string]$ConnectionString)
+  if ($ConnectionString -match '%(?![0-9A-Fa-f]{2})') {
+    throw "The protected connection value contains malformed percent encoding."
+  }
   $uri = [Uri]$ConnectionString
   if ($uri.Scheme -notin @("postgres", "postgresql") -or !$uri.Host) {
     throw "The protected connection value must be a PostgreSQL connection URL."
@@ -29,15 +57,31 @@ function Get-ConnectionParts {
   }
   $database = $uri.AbsolutePath.TrimStart("/")
   if (!$database) { throw "The protected connection value must identify a database." }
-  $query = [Web.HttpUtility]::ParseQueryString($uri.Query)
+  $query = Get-ConnectionQueryParameters $uri.Query
+  $sslMode = if ($query.ContainsKey("sslmode")) {
+    $query["sslmode"].ToLowerInvariant()
+  } else {
+    "require"
+  }
+  if ($sslMode -notin @("require", "verify-ca", "verify-full")) {
+    throw "The protected connection value must use a secure SSL mode."
+  }
+  $channelBinding = if ($query.ContainsKey("channel_binding")) {
+    $query["channel_binding"].ToLowerInvariant()
+  } else {
+    "require"
+  }
+  if ($channelBinding -ne "require") {
+    throw "The protected connection value must require channel binding."
+  }
   return @{
     Host = $uri.Host
     Port = if ($uri.IsDefaultPort) { "5432" } else { [string]$uri.Port }
-    Database = [Uri]::UnescapeDataString($database)
-    User = [Uri]::UnescapeDataString($userInfo[0])
-    Password = [Uri]::UnescapeDataString($userInfo[1])
-    SslMode = if ($query["sslmode"]) { $query["sslmode"] } else { "require" }
-    ChannelBinding = if ($query["channel_binding"]) { $query["channel_binding"] } else { "require" }
+    Database = ConvertFrom-UriComponent $database
+    User = ConvertFrom-UriComponent $userInfo[0]
+    Password = ConvertFrom-UriComponent $userInfo[1]
+    SslMode = $sslMode
+    ChannelBinding = $channelBinding
   }
 }
 
