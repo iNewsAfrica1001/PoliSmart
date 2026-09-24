@@ -111,22 +111,25 @@ test("credentials are collected securely and never embedded", () => {
   assert.match(wrapper, /\.Replace\("'", "''"\)/);
   assert.match(wrapper, /RedirectStandardInput = \$true/);
   assert.match(wrapper, /StandardInput\.Write\(\$sql\)/);
-  assert.doesNotMatch(wrapper, /ArgumentList\.Add\([^\r\n]*(?:Password|Connection)/i);
+  assert.doesNotMatch(wrapper, /Arguments?[^\r\n]*(?:Password|Connection)/i);
   assert.match(wrapper, /\$runtimePassword -ceq \$migratorPassword/);
   assert.match(wrapper, /SecureStringToBSTR/);
   assert.match(wrapper, /ZeroFreeBSTR/);
   assert.match(wrapper, /\$runtimePassword = \$null/);
   assert.match(wrapper, /\$migratorPassword = \$null/);
-  assert.match(wrapper, /Environment\["PGPASSWORD"\] = ""/);
-  assert.match(wrapper, /Environment\.Clear\(\)/);
+  assert.match(wrapper, /EnvironmentVariables\["PGPASSWORD"\] = ""/);
+  assert.match(wrapper, /EnvironmentVariables\.Clear\(\)/);
   assert.match(operations, /safe SQL\s+string-literal escaping/);
 });
 
 test("wrapper protects connection input and redacts subprocess failures", () => {
   assert.match(wrapper, /Read-Host "Enter the protected owner PostgreSQL connection URL" -AsSecureString/);
-  assert.match(wrapper, /Environment\["PGPASSWORD"\] = \$connection\.Password/);
+  assert.match(wrapper, /EnvironmentVariables\["PGPASSWORD"\] = \$connection\.Password/);
   assert.match(wrapper, /Protect-DiagnosticText/);
-  assert.doesNotMatch(wrapper, /Write-(?:Host|Output)[^\r\n]*(?:Password|Connection)/i);
+  assert.doesNotMatch(
+    wrapper,
+    /Write-(?:Host|Output)[^\r\n]*\$(?:ownerConnection|runtimePassword|migratorPassword|connection\.Password)/i,
+  );
   assert.doesNotMatch(wrapper, /Out-File|Set-Content|Add-Content|New-TemporaryFile/);
 });
 
@@ -171,6 +174,57 @@ $results | ConvertTo-Json -Compress
     Password: "synthetic",
   });
   assert.doesNotMatch(result.stderr, /user%40ops|p%40|syntheticPassword/);
+});
+
+test("Neon connection input normalization accepts clipboard whitespace and outer quotes", () => {
+  const parserStart = wrapper.indexOf("function ConvertFrom-UriComponent");
+  const parserEnd = wrapper.indexOf("function Protect-DiagnosticText");
+  const parserFunctions = wrapper.slice(parserStart, parserEnd);
+  const neonUrl =
+    "postgresql://testuser:testpassword@ep-example-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+  const script = `${parserFunctions}
+$inputs = @(
+  '${neonUrl}'
+  '  ${neonUrl}  '
+  '"${neonUrl}"'
+  "'${neonUrl}'"
+  'postgres://testuser:testpassword@ep-example-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+  'postgresql://test%40user:p%40ss%3Aword@ep-example-pooler.us-east-2.aws.neon.tech/neondb?sslmode=verify-full&channel_binding=require'
+)
+$inputs | ForEach-Object {
+  $parsed = Get-ConnectionParts $_
+  [pscustomobject]@{
+    Host = $parsed.Host
+    Database = $parsed.Database
+    SslMode = $parsed.SslMode
+    ChannelBinding = $parsed.ChannelBinding
+  }
+} | ConvertTo-Json -Compress
+`;
+  const result = spawnSync(
+    "powershell.exe",
+    ["-NoProfile", "-NonInteractive", "-Command", "$input | Out-String | Invoke-Expression"],
+    { input: script, encoding: "utf8" },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  const parsed = JSON.parse(result.stdout.trim());
+  assert.equal(parsed.length, 6);
+  for (const entry of parsed) {
+    assert.equal(entry.Host, "ep-example-pooler.us-east-2.aws.neon.tech");
+    assert.equal(entry.Database, "neondb");
+    assert.match(entry.SslMode, /^(?:require|verify-full)$/);
+    assert.equal(entry.ChannelBinding, "require");
+  }
+  assert.doesNotMatch(result.stderr, /must be a PostgreSQL connection URL/);
+});
+
+test("wrapper exposes a no-network protected connection validation mode", () => {
+  assert.match(wrapper, /\[switch\]\$ValidateConnectionOnly/);
+  assert.match(wrapper, /if \(\$ValidateConnectionOnly\) \{/);
+  assert.match(wrapper, /No database connection was attempted/);
+  const validation = wrapper.indexOf("if ($ValidateConnectionOnly)");
+  const processStart = wrapper.indexOf("$process = [Diagnostics.Process]::new()");
+  assert.ok(validation >= 0 && processStart > validation);
 });
 
 test("connection URL parser fails closed on malformed encoding and insecure parameters", () => {

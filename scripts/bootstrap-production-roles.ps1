@@ -1,5 +1,8 @@
 [CmdletBinding()]
-param([string]$PsqlPath = "psql")
+param(
+  [string]$PsqlPath = "psql",
+  [switch]$ValidateConnectionOnly
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
@@ -25,6 +28,23 @@ function ConvertFrom-UriComponent {
   return [Uri]::UnescapeDataString($Value.Replace("+", " "))
 }
 
+function Normalize-ConnectionInput {
+  param([Parameter(Mandatory)][string]$Value)
+  $normalized = $Value.Trim()
+  if ($normalized.Length -ge 2) {
+    $first = $normalized[0]
+    $last = $normalized[$normalized.Length - 1]
+    if (($first -eq '"' -and $last -eq '"') -or
+        ($first -eq "'" -and $last -eq "'")) {
+      $normalized = $normalized.Substring(1, $normalized.Length - 2).Trim()
+    }
+  }
+  if (!$normalized) {
+    throw "The protected connection value must be a PostgreSQL connection URL."
+  }
+  return $normalized
+}
+
 function Get-ConnectionQueryParameters {
   param([AllowEmptyString()][string]$Query)
   $parameters = New-Object 'System.Collections.Generic.Dictionary[string,string]' (
@@ -44,11 +64,13 @@ function Get-ConnectionQueryParameters {
 
 function Get-ConnectionParts {
   param([Parameter(Mandatory)][string]$ConnectionString)
-  if ($ConnectionString -match '%(?![0-9A-Fa-f]{2})') {
+  $normalized = Normalize-ConnectionInput $ConnectionString
+  if ($normalized -match '%(?![0-9A-Fa-f]{2})') {
     throw "The protected connection value contains malformed percent encoding."
   }
-  $uri = [Uri]$ConnectionString
-  if ($uri.Scheme -notin @("postgres", "postgresql") -or !$uri.Host) {
+  $uri = $null
+  if (![Uri]::TryCreate($normalized, [UriKind]::Absolute, [ref]$uri) -or
+      $uri.Scheme -notin @("postgres", "postgresql") -or !$uri.Host) {
     throw "The protected connection value must be a PostgreSQL connection URL."
   }
   $userInfo = $uri.UserInfo.Split(":", 2)
@@ -107,9 +129,16 @@ $startInfo = $null
 
 try {
   $ownerSecure = Read-Host "Enter the protected owner PostgreSQL connection URL" -AsSecureString
+  $ownerConnection = ConvertFrom-ProtectedValue $ownerSecure
+  $connection = Get-ConnectionParts $ownerConnection
+
+  if ($ValidateConnectionOnly) {
+    Write-Output "Protected PostgreSQL connection input accepted for host and database validation. No database connection was attempted."
+    return
+  }
+
   $runtimeSecure = Read-Host "Enter password for polismart_runtime" -AsSecureString
   $migratorSecure = Read-Host "Enter password for polismart_migrator" -AsSecureString
-  $ownerConnection = ConvertFrom-ProtectedValue $ownerSecure
   $runtimePassword = ConvertFrom-ProtectedValue $runtimeSecure
   $migratorPassword = ConvertFrom-ProtectedValue $migratorSecure
 
@@ -118,7 +147,6 @@ try {
     throw "Runtime and migrator passwords must be distinct."
   }
 
-  $connection = Get-ConnectionParts $ownerConnection
   $templatePath = Join-Path $PSScriptRoot "bootstrap-production-roles.sql"
   $sql = [IO.File]::ReadAllText($templatePath)
   $runtimePlaceholder = "__POLISMART_RUNTIME_PASSWORD_SQL_LITERAL__"
@@ -137,16 +165,14 @@ try {
   $startInfo.RedirectStandardInput = $true
   $startInfo.RedirectStandardOutput = $true
   $startInfo.RedirectStandardError = $true
-  $startInfo.ArgumentList.Add("-X")
-  $startInfo.ArgumentList.Add("--no-psqlrc")
-  $startInfo.ArgumentList.Add("--quiet")
-  $startInfo.Environment["PGHOST"] = $connection.Host
-  $startInfo.Environment["PGPORT"] = $connection.Port
-  $startInfo.Environment["PGDATABASE"] = $connection.Database
-  $startInfo.Environment["PGUSER"] = $connection.User
-  $startInfo.Environment["PGPASSWORD"] = $connection.Password
-  $startInfo.Environment["PGSSLMODE"] = $connection.SslMode
-  $startInfo.Environment["PGCHANNELBINDING"] = $connection.ChannelBinding
+  $startInfo.Arguments = "-X --no-psqlrc --quiet"
+  $startInfo.EnvironmentVariables["PGHOST"] = $connection.Host
+  $startInfo.EnvironmentVariables["PGPORT"] = $connection.Port
+  $startInfo.EnvironmentVariables["PGDATABASE"] = $connection.Database
+  $startInfo.EnvironmentVariables["PGUSER"] = $connection.User
+  $startInfo.EnvironmentVariables["PGPASSWORD"] = $connection.Password
+  $startInfo.EnvironmentVariables["PGSSLMODE"] = $connection.SslMode
+  $startInfo.EnvironmentVariables["PGCHANNELBINDING"] = $connection.ChannelBinding
 
   $process = [Diagnostics.Process]::new()
   $process.StartInfo = $startInfo
@@ -175,8 +201,8 @@ try {
 finally {
   if ($process) { $process.Dispose() }
   if ($startInfo) {
-    $startInfo.Environment["PGPASSWORD"] = ""
-    $startInfo.Environment.Clear()
+    $startInfo.EnvironmentVariables["PGPASSWORD"] = ""
+    $startInfo.EnvironmentVariables.Clear()
   }
   if ($ownerSecure) { $ownerSecure.Dispose() }
   if ($runtimeSecure) { $runtimeSecure.Dispose() }
