@@ -8,6 +8,8 @@
 
 The authoritative Nigeria Production database target is:
 
+- Neon project: `polismart`
+- Neon project ID: `young-base-56422836`
 - Neon branch: `production`
 - Neon branch ID: `br-noisy-forest-axlven4c`
 - Database: `neondb`
@@ -24,6 +26,10 @@ available from the service catalog. Only `neondb_owner` exists; `polismart_runti
 
 **DATABASE INITIALIZATION/MIGRATION REQUIRED: YES**
 
+The reviewed migration range remains `0001`–`0015`, and those migrations create exactly 64
+application tables. `_prisma_migrations` is Prisma infrastructure and is not included in that
+application-table count.
+
 This correction changes a technical prerequisite only. It does not alter any Legal, Privacy,
 Human Rights, Security/Technical, Operations, or Platform Owner approval, and it does not broaden
 the authorization beyond Nigeria Free Early Access. Billing, Payments, and Fundraising remain
@@ -35,18 +41,25 @@ Role bootstrap requires a separate, explicit authorization. Before any migration
 operator using the protected owner identity must:
 
 1. Reconfirm the exact branch ID, database, and schema above.
-2. Create `polismart_runtime` and `polismart_migrator` with unique generated credentials held only
-   in the appropriate secret scopes.
-3. Give both roles `CONNECT` on `neondb` and `USAGE` on `public`.
-4. Give only `polismart_migrator` database-level `CREATE`, plus `CREATE` on `public`, and the
+2. Run only the atomic, fail-closed procedure in `scripts/bootstrap-production-roles.sql`, as
+   directed by `DATABASE_OPERATIONS.md`. It checks that both role names are absent before either
+   is created and rolls back the complete transaction if any role, privilege, or password step
+   fails. Never alter, reuse, skip, or automatically drop an unexpectedly existing role.
+3. Supply unique generated credentials only through the procedure's secure `psql` `\password`
+   prompts and place them only in the appropriate secret scopes. Do not put credentials in SQL,
+   command arguments, environment files, logs, or documentation.
+4. Give both roles `CONNECT` on `neondb` and `USAGE` on `public`.
+5. Revoke `CREATE` on `public` from `PUBLIC`, then give only `polismart_migrator` database-level
+   `CREATE`, plus `CREATE` on `public`, and the
    ownership/alteration capability needed for migration-created objects. Database-level `CREATE`
    is not the `CREATEDB` role attribute and does not permit creating another database.
-5. Give neither role superuser, `CREATEDB`, `CREATEROLE`, or `BYPASSRLS`.
-6. Explicitly deny `polismart_runtime` schema `CREATE`; do not make it a member of the migrator.
-7. Confirm the migrator can create the reviewed available extensions through migrations `0001`
+6. Give neither role superuser, `CREATEDB`, `CREATEROLE`, or `BYPASSRLS`.
+7. Explicitly deny `polismart_runtime` database and schema `CREATE`; do not make it a member of
+   the migrator and do not give either role ownership during bootstrap.
+8. Confirm the migrator can create the reviewed available extensions through migrations `0001`
    and `0004` by first reproducing the role design on an isolated Neon branch from the same
    project. Do not pre-create either extension in Production.
-8. Put only the pooled runtime credential in Production `DATABASE_URL`. Put only the direct
+9. Put only the pooled runtime credential in Production `DATABASE_URL`. Put only the direct
    migrator credential in the separately controlled migration environment as
    `MIGRATION_DATABASE_URL`. Never expose the latter to the running application.
 

@@ -4,21 +4,38 @@ The running application uses `DATABASE_URL`, while reviewed migrations use `MIGR
 
 ## Required production roles
 
-Role creation is a separately authorized operator action. Before the first migration, create two
-separate Neon roles in a protected owner session. Never run the following through the application
-runtime, and never store the generated credentials in source control or shell history:
+Role creation is a separately authorized operator action. The sole authoritative bootstrap is
+`scripts/bootstrap-production-roles.sql`. Before the first migration, run that file from a
+protected owner session using `psql -X --file scripts/bootstrap-production-roles.sql`. Never run
+it through the application runtime or an interactive `\i`, and never store the generated
+credentials in source control, command arguments, environment files, shell history, or logs.
 
-```sql
-CREATE ROLE polismart_runtime LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS PASSWORD '<generated-runtime-password>';
-GRANT CONNECT ON DATABASE neondb TO polismart_runtime;
-GRANT USAGE ON SCHEMA public TO polismart_runtime;
-REVOKE CREATE ON SCHEMA public FROM polismart_runtime;
+The script sets `ON_ERROR_STOP`, opens one explicit transaction, and checks that both role names
+are absent before creating either. An existing `polismart_runtime` or `polismart_migrator` aborts
+the transaction; the procedure never alters, reuses, or drops an unexpected role. Any subsequent
+role, privilege, or password-setting failure stops the file before `COMMIT`; closing the resulting
+failed `psql` session rolls back every bootstrap statement, so a single-role partial state cannot
+remain. Do not continue an errored session or issue a manual commit.
 
-CREATE ROLE polismart_migrator LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS PASSWORD '<generated-migrator-password>';
-GRANT CONNECT ON DATABASE neondb TO polismart_migrator;
-GRANT CREATE ON DATABASE neondb TO polismart_migrator;
-GRANT USAGE, CREATE ON SCHEMA public TO polismart_migrator;
+The two `\password` prompts run before `COMMIT`. They securely collect unique generated
+credentials without embedding them in SQL or exposing them in command history or server logs.
+The reviewed procedure is logically equivalent to:
+
+```text
+BEGIN
+  verify both role names are absent
+  create both restricted LOGIN roles
+  revoke public schema CREATE from PUBLIC
+  grant runtime CONNECT and schema USAGE only
+  grant migrator CONNECT/database CREATE and schema USAGE/CREATE
+  collect both passwords using secure psql prompts
+COMMIT
 ```
+
+Revoking `CREATE` on `public` from `PUBLIC` prevents either role from inheriting object-creation
+capability through PostgreSQL's public pseudo-role. `polismart_runtime` receives explicit schema
+`USAGE` but no schema or database `CREATE`; `polismart_migrator` receives the narrowly required
+database and schema `CREATE`. Neither role receives ownership or membership in the other.
 
 The protected owner must also arrange ownership or the narrowly required alteration rights for any
 pre-existing application objects before the migrator is used. For an empty initialization, the
@@ -48,6 +65,12 @@ sequence is created by migrations `0001`–`0015`, so the runtime receives no se
 Fundraising tables receive no runtime access while Fundraising is disabled.
 
 Verify the runtime role with `npm run db:validate:production`. The validator fails if dangerous role attributes are present.
+
+Immediately after a separately authorized bootstrap, and before any migration, use read-only
+catalog queries to verify both roles' attributes, database and schema privileges, memberships,
+object ownership, and effective privileges. Test the pooled runtime connection and the direct
+migrator connection with credentials supplied through approved secret handling. Confirm that no
+application object, extension, or migration history was created by the bootstrap itself.
 
 ## Preflight and migration review
 
