@@ -2,8 +2,8 @@
 
 -- Repository-reviewed Production role bootstrap.
 -- Run only through the separately authorized protected-owner procedure documented in
--- DATABASE_OPERATIONS.md. The \password prompts keep credentials out of this file,
--- command history, and server logs.
+-- DATABASE_OPERATIONS.md. Hidden prompts keep credentials out of this file and
+-- command history. Do not run psql with query-echo or tracing options.
 BEGIN;
 
 DO $bootstrap_precheck$
@@ -35,7 +35,13 @@ REVOKE CREATE ON SCHEMA public FROM polismart_runtime;
 GRANT CONNECT, CREATE ON DATABASE neondb TO polismart_migrator;
 GRANT USAGE, CREATE ON SCHEMA public TO polismart_migrator;
 
-\password polismart_runtime
-\password polismart_migrator
+\prompt -s 'Enter password for polismart_runtime: ' runtime_password
+\prompt -s 'Enter password for polismart_migrator: ' migrator_password
+
+ALTER ROLE polismart_runtime PASSWORD :'runtime_password';
+ALTER ROLE polismart_migrator PASSWORD :'migrator_password';
+
+\unset runtime_password
+\unset migrator_password
 
 COMMIT;

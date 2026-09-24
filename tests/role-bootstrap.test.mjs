@@ -8,6 +8,12 @@ const operations = readFileSync("DATABASE_OPERATIONS.md", "utf8");
 const precheckEnd = sql.indexOf("$bootstrap_precheck$;");
 const runtimeCreate = sql.indexOf("CREATE ROLE polismart_runtime");
 const migratorCreate = sql.indexOf("CREATE ROLE polismart_migrator");
+const runtimePasswordAssignment = sql.indexOf(
+  "ALTER ROLE polismart_runtime PASSWORD :'runtime_password';",
+);
+const migratorPasswordAssignment = sql.indexOf(
+  "ALTER ROLE polismart_migrator PASSWORD :'migrator_password';",
+);
 
 test("atomic bootstrap checks both role names before creating either", () => {
   assert.match(sql, /\\set ON_ERROR_STOP on/);
@@ -20,7 +26,8 @@ test("atomic bootstrap checks both role names before creating either", () => {
   assert.ok(runtimeCreate > precheckEnd);
   assert.ok(migratorCreate > precheckEnd);
   assert.doesNotMatch(sql, /CREATE ROLE[\s\S]*IF NOT EXISTS/i);
-  assert.doesNotMatch(sql, /ALTER ROLE|DROP ROLE/i);
+  assert.doesNotMatch(sql.slice(0, runtimeCreate), /ALTER ROLE|DROP ROLE/i);
+  assert.doesNotMatch(sql, /DROP ROLE/i);
 });
 
 test("existing runtime, migrator, or both fail through the same pre-create guard", () => {
@@ -51,8 +58,10 @@ test("role and privilege failures remain inside the all-or-nothing transaction",
     "CREATE ROLE polismart_migrator",
     "GRANT CONNECT ON DATABASE neondb TO polismart_runtime",
     "GRANT CONNECT, CREATE ON DATABASE neondb TO polismart_migrator",
-    "\\password polismart_runtime",
-    "\\password polismart_migrator",
+    "\\prompt -s 'Enter password for polismart_runtime: ' runtime_password",
+    "\\prompt -s 'Enter password for polismart_migrator: ' migrator_password",
+    "ALTER ROLE polismart_runtime PASSWORD :'runtime_password';",
+    "ALTER ROLE polismart_migrator PASSWORD :'migrator_password';",
   ]) {
     const position = sql.indexOf(statement);
     assert.ok(position > begin && position < commit, `${statement} must be transactional`);
@@ -84,12 +93,52 @@ test("bootstrap preserves the least-privilege runtime and migrator designs", () 
 });
 
 test("credentials are collected securely and never embedded", () => {
-  assert.match(sql, /\\password polismart_runtime/);
-  assert.match(sql, /\\password polismart_migrator/);
-  assert.doesNotMatch(sql, /PASSWORD\s+['"]/i);
+  assert.doesNotMatch(sql, /\\password\b/);
+  assert.match(sql, /\\prompt -s 'Enter password for polismart_runtime: ' runtime_password/);
+  assert.match(sql, /\\prompt -s 'Enter password for polismart_migrator: ' migrator_password/);
+  assert.match(sql, /ALTER ROLE polismart_runtime PASSWORD :'runtime_password';/);
+  assert.match(sql, /ALTER ROLE polismart_migrator PASSWORD :'migrator_password';/);
+  assert.doesNotMatch(sql, /PASSWORD\s+'[^:]/i);
   assert.doesNotMatch(sql, /generated-(?:runtime|migrator)-password/i);
-  assert.match(
-    operations,
-    /without embedding them in SQL or exposing them in command history or server logs/,
-  );
+  assert.ok(runtimePasswordAssignment > runtimeCreate);
+  assert.ok(migratorPasswordAssignment > migratorCreate);
+  assert.ok(runtimePasswordAssignment < migratorPasswordAssignment);
+  assert.ok(runtimePasswordAssignment < sql.lastIndexOf("COMMIT;"));
+  assert.ok(migratorPasswordAssignment < sql.lastIndexOf("COMMIT;"));
+  assert.equal((sql.match(/ALTER ROLE\s+\w+\s+PASSWORD/gi) ?? []).length, 2);
+  assert.match(sql, /\\unset runtime_password/);
+  assert.match(sql, /\\unset migrator_password/);
+  assert.match(operations, /safe SQL-literal interpolation/);
+});
+
+test("password and grant failures roll back both newly created roles", () => {
+  const executeTransaction = (failurePoint) => {
+    const state = { roles: new Set() };
+    const snapshot = new Set(state.roles);
+    try {
+      for (const step of [
+        "create-runtime",
+        "create-migrator",
+        "grant",
+        "runtime-password",
+        "migrator-password",
+      ]) {
+        if (step === "create-runtime") state.roles.add("polismart_runtime");
+        if (step === "create-migrator") state.roles.add("polismart_migrator");
+        if (step === failurePoint) throw new Error(`simulated ${step} failure`);
+      }
+      return state;
+    } catch {
+      state.roles = snapshot;
+      return state;
+    }
+  };
+
+  for (const failurePoint of ["runtime-password", "migrator-password", "grant"]) {
+    assert.deepEqual(
+      [...executeTransaction(failurePoint).roles],
+      [],
+      `${failurePoint} must leave neither newly created role`,
+    );
+  }
 });

@@ -45,9 +45,12 @@ operator using the protected owner identity must:
    directed by `DATABASE_OPERATIONS.md`. It checks that both role names are absent before either
    is created and rolls back the complete transaction if any role, privilege, or password step
    fails. Never alter, reuse, skip, or automatically drop an unexpectedly existing role.
-3. Supply unique generated credentials only through the procedure's secure `psql` `\password`
-   prompts and place them only in the appropriate secret scopes. Do not put credentials in SQL,
-   command arguments, environment files, logs, or documentation.
+3. Supply unique generated credentials only through the procedure's hidden `psql` `\prompt -s`
+   prompts. The procedure uses safely quoted SQL-literal interpolation for Neon's required
+   plaintext password input and unsets both psql variables before commit. Run without query echo
+   or tracing, retain no expanded-SQL transcript, and place credentials only in the appropriate
+   secret scopes. Do not put credentials in the repository, command arguments, environment files,
+   logs, or documentation.
 4. Give both roles `CONNECT` on `neondb` and `USAGE` on `public`.
 5. Revoke `CREATE` on `public` from `PUBLIC`, then give only `polismart_migrator` database-level
    `CREATE`, plus `CREATE` on `public`, and the
@@ -73,6 +76,14 @@ the repository-derived table and column policy documented in
 `V1_1_RUNTIME_DATABASE_PRIVILEGE_CATALOG.md`. Fundraising tables and unused legacy/import tables
 receive no runtime access. The migration chain creates no application sequence, so no runtime
 sequence privilege is required.
+
+The first authorized Production bootstrap attempt reached the two password assignments, where
+Neon rejected psql's `\password` representation because Neon requires plaintext password input.
+`ON_ERROR_STOP` stopped the file before `COMMIT`; the atomic transaction rolled back successfully.
+Read-only verification confirmed that both target roles remained absent, no migration ran, and no
+extension or application table was created. The repository procedure now uses the hidden-prompt,
+safely quoted Neon-compatible mechanism described above. This remediation changes no approval,
+jurisdiction, financial-feature boundary, migration, or Production deployment.
 
 ## 3. Migration and recovery sequence
 

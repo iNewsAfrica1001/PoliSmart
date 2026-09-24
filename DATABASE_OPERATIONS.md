@@ -17,8 +17,12 @@ role, privilege, or password-setting failure stops the file before `COMMIT`; clo
 failed `psql` session rolls back every bootstrap statement, so a single-role partial state cannot
 remain. Do not continue an errored session or issue a manual commit.
 
-The two `\password` prompts run before `COMMIT`. They securely collect unique generated
-credentials without embedding them in SQL or exposing them in command history or server logs.
+The two `\prompt -s` prompts run before `COMMIT` and suppress terminal echo. The resulting psql
+variables are passed to `ALTER ROLE ... PASSWORD` using safe SQL-literal interpolation (`:'name'`),
+which supplies the plaintext form Neon requires without embedding credentials in this file or
+placing them in command arguments or shell history. The variables are unset before `COMMIT`. Run
+the file without psql query-echo or tracing options, and retain no session transcript containing
+expanded SQL.
 The reviewed procedure is logically equivalent to:
 
 ```text
@@ -28,9 +32,17 @@ BEGIN
   revoke public schema CREATE from PUBLIC
   grant runtime CONNECT and schema USAGE only
   grant migrator CONNECT/database CREATE and schema USAGE/CREATE
-  collect both passwords using secure psql prompts
+  collect both passwords using hidden psql prompts
+  assign both passwords using safely quoted SQL literals
+  unset both password variables
 COMMIT
 ```
+
+The first authorized Production attempt used psql's `\password` meta-command. Neon rejected its
+password representation because Neon requires plaintext input. `ON_ERROR_STOP` halted execution
+before `COMMIT`, the transaction rolled back, and read-only verification confirmed that both
+target roles remained absent. That attempt executed no migration and created no extension or
+application table; the Production deployment remained unchanged.
 
 Revoking `CREATE` on `public` from `PUBLIC` prevents either role from inheriting object-creation
 capability through PostgreSQL's public pseudo-role. `polismart_runtime` receives explicit schema
