@@ -75,16 +75,38 @@ Billing, Payments, or Fundraising.
 
 **Database migration required:** NO
 
-## 7. Platform Owner confirmation
+## 7. Platform Owner approval and reconciliation confirmation
 
-### PLATFORM OWNER CONFIRMATION
+### Original Platform Owner approval
 
-I confirm that this Approval Status Reconciliation accurately records the relationship between the
-historical pre-approval NO-GO summary and the subsequently completed Unified Decision and Approval
-Page.
+The Unified Decision and Approval Page contains the existing signed Platform Owner approval:
 
-I confirm that the Unified Decision and Approval Page is the authoritative approval record for the
-PoliSmart Africa AI V1.1 Free Early Access release in Nigeria.
+- **Platform Owner:** Dr. Michael Omoruyi
+- **Role:** President/CIO
+- **Decision:** APPROVED
+- **Conditions:** NONE
+- **Authorized jurisdiction:** NIGERIA
+- **Effective date:** September 18, 2026
+- **Signature:** Recorded in the Unified Decision and Approval Page
+- **Approval date:** September 18, 2026
+
+This reconciliation does not replace, repeat, backdate, or create a second underlying Platform
+Owner approval. The September 18, 2026 signature remains solely the signature recorded on the
+Unified Decision and Approval Page.
+
+### Reconciliation confirmation
+
+The Platform Owner has reviewed this Approval Status Reconciliation and confirms that it
+accurately records the relationship between the historical pre-approval NO-GO summary and the
+subsequently completed Unified Decision and Approval Page.
+
+The Platform Owner confirms that the Unified Decision and Approval Page is the authoritative
+approval record for the PoliSmart Africa AI V1.1 Free Early Access release in Nigeria.
+
+**Reconciliation confirmation date:** September 24, 2026
+
+This confirmation concerns the accuracy of this reconciliation record. It is not a second approval
+decision or a second signature on the underlying approval.
 
 **Authorized jurisdiction:**
 
@@ -101,14 +123,6 @@ DISABLED
 **Fundraising:**
 
 DISABLED
-
-Name: ______________________________
-
-Role: Platform Owner
-
-Signature: _________________________
-
-Date: ______________________________
 
 ## 8. Document control
 
