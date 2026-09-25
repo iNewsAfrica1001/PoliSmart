@@ -41,6 +41,33 @@ test("every column-limited update names a real database column", () => {
     for (const column of policy.updateColumns)
       assert.equal(columnsByTable[table]?.has(column), true, `${table}.${column} is not in Prisma`);
 });
+test("runtime geographic updates allow required fields and prohibit provenance mutation", () => {
+  assert.deepEqual(RUNTIME_DATABASE_PRIVILEGES.geographic_levels.updateColumns, [
+    "name",
+    "order_index",
+    "is_active",
+    "updated_at",
+  ]);
+  assert.deepEqual(RUNTIME_DATABASE_PRIVILEGES.geographic_areas.updateColumns, [
+    "level_id",
+    "parent_id",
+    "name",
+    "code",
+    "is_active",
+    "updated_at",
+  ]);
+  for (const prohibited of [
+    "source_institution",
+    "source_document",
+    "source_version_date",
+    "imported_at",
+    "validation_status",
+  ])
+    assert.equal(
+      RUNTIME_DATABASE_PRIVILEGES.geographic_areas.updateColumns.includes(prohibited),
+      false,
+    );
+});
 
 test("migrations 0015-0016 exactly implement the reviewed table and column policy", () => {
   const sql = readFileSync(
@@ -141,10 +168,7 @@ test("Production validator does not require runtime access to Prisma migration h
   assert.match(source, /separateMigratorStatusRequired: !migrationHistoryAccess\.can_select/);
   assert.match(source, /migrationHistoryAccess\.exists/);
   assert.doesNotMatch(
-    readFileSync(
-      "prisma/migrations/0015_runtime_privilege_catalog/migration.sql",
-      "utf8",
-    ),
+    readFileSync("prisma/migrations/0015_runtime_privilege_catalog/migration.sql", "utf8"),
     /GRANT\s+SELECT[^;]*_prisma_migrations/is,
   );
 });

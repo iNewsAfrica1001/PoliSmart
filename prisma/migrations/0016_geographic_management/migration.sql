@@ -14,6 +14,6 @@ CREATE INDEX "geographic_areas_tenant_campaign_active_idx" ON "geographic_areas"
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'polismart_runtime') THEN
     GRANT UPDATE ("name", "order_index", "is_active", "updated_at") ON TABLE "geographic_levels" TO "polismart_runtime";
-    GRANT UPDATE ("level_id", "parent_id", "name", "code", "is_active", "source_institution", "source_document", "source_version_date", "imported_at", "validation_status", "updated_at") ON TABLE "geographic_areas" TO "polismart_runtime";
+    GRANT UPDATE ("level_id", "parent_id", "name", "code", "is_active", "updated_at") ON TABLE "geographic_areas" TO "polismart_runtime";
   END IF;
 END $$;

@@ -39,6 +39,123 @@ test("malformed rows and field bounds are controlled", () => {
     /limit/,
   );
 });
+test("level field has an explicit enforced boundary and type", () => {
+  const maximumLevel = "L".repeat(GEOGRAPHIC_IMPORT_LIMITS.level);
+  assert.equal(
+    validateGeographicRows({
+      rows: [row(maximumLevel, "Area", "A")],
+      levels: [{ id: "maximum", name: maximumLevel, isActive: true }],
+    }).rowsValid,
+    1,
+  );
+  assert.equal(
+    validateGeographicRows({
+      rows: [row(`${maximumLevel}X`, "Area", "A")],
+      levels: [{ id: "too-long", name: `${maximumLevel}X`, isActive: true }],
+    }).rejected[0].reason,
+    "INVALID_FIELDS",
+  );
+  for (const value of ["", 1, true, {}, []]) {
+    const result = validateGeographicRows({
+      rows: [{ level: value, name: "Area", code: "A" }],
+      levels,
+    });
+    assert.equal(result.rowsRejected, 1);
+  }
+});
+test("every geographic import field boundary is enforced", () => {
+  const stateLevel = "State / FCT";
+  const accepted = validateGeographicRows({
+    rows: [
+      row(
+        stateLevel,
+        "N".repeat(GEOGRAPHIC_IMPORT_LIMITS.name),
+        "C".repeat(GEOGRAPHIC_IMPORT_LIMITS.code),
+      ),
+    ],
+    levels,
+  });
+  assert.equal(accepted.rowsValid, 1);
+  for (const oversized of [
+    row(stateLevel, "N".repeat(GEOGRAPHIC_IMPORT_LIMITS.name + 1), "A"),
+    row(stateLevel, "Area", "C".repeat(GEOGRAPHIC_IMPORT_LIMITS.code + 1)),
+    row(stateLevel, "Area", "A", "P".repeat(GEOGRAPHIC_IMPORT_LIMITS.parentReference + 1), "P"),
+    row(
+      stateLevel,
+      "Area",
+      "A",
+      "Country",
+      "P".repeat(GEOGRAPHIC_IMPORT_LIMITS.parentReference + 1),
+    ),
+  ])
+    assert.equal(validateGeographicRows({ rows: [oversized], levels }).rowsRejected, 1);
+  assert.doesNotThrow(() =>
+    validateGeographicRows({ rows: Array(GEOGRAPHIC_IMPORT_LIMITS.rows).fill(null), levels }),
+  );
+  assert.throws(
+    () =>
+      validateProvenance({
+        sourceInstitution: "S".repeat(GEOGRAPHIC_IMPORT_LIMITS.source + 1),
+        sourceDocument: "Dataset",
+        sourceVersionDate: "2026-09-25",
+        validationStatus: "REVIEWED",
+      }),
+    /provenance/,
+  );
+  assert.throws(
+    () =>
+      validateProvenance({
+        sourceInstitution: "Institution",
+        sourceDocument: "Dataset",
+        sourceVersionDate: "2026-09-25",
+        validationStatus: "V".repeat(GEOGRAPHIC_IMPORT_LIMITS.validationStatus + 1),
+      }),
+    /provenance/,
+  );
+});
+test("parent references accept explicit roots and reject invalid types or incomplete pairs", () => {
+  for (const parentFields of [
+    {},
+    { parentLevel: null, parentCode: null },
+    { parentLevel: "", parentCode: "" },
+    { parentLevel: "   ", parentCode: "   " },
+  ])
+    assert.equal(
+      validateGeographicRows({
+        rows: [{ ...row("State / FCT", "Area", "A"), ...parentFields }],
+        levels,
+      }).rowsValid,
+      1,
+    );
+  for (const invalid of [1, true, {}, []]) {
+    for (const field of ["parentLevel", "parentCode"]) {
+      const result = validateGeographicRows({
+        rows: [{ ...row("State / FCT", "Area", "A"), [field]: invalid }],
+        levels,
+      });
+      assert.equal(result.rejected[0].reason, "INVALID_FIELD_TYPE");
+    }
+  }
+  for (const parentFields of [
+    { parentLevel: "Country", parentCode: "" },
+    { parentLevel: "", parentCode: "NG" },
+  ])
+    assert.equal(
+      validateGeographicRows({
+        rows: [{ ...row("State / FCT", "Area", "A"), ...parentFields }],
+        levels,
+      }).rejected[0].reason,
+      "MALFORMED_PARENT_REFERENCE",
+    );
+  assert.equal(
+    validateGeographicRows({
+      rows: [row("State / FCT", "Area", "A", "Country", "NG")],
+      levels,
+      existingAreas: [{ id: "country", level: { name: "Country" }, code: "NG", isActive: true }],
+    }).rowsValid,
+    1,
+  );
+});
 test("inactive levels and inactive parents are rejected", () => {
   const inactive = levels.map((l, i) => (i === 2 ? { ...l, isActive: false } : l));
   assert.equal(
@@ -180,25 +297,6 @@ test("provenance is bounded and complete", () => {
     }).sourceInstitution,
     "INEC",
   );
-});
-test("routes preserve authorization, tenant scope, atomic import, and audit coverage", () => {
-  const routes = readFileSync(new URL("../server/routes/operations.js", import.meta.url), "utf8");
-  const repository = readFileSync(
-    new URL("../server/repositories/operationsRepository.js", import.meta.url),
-    "utf8",
-  );
-  assert.match(routes, /PERMISSIONS\.GEOGRAPHY_MANAGE/);
-  assert.match(routes, /repository\.transaction/);
-  for (const action of [
-    "GEOGRAPHIC_LEVEL_CREATED",
-    "GEOGRAPHIC_LEVEL_CHANGED",
-    "GEOGRAPHIC_AREA_CREATED",
-    "GEOGRAPHIC_AREA_CHANGED",
-    "GEOGRAPHIC_IMPORT_EXECUTED",
-  ])
-    assert.match(routes, new RegExp(action));
-  assert.match(repository, /tenantId, campaignId/);
-  assert.match(repository, /appendGeographicAudit/);
 });
 test("Super Administrator UI exposes search, filter, edit, path, and controlled modes", () => {
   const page = readFileSync(

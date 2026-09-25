@@ -1,3 +1,5 @@
+import { assertNoAreaCycle } from "../services/geographicManagement.js";
+
 const MODELS = Object.freeze({
   initiatives: "initiative",
   activities: "activity",
@@ -63,6 +65,14 @@ export function createOperationsRepository(database) {
     )
       rejectReference();
   }
+  const auditData = (tenantId, actorId, action, entity, entityId, metadata = {}) => ({
+    tenantId,
+    actorId,
+    action,
+    entity,
+    entityId,
+    metadata,
+  });
   return {
     list(tenantId, campaignId, kind) {
       return scoped(kind).findMany({
@@ -143,6 +153,47 @@ export function createOperationsRepository(database) {
     updateLevel(tenantId, id, data) {
       return database.geographicLevel.updateMany({ where: { id, tenantId }, data });
     },
+    createGeographicLevel(tenantId, actorId, data) {
+      return database.$transaction(async (transaction) => {
+        const level = await transaction.geographicLevel.create({ data: { ...data, tenantId } });
+        await transaction.securityAuditEvent.create({
+          data: auditData(
+            tenantId,
+            actorId,
+            "GEOGRAPHIC_LEVEL_CREATED",
+            "geographic_level",
+            level.id,
+            { orderIndex: level.orderIndex, isActive: level.isActive },
+          ),
+        });
+        return level;
+      });
+    },
+    updateGeographicLevel(tenantId, actorId, id, data) {
+      return database.$transaction(async (transaction) => {
+        const result = await transaction.geographicLevel.updateMany({
+          where: { id, tenantId },
+          data,
+        });
+        if (!result.count)
+          throw Object.assign(new Error("Geographic level not found."), { status: 404 });
+        await transaction.securityAuditEvent.create({
+          data: auditData(
+            tenantId,
+            actorId,
+            data.isActive === undefined
+              ? "GEOGRAPHIC_LEVEL_CHANGED"
+              : data.isActive
+                ? "GEOGRAPHIC_LEVEL_ACTIVATED"
+                : "GEOGRAPHIC_LEVEL_DEACTIVATED",
+            "geographic_level",
+            id,
+            { changedFields: Object.keys(data) },
+          ),
+        });
+        return result;
+      });
+    },
     async updateArea(tenantId, campaignId, id, data) {
       await assertReferences(tenantId, campaignId, "areas", data);
       if (
@@ -166,6 +217,113 @@ export function createOperationsRepository(database) {
         });
       return database.geographicArea.updateMany({ where: { id, tenantId, campaignId }, data });
     },
+    createGeographicArea(tenantId, campaignId, actorId, data) {
+      return database.$transaction(async (transaction) => {
+        if (
+          (await transaction.geographicLevel.count({
+            where: { id: data.levelId, tenantId, isActive: true },
+          })) !== 1
+        )
+          throw Object.assign(
+            new Error("The selected geographic level is inactive or unavailable."),
+            { status: 400 },
+          );
+        if (
+          data.parentId &&
+          (await transaction.geographicArea.count({
+            where: { id: data.parentId, tenantId, campaignId, isActive: true },
+          })) !== 1
+        )
+          throw Object.assign(new Error("The selected parent is inactive or unavailable."), {
+            status: 400,
+          });
+        if (
+          await transaction.geographicArea.count({
+            where: {
+              tenantId,
+              campaignId,
+              levelId: data.levelId,
+              parentId: data.parentId || null,
+              name: { equals: data.name, mode: "insensitive" },
+            },
+          })
+        )
+          throw Object.assign(
+            new Error("A geographic area with this name already exists in the selected scope."),
+            { status: 409 },
+          );
+        const item = await transaction.geographicArea.create({
+          data: { ...data, tenantId, campaignId },
+        });
+        await transaction.securityAuditEvent.create({
+          data: auditData(
+            tenantId,
+            actorId,
+            "GEOGRAPHIC_AREA_CREATED",
+            "geographic_area",
+            item.id,
+            { campaignId, levelId: item.levelId, hasParent: Boolean(item.parentId) },
+          ),
+        });
+        return item;
+      });
+    },
+    updateGeographicArea(tenantId, campaignId, actorId, id, data) {
+      return database.$transaction(async (transaction) => {
+        const existing = await transaction.geographicArea.findFirst({
+          where: { id, tenantId, campaignId },
+          select: { id: true, levelId: true, parentId: true, isActive: true },
+        });
+        if (!existing)
+          throw Object.assign(new Error("Geographic area not found."), { status: 404 });
+        const resulting = { ...existing, ...data };
+        if (data.levelId !== undefined || resulting.isActive) {
+          if (
+            (await transaction.geographicLevel.count({
+              where: { id: resulting.levelId, tenantId, isActive: true },
+            })) !== 1
+          )
+            throw Object.assign(
+              new Error("The selected geographic level is inactive or unavailable."),
+              { status: 400 },
+            );
+        }
+        if (
+          resulting.parentId &&
+          (data.parentId !== undefined || resulting.isActive) &&
+          (await transaction.geographicArea.count({
+            where: { id: resulting.parentId, tenantId, campaignId, isActive: true },
+          })) !== 1
+        )
+          throw Object.assign(new Error("The selected parent is inactive or unavailable."), {
+            status: 400,
+          });
+        const areas = await transaction.geographicArea.findMany({
+          where: { tenantId, campaignId },
+          select: { id: true, parentId: true, isActive: true },
+        });
+        assertNoAreaCycle({ areaId: id, parentId: resulting.parentId, areas });
+        const result = await transaction.geographicArea.updateMany({
+          where: { id, tenantId, campaignId },
+          data,
+        });
+        await transaction.securityAuditEvent.create({
+          data: auditData(
+            tenantId,
+            actorId,
+            data.isActive === undefined
+              ? "GEOGRAPHIC_AREA_CHANGED"
+              : data.isActive
+                ? "GEOGRAPHIC_AREA_ACTIVATED"
+                : "GEOGRAPHIC_AREA_DEACTIVATED",
+            "geographic_area",
+            id,
+            { campaignId, changedFields: Object.keys(data) },
+          ),
+        });
+        return result;
+      });
+    },
     listAreas(tenantId, campaignId) {
       return database.geographicArea.findMany({
         where: { tenantId, campaignId },
@@ -179,7 +337,7 @@ export function createOperationsRepository(database) {
     database,
     appendGeographicAudit(tenantId, actorId, action, entity, entityId, metadata = {}) {
       return database.securityAuditEvent.create({
-        data: { tenantId, actorId, action, entity, entityId, metadata },
+        data: auditData(tenantId, actorId, action, entity, entityId, metadata),
       });
     },
     async addLeader(tenantId, campaignId, data) {

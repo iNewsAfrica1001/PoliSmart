@@ -9,6 +9,7 @@ export const NIGERIA_GEOGRAPHIC_LEVELS = Object.freeze([
 ]);
 export const GEOGRAPHIC_IMPORT_LIMITS = Object.freeze({
   rows: 5000,
+  level: 80,
   name: 120,
   code: 40,
   parentReference: 120,
@@ -92,6 +93,18 @@ export function validateGeographicRows({ rows, levels, existingAreas = [] }) {
       rejected.push({ row: index + 1, reason: "MALFORMED_ROW" });
       continue;
     }
+    const parentValuesValid = [source.parentCode, source.parentLevel].every(
+      (value) => value === undefined || value === null || typeof value === "string",
+    );
+    if (
+      typeof source.name !== "string" ||
+      typeof source.level !== "string" ||
+      typeof source.code !== "string" ||
+      !parentValuesValid
+    ) {
+      rejected.push({ row: index + 1, reason: "INVALID_FIELD_TYPE" });
+      continue;
+    }
     const name = clean(source.name),
       levelName = clean(source.level),
       code = clean(source.code),
@@ -102,6 +115,7 @@ export function validateGeographicRows({ rows, levels, existingAreas = [] }) {
       !levelName ||
       !code ||
       name.length > GEOGRAPHIC_IMPORT_LIMITS.name ||
+      levelName.length > GEOGRAPHIC_IMPORT_LIMITS.level ||
       code.length > GEOGRAPHIC_IMPORT_LIMITS.code ||
       parentCode.length > GEOGRAPHIC_IMPORT_LIMITS.parentReference ||
       parentLevel.length > GEOGRAPHIC_IMPORT_LIMITS.parentReference
