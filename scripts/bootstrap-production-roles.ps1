@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [string]$PsqlPath = "psql",
+  [string]$PsqlPath,
   [switch]$ValidateConnectionOnly
 )
 
@@ -12,6 +12,47 @@ function ConvertFrom-ProtectedValue {
   $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($Value)
   try { return [Runtime.InteropServices.Marshal]::PtrToStringBSTR($pointer) }
   finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($pointer) }
+}
+
+function Resolve-PsqlExecutable {
+  param(
+    [AllowEmptyString()][string]$RequestedPath,
+    [string]$PostgreSqlRoot = (Join-Path $env:ProgramFiles "PostgreSQL"),
+    [string]$CommandName = "psql.exe"
+  )
+  if ($RequestedPath) {
+    if (Test-Path -LiteralPath $RequestedPath -PathType Leaf) {
+      return [IO.Path]::GetFullPath($RequestedPath)
+    }
+    $requestedCommand = Get-Command $RequestedPath -CommandType Application -ErrorAction SilentlyContinue |
+      Select-Object -First 1
+    if ($requestedCommand) { return $requestedCommand.Source }
+    throw "PostgreSQL psql.exe could not be located."
+  }
+
+  $pathCommand = Get-Command $CommandName -CommandType Application -ErrorAction SilentlyContinue |
+    Select-Object -First 1
+  if ($pathCommand) { return $pathCommand.Source }
+
+  if (Test-Path -LiteralPath $PostgreSqlRoot -PathType Container) {
+    $installed = @(
+      Get-ChildItem -LiteralPath $PostgreSqlRoot -Directory -ErrorAction SilentlyContinue |
+        ForEach-Object {
+          if ($_.Name -match '^[0-9]+(?:\.[0-9]+)*$') {
+            $versionText = if ($_.Name.Contains(".")) { $_.Name } else { "$($_.Name).0" }
+            $parsedVersion = [version]$versionText
+            $candidate = Join-Path $_.FullName "bin\psql.exe"
+            if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+              [pscustomobject]@{ Version = $parsedVersion; Path = [IO.Path]::GetFullPath($candidate) }
+            }
+          }
+        } |
+        Sort-Object Version -Descending
+    )
+    if ($installed.Count -gt 0) { return $installed[0].Path }
+  }
+
+  throw "PostgreSQL psql.exe could not be located."
 }
 
 function ConvertTo-PostgresStringLiteral {
@@ -220,6 +261,7 @@ $connection = $null
 $sql = $null
 $process = $null
 $startInfo = $null
+$resolvedPsqlPath = $null
 
 try {
   $ownerSecure = Read-Host "Enter the protected owner PostgreSQL connection URL" -AsSecureString
@@ -245,8 +287,9 @@ try {
   $sql = [IO.File]::ReadAllText($templatePath)
   $sql = Expand-RolePasswordTemplate $sql $runtimePassword $migratorPassword
 
+  $resolvedPsqlPath = Resolve-PsqlExecutable $PsqlPath
   $startInfo = [Diagnostics.ProcessStartInfo]::new()
-  $startInfo.FileName = $PsqlPath
+  $startInfo.FileName = $resolvedPsqlPath
   $startInfo.UseShellExecute = $false
   $startInfo.CreateNoWindow = $true
   $startInfo.RedirectStandardInput = $true
@@ -300,6 +343,7 @@ finally {
   $ownerConnection = $null
   $runtimePassword = $null
   $migratorPassword = $null
+  $resolvedPsqlPath = $null
   [GC]::Collect()
   [GC]::WaitForPendingFinalizers()
 }

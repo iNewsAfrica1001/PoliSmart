@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { copyFileSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const sql = readFileSync("scripts/bootstrap-production-roles.sql", "utf8");
 const wrapper = readFileSync("scripts/bootstrap-production-roles.ps1", "utf8");
@@ -190,6 +192,70 @@ test("wrapper protects connection input and redacts subprocess failures", () => 
     /Write-(?:Host|Output)[^\r\n]*\$(?:ownerConnection|runtimePassword|migratorPassword|connection\.Password)/i,
   );
   assert.doesNotMatch(wrapper, /Out-File|Set-Content|Add-Content|New-TemporaryFile/);
+});
+
+test("Windows psql discovery resolves PATH first and otherwise selects the highest installed version", () => {
+  const resolverStart = wrapper.indexOf("function Resolve-PsqlExecutable");
+  const resolverEnd = wrapper.indexOf("function ConvertTo-PostgresStringLiteral");
+  assert.ok(resolverStart >= 0 && resolverEnd > resolverStart);
+  const resolverFunction = wrapper.slice(resolverStart, resolverEnd);
+  const root = mkdtempSync(join(tmpdir(), "polismart-psql-resolution-"));
+  try {
+    const pathDirectory = join(root, "path bin");
+    const installRoot = join(root, "Program Files", "PostgreSQL");
+    const version15 = join(installRoot, "15", "bin");
+    const version18 = join(installRoot, "18", "bin");
+    mkdirSync(pathDirectory, { recursive: true });
+    mkdirSync(version15, { recursive: true });
+    mkdirSync(version18, { recursive: true });
+    const pathPsql = join(pathDirectory, "psql-test-path.exe");
+    const psql15 = join(version15, "psql.exe");
+    const psql18 = join(version18, "psql.exe");
+    copyFileSync(process.execPath, pathPsql);
+    writeFileSync(psql15, "synthetic executable placeholder");
+    writeFileSync(psql18, "synthetic executable placeholder");
+    const encodedResolver = Buffer.from(resolverFunction, "utf8").toString("base64");
+    const encodedPathPsql = Buffer.from(pathPsql, "utf8").toString("base64");
+    const encodedPathDirectory = Buffer.from(pathDirectory, "utf8").toString("base64");
+    const encodedInstallRoot = Buffer.from(installRoot, "utf8").toString("base64");
+    const script = `
+$resolver = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${encodedResolver}'))
+Invoke-Expression $resolver
+$pathPsql = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${encodedPathPsql}'))
+$pathDirectory = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${encodedPathDirectory}'))
+$installRoot = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${encodedInstallRoot}'))
+$requestedResolved = Resolve-PsqlExecutable $pathPsql $installRoot 'missing-from-path.exe'
+$originalPath = $env:PATH
+$env:PATH = $pathDirectory + [IO.Path]::PathSeparator + $originalPath
+$pathResolved = Resolve-PsqlExecutable '' $installRoot 'psql-test-path.exe'
+$env:PATH = $originalPath
+$installResolved = Resolve-PsqlExecutable '' $installRoot 'missing-from-path.exe'
+$missingRejected = $false
+try { $null = Resolve-PsqlExecutable '' (Join-Path $installRoot 'absent') 'missing-from-path.exe' }
+catch { $missingRejected = $_.Exception.Message -eq 'PostgreSQL psql.exe could not be located.' }
+@{
+  pathResolved = $pathResolved
+  requestedResolved = $requestedResolved
+  installResolved = $installResolved
+  missingRejected = $missingRejected
+} | ConvertTo-Json -Compress
+`;
+    const result = spawnSync(
+      "powershell.exe",
+      ["-NoProfile", "-NonInteractive", "-Command", "$input | Out-String | Invoke-Expression"],
+      { input: script, encoding: "utf8" },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    const parsed = JSON.parse(result.stdout.trim());
+    assert.equal(parsed.pathResolved.toLowerCase(), pathPsql.toLowerCase());
+    assert.equal(parsed.requestedResolved.toLowerCase(), pathPsql.toLowerCase());
+    assert.equal(parsed.installResolved.toLowerCase(), psql18.toLowerCase());
+    assert.equal(parsed.missingRejected, true);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+  assert.match(wrapper, /\$startInfo\.FileName = \$resolvedPsqlPath/);
+  assert.doesNotMatch(wrapper, /\$startInfo\.FileName = ["']psql(?:\.exe)?["']/i);
 });
 
 test("connection URLs parse under Windows PowerShell without Web.HttpUtility", () => {
