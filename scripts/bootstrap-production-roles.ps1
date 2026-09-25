@@ -59,20 +59,42 @@ function ConvertFrom-UriComponent {
 }
 
 function Normalize-ConnectionInput {
-  param([Parameter(Mandatory)][string]$Value)
-  $normalized = $Value.Trim()
+  param([Parameter(Mandatory)][AllowEmptyString()][string]$Value)
+  $withoutLineBreaks = $Value.Replace("`r", "").Replace("`n", "")
+  $normalized = $withoutLineBreaks.Trim()
+  $whitespaceRemoved = $normalized -cne $Value
+  $outerQuotesRemoved = $false
   if ($normalized.Length -ge 2) {
     $first = $normalized[0]
     $last = $normalized[$normalized.Length - 1]
     if (($first -eq '"' -and $last -eq '"') -or
         ($first -eq "'" -and $last -eq "'")) {
       $normalized = $normalized.Substring(1, $normalized.Length - 2).Trim()
+      $outerQuotesRemoved = $true
     }
   }
-  if (!$normalized) {
-    throw "The protected connection value must be a PostgreSQL connection URL."
+  return @{
+    Value = $normalized
+    InputWasBlank = !$normalized
+    OuterQuotesRemoved = $outerQuotesRemoved
+    WhitespaceRemoved = $whitespaceRemoved
   }
-  return $normalized
+}
+
+function New-ConnectionInputError {
+  param(
+    [Parameter(Mandatory)][hashtable]$InputState,
+    [Parameter(Mandatory)][string]$DetectedScheme,
+    [Parameter(Mandatory)][bool]$ContainsAtSeparator,
+    [Parameter(Mandatory)][bool]$ContainsDatabasePath,
+    [Parameter(Mandatory)][string]$Reason
+  )
+  return "$Reason Input was blank: $(if ($InputState.InputWasBlank) { 'YES' } else { 'NO' }); " +
+    "Outer quotes removed: $(if ($InputState.OuterQuotesRemoved) { 'YES' } else { 'NO' }); " +
+    "Leading/trailing whitespace or CR/LF removed: $(if ($InputState.WhitespaceRemoved) { 'YES' } else { 'NO' }); " +
+    "Detected scheme: $DetectedScheme; " +
+    "Contains @ separator: $(if ($ContainsAtSeparator) { 'YES' } else { 'NO' }); " +
+    "Contains database path: $(if ($ContainsDatabasePath) { 'YES' } else { 'NO' })."
 }
 
 function Get-ConnectionQueryParameters {
@@ -93,23 +115,65 @@ function Get-ConnectionQueryParameters {
 }
 
 function Get-ConnectionParts {
-  param([Parameter(Mandatory)][string]$ConnectionString)
-  $normalized = Normalize-ConnectionInput $ConnectionString
+  param([Parameter(Mandatory)][AllowEmptyString()][string]$ConnectionString)
+  $inputState = Normalize-ConnectionInput $ConnectionString
+  $normalized = $inputState.Value
+  $detectedScheme = "none"
+  $schemeLength = 0
+  if ($normalized.StartsWith("postgresql://", [StringComparison]::OrdinalIgnoreCase)) {
+    $detectedScheme = "postgresql"
+    $schemeLength = "postgresql://".Length
+  } elseif ($normalized.StartsWith("postgres://", [StringComparison]::OrdinalIgnoreCase)) {
+    $detectedScheme = "postgres"
+    $schemeLength = "postgres://".Length
+  }
+  $containsAtSeparator = $normalized.Contains("@")
+  $containsDatabasePath = if ($schemeLength -gt 0) {
+    $normalized.IndexOf("/", $schemeLength) -ge 0
+  } else {
+    $false
+  }
+  if ($inputState.InputWasBlank -or $detectedScheme -eq "none") {
+    $kind = if ($inputState.InputWasBlank) {
+      "The protected connection value is blank."
+    } elseif ($normalized -match '^(?i)psql(?:\.exe)?\s') {
+      "The protected connection value is a psql command; paste only its PostgreSQL connection URL."
+    } elseif ($normalized -match '^[A-Za-z_][A-Za-z0-9_]*\s*=') {
+      "The protected connection value is a shell assignment; paste only its PostgreSQL connection URL."
+    } else {
+      "The protected connection value must begin with postgres:// or postgresql://."
+    }
+    throw (New-ConnectionInputError $inputState $detectedScheme $containsAtSeparator $containsDatabasePath $kind)
+  }
   if ($normalized -match '%(?![0-9A-Fa-f]{2})') {
     throw "The protected connection value contains malformed percent encoding."
   }
-  $uri = $null
-  if (![Uri]::TryCreate($normalized, [UriKind]::Absolute, [ref]$uri) -or
-      $uri.Scheme -notin @("postgres", "postgresql") -or !$uri.Host) {
-    throw "The protected connection value must be a PostgreSQL connection URL."
+  $remainder = $normalized.Substring($schemeLength)
+  $queryStart = $remainder.IndexOf("?")
+  $connectionPath = if ($queryStart -ge 0) { $remainder.Substring(0, $queryStart) } else { $remainder }
+  $queryText = if ($queryStart -ge 0) { $remainder.Substring($queryStart + 1) } else { "" }
+  $databaseSeparator = $connectionPath.IndexOf("/")
+  if ($databaseSeparator -lt 1 -or $databaseSeparator -eq $connectionPath.Length - 1) {
+    throw (New-ConnectionInputError $inputState $detectedScheme $containsAtSeparator $false "The protected connection value must include a host and database path.")
   }
-  $userInfo = $uri.UserInfo.Split(":", 2)
+  $authority = $connectionPath.Substring(0, $databaseSeparator)
+  $database = $connectionPath.Substring($databaseSeparator + 1)
+  $atSeparator = $authority.LastIndexOf("@")
+  if ($atSeparator -lt 1 -or $atSeparator -eq $authority.Length - 1) {
+    throw (New-ConnectionInputError $inputState $detectedScheme $false $true "The protected connection value must include user information and a host.")
+  }
+  $userInfo = $authority.Substring(0, $atSeparator).Split(":", 2)
   if ($userInfo.Count -ne 2 -or !$userInfo[0] -or !$userInfo[1]) {
     throw "The protected connection value must include a user and password."
   }
-  $database = $uri.AbsolutePath.TrimStart("/")
-  if (!$database) { throw "The protected connection value must identify a database." }
-  $query = Get-ConnectionQueryParameters $uri.Query
+  $hostAndPort = $authority.Substring($atSeparator + 1)
+  $hostMatch = [regex]::Match($hostAndPort, '^(?<host>\[[^\]]+\]|[^:]+)(?::(?<port>[0-9]+))?$')
+  if (!$hostMatch.Success -or !$hostMatch.Groups["host"].Value) {
+    throw (New-ConnectionInputError $inputState $detectedScheme $true $true "The protected connection value must include a valid host and optional numeric port.")
+  }
+  $databaseHost = $hostMatch.Groups["host"].Value.Trim([char[]]"[]")
+  $port = if ($hostMatch.Groups["port"].Success) { $hostMatch.Groups["port"].Value } else { "5432" }
+  $query = Get-ConnectionQueryParameters $queryText
   $sslMode = if ($query.ContainsKey("sslmode")) {
     $query["sslmode"].ToLowerInvariant()
   } else {
@@ -127,8 +191,8 @@ function Get-ConnectionParts {
     throw "The protected connection value must require channel binding."
   }
   return @{
-    Host = $uri.Host
-    Port = if ($uri.IsDefaultPort) { "5432" } else { [string]$uri.Port }
+    Host = $databaseHost
+    Port = $port
     Database = ConvertFrom-UriComponent $database
     User = ConvertFrom-UriComponent $userInfo[0]
     Password = ConvertFrom-UriComponent $userInfo[1]

@@ -194,6 +194,7 @@ test("wrapper protects connection input and redacts subprocess failures", () => 
 
 test("connection URLs parse under Windows PowerShell without Web.HttpUtility", () => {
   assert.doesNotMatch(wrapper, /Web\.HttpUtility/);
+  assert.doesNotMatch(wrapper, /\[Uri\]::TryCreate|\[Uri\]\s*\$/);
   const parserStart = wrapper.indexOf("function ConvertFrom-UriComponent");
   const parserEnd = wrapper.indexOf("function Protect-DiagnosticText");
   assert.ok(parserStart >= 0 && parserEnd > parserStart);
@@ -245,6 +246,7 @@ test("Neon connection input normalization accepts clipboard whitespace and outer
 $inputs = @(
   '${neonUrl}'
   '  ${neonUrl}  '
+  ([string][char]13 + [char]10 + '${neonUrl}' + [char]13 + [char]10)
   '"${neonUrl}"'
   "'${neonUrl}'"
   'postgres://testuser:testpassword@ep-example-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
@@ -267,7 +269,7 @@ $inputs | ForEach-Object {
   );
   assert.equal(result.status, 0, result.stderr);
   const parsed = JSON.parse(result.stdout.trim());
-  assert.equal(parsed.length, 6);
+  assert.equal(parsed.length, 7);
   for (const entry of parsed) {
     assert.equal(entry.Host, "ep-example-pooler.us-east-2.aws.neon.tech");
     assert.equal(entry.Database, "neondb");
@@ -275,6 +277,36 @@ $inputs | ForEach-Object {
     assert.equal(entry.ChannelBinding, "require");
   }
   assert.doesNotMatch(result.stderr, /must be a PostgreSQL connection URL/);
+});
+
+test("interactive parser failures provide only non-secret structural diagnostics", () => {
+  const parserStart = wrapper.indexOf("function ConvertFrom-UriComponent");
+  const parserEnd = wrapper.indexOf("function Protect-DiagnosticText");
+  const parserFunctions = wrapper.slice(parserStart, parserEnd);
+  const script = `${parserFunctions}
+$inputs = @('', 'ep-example-pooler.us-east-2.aws.neon.tech', 'psql postgresql://user:secret@example.test/db', 'DATABASE_URL=postgresql://user:secret@example.test/db')
+$inputs | ForEach-Object {
+  try { $null = Get-ConnectionParts $_; 'UNEXPECTED_ACCEPTANCE' }
+  catch { $_.Exception.Message }
+} | ConvertTo-Json -Compress
+`;
+  const result = spawnSync(
+    "powershell.exe",
+    ["-NoProfile", "-NonInteractive", "-Command", "$input | Out-String | Invoke-Expression"],
+    { input: script, encoding: "utf8" },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  const diagnostics = JSON.parse(result.stdout.trim());
+  assert.equal(diagnostics.length, 4);
+  assert.match(diagnostics[0], /Input was blank: YES/);
+  assert.match(diagnostics[1], /Detected scheme: none/);
+  assert.match(diagnostics[2], /is a psql command/);
+  assert.match(diagnostics[3], /is a shell assignment/);
+  for (const diagnostic of diagnostics) {
+    assert.match(diagnostic, /Outer quotes removed: (?:YES|NO)/);
+    assert.match(diagnostic, /Contains @ separator: (?:YES|NO)/);
+    assert.doesNotMatch(diagnostic, /secret|example\.test|ep-example|DATABASE_URL=/);
+  }
 });
 
 test("wrapper exposes a no-network protected connection validation mode", () => {
