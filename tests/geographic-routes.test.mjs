@@ -4,7 +4,10 @@ import express from "express";
 import request from "supertest";
 import { createOperationsRouter } from "../server/routes/operations.js";
 import { createOperationsRepository } from "../server/repositories/operationsRepository.js";
-import { NIGERIA_GEOGRAPHIC_LEVELS } from "../server/services/geographicManagement.js";
+import {
+  GEOGRAPHIC_IMPORT_LIMITS,
+  NIGERIA_GEOGRAPHIC_LEVELS,
+} from "../server/services/geographicManagement.js";
 
 const tenantId = "tenant-a";
 const campaignId = "campaign-a";
@@ -23,10 +26,46 @@ const importRow = {
   name: "Reviewed area",
   code: "RA",
 };
+function completeHierarchyRows() {
+  const rows = [{ level: "Country", name: "Nigeria", code: "NG" }];
+  for (let index = 0; index < 6; index += 1)
+    rows.push({
+      level: "Geopolitical Zone",
+      name: `Zone ${index}`,
+      code: `Z${index}`,
+      parentLevel: "Country",
+      parentCode: "NG",
+    });
+  for (let index = 0; index < 37; index += 1)
+    rows.push({
+      level: "State / FCT",
+      name: `State ${index}`,
+      code: `S${index}`,
+      parentLevel: "Geopolitical Zone",
+      parentCode: `Z${index % 6}`,
+    });
+  for (let index = 0; index < 774; index += 1)
+    rows.push({
+      level: "Local Government Area / FCT Area Council",
+      name: `LGA ${index}`,
+      code: `L${index}`,
+      parentLevel: "State / FCT",
+      parentCode: `S${index % 37}`,
+    });
+  for (let index = 0; index < 8809; index += 1)
+    rows.push({
+      level: "Ward / Registration Area",
+      name: `Ward ${index}`,
+      code: `W${index}`,
+      parentLevel: "Local Government Area / FCT Area Council",
+      parentCode: `L${index % 774}`,
+    });
+  return rows;
+}
 
 function appFor(role, repository) {
   const app = express();
-  app.use(express.json());
+  app.use(express.json({ limit: GEOGRAPHIC_IMPORT_LIMITS.validateJsonBody }));
   if (role)
     app.use((req, _res, next) => {
       req.auth = { user: { id: actorId, memberships: [{ tenantId, role }] } };
@@ -128,6 +167,68 @@ test("VALIDATE and PREVIEW write durable audits but no geographic business state
     assert.equal(calls.audits[0][5].sourceVersionDate, "2026-09-25");
     assert.equal(calls.audits[0][5].retrievalDate, "2026-09-26");
   }
+});
+test("VALIDATE alone receives the enlarged server-controlled row allowance", async () => {
+  const largeRows = Array(GEOGRAPHIC_IMPORT_LIMITS.rows + 1).fill(null);
+  {
+    const { repository, calls } = routeRepository();
+    const response = await request(appFor("SUPER_ADMINISTRATOR", repository))
+      .post(`/operations/${campaignId}/geography/import`)
+      .set("X-Organization-Id", tenantId)
+      .send({ mode: "VALIDATE", provenance, rows: largeRows })
+      .expect(200);
+    assert.equal(response.body.report.rowsReceived, largeRows.length);
+    assert.equal(calls.geographicWrites, 0);
+    assert.equal(calls.transactions, 0);
+    assert.equal(calls.audits.length, 1);
+  }
+  for (const mode of ["PREVIEW", "IMPORT"]) {
+    const { repository, calls } = routeRepository();
+    await request(appFor("SUPER_ADMINISTRATOR", repository))
+      .post(`/operations/${campaignId}/geography/import`)
+      .set("X-Organization-Id", tenantId)
+      .send({
+        mode,
+        confirmation: "IMPORT AUTHORIZED GEOGRAPHIC DATA",
+        provenance,
+        rows: largeRows,
+      })
+      .expect(413);
+    assert.equal(calls.geographicWrites, 0);
+    assert.equal(calls.transactions, 0);
+    assert.equal(calls.audits.length, 0);
+  }
+});
+test("VALIDATE resolves and audits a complete 9,627-row hierarchy without business writes", async () => {
+  const { repository, calls } = routeRepository();
+  const rows = completeHierarchyRows();
+  assert.equal(rows.length, 9627);
+  const response = await request(appFor("SUPER_ADMINISTRATOR", repository))
+    .post(`/operations/${campaignId}/geography/import`)
+    .set("X-Organization-Id", tenantId)
+    .send({ mode: "VALIDATE", provenance, rows })
+    .expect(200);
+  assert.equal(response.body.report.rowsReceived, 9627);
+  assert.equal(response.body.report.rowsValid, 9627);
+  assert.equal(response.body.report.rowsRejected, 0);
+  assert.equal(calls.geographicWrites, 0);
+  assert.equal(calls.transactions, 0);
+  assert.equal(calls.audits.length, 1);
+  assert.equal(calls.audits[0][2], "GEOGRAPHIC_IMPORT_VALIDATE");
+});
+test("ordinary administrators cannot use the enlarged VALIDATE path", async () => {
+  const { repository, calls } = routeRepository();
+  await request(appFor("CAMPAIGN_ADMINISTRATOR", repository))
+    .post(`/operations/${campaignId}/geography/import`)
+    .set("X-Organization-Id", tenantId)
+    .send({
+      mode: "VALIDATE",
+      provenance,
+      rows: Array(GEOGRAPHIC_IMPORT_LIMITS.rows + 1).fill(null),
+    })
+    .expect(403);
+  assert.equal(calls.geographicWrites, 0);
+  assert.equal(calls.audits.length, 0);
 });
 
 test("IMPORT requires exact confirmation before opening a transaction", async () => {

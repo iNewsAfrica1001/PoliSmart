@@ -9,6 +9,8 @@ export const NIGERIA_GEOGRAPHIC_LEVELS = Object.freeze([
 ]);
 export const GEOGRAPHIC_IMPORT_LIMITS = Object.freeze({
   rows: 5000,
+  validateRows: 12000,
+  validateJsonBody: "2mb",
   level: 80,
   name: 120,
   code: 40,
@@ -79,9 +81,14 @@ function detectCycles(nodes) {
   for (const key of nodes.keys()) visit(key);
   return ordered;
 }
-export function validateGeographicRows({ rows, levels, existingAreas = [] }) {
+export function validateGeographicRows({
+  rows,
+  levels,
+  existingAreas = [],
+  rowLimit = GEOGRAPHIC_IMPORT_LIMITS.rows,
+}) {
   if (!Array.isArray(rows)) throw fail("Import rows must be an array.", "ROWS_REQUIRED");
-  if (rows.length > GEOGRAPHIC_IMPORT_LIMITS.rows)
+  if (rows.length > rowLimit)
     throw fail("Import row limit exceeded.", "ROW_LIMIT_EXCEEDED", 413);
   const activeLevels = new Map(
     levels.filter((item) => item.isActive !== false).map((item) => [item.name, item]),
@@ -106,7 +113,8 @@ export function validateGeographicRows({ rows, levels, existingAreas = [] }) {
   for (const node of nodes.values())
     if (node.parentId) node.parentKey = existingKeyById.get(node.parentId) || null;
   const rejected = [],
-    candidates = [];
+    candidates = [],
+    candidateKeys = new Set();
   for (let index = 0; index < rows.length; index += 1) {
     const source = rows[index];
     if (!source || typeof source !== "object" || Array.isArray(source)) {
@@ -158,7 +166,7 @@ export function validateGeographicRows({ rows, levels, existingAreas = [] }) {
       rejected.push({ row: index + 1, reason: "SELF_PARENT" });
       continue;
     }
-    if (nodes.has(key) || candidates.some((item) => item.key === key)) {
+    if (nodes.has(key) || candidateKeys.has(key)) {
       rejected.push({ row: index + 1, reason: "DUPLICATE" });
       continue;
     }
@@ -175,6 +183,7 @@ export function validateGeographicRows({ rows, levels, existingAreas = [] }) {
       imported: true,
       active: true,
     });
+    candidateKeys.add(key);
   }
   for (const item of candidates) nodes.set(item.key, item);
   for (const item of candidates)

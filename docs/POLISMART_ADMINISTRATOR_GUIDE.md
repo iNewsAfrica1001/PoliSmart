@@ -262,6 +262,22 @@ source, documentation, tickets, screenshots, chat, or Git.
 
 Although some identifiers are not passwords, restrict environment access to authorized operators.
 
+### Controlled geographic validation capacity
+
+The server applies separate, fixed limits to the controlled geographic modes:
+
+- `VALIDATE` accepts at most 12,000 rows so a reviewed 9,627-row national hierarchy can be
+  checked in one request, including all in-request parent references.
+- `PREVIEW` and `IMPORT` remain limited to 5,000 rows. The larger validation allowance does not
+  authorize either state-changing mode to accept a larger batch.
+- The geographic import endpoint has a dedicated 2 MiB JSON parser ceiling. The reviewed Nigeria
+  payload is approximately 1.35 MiB when serialized, while the byte ceiling and row ceilings keep
+  memory use bounded.
+
+Validation remains read-only for geographic business data and creates only its reviewed durable
+audit record. Vercel provides 1,024 MiB memory and a 60-second function ceiling; validation performs
+one bounded level query, one campaign-scoped area query, and linear in-memory hierarchy checks.
+
 ## 9. Troubleshooting procedures
 
 ### User cannot log in

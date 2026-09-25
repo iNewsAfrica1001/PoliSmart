@@ -12,7 +12,11 @@ import {
   workStatus,
 } from "../services/operationsValidation.js";
 import { requireString } from "../services/validation.js";
-import { validateGeographicRows, validateProvenance } from "../services/geographicManagement.js";
+import {
+  GEOGRAPHIC_IMPORT_LIMITS,
+  validateGeographicRows,
+  validateProvenance,
+} from "../services/geographicManagement.js";
 
 function workData(body) {
   return {
@@ -323,6 +327,10 @@ export function createOperationsRouter(repository) {
         rows: request.body?.rows,
         levels,
         existingAreas: areas,
+        rowLimit:
+          mode === "VALIDATE"
+            ? GEOGRAPHIC_IMPORT_LIMITS.validateRows
+            : GEOGRAPHIC_IMPORT_LIMITS.rows,
       });
       report.sourceProvenance = provenance;
       if (mode !== "IMPORT") {

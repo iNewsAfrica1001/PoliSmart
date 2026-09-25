@@ -50,6 +50,7 @@ import { createKnowledgeBaseService } from "./server/services/knowledgeBase.js";
 import { createAiProvider } from "./server/services/aiProvider.js";
 import { createAiAssistantService } from "./server/services/aiAssistant.js";
 import { createIntelligenceWorkflowService } from "./server/services/intelligenceWorkflows.js";
+import { GEOGRAPHIC_IMPORT_LIMITS } from "./server/services/geographicManagement.js";
 import { createGovernanceService } from "./server/services/governance.js";
 import { createDocumentStorage } from "./server/services/documentStorage.js";
 import { PERMISSIONS } from "./server/config/authorization.js";
@@ -127,6 +128,10 @@ server.requestTimeout = 30_000;
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
 app.use(cors({ origin: config.clientOrigins, credentials: true }));
+app.use(
+  "/api/operations/:campaignId/geography/import",
+  express.json({ limit: GEOGRAPHIC_IMPORT_LIMITS.validateJsonBody }),
+);
 app.use(express.json({ limit: config.jsonLimit }));
 app.use(assignRequestId);
 app.use(securityHeaders({ isProduction: config.isProduction }));

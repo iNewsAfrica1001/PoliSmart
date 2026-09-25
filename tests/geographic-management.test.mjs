@@ -39,6 +39,59 @@ test("malformed rows and field bounds are controlled", () => {
     /limit/,
   );
 });
+test("VALIDATE capacity accepts the complete 9,627-row hierarchy and remains bounded", () => {
+  const productionLevels = [
+    "Country",
+    "Geopolitical Zone",
+    "State/FCT",
+    "Local Government Area/FCT Area Council",
+    "Ward/Registration Area",
+  ].map((name, index) => ({ id: `production-${index}`, name, isActive: true }));
+  const rows = [row("Country", "Nigeria", "NG")];
+  for (let index = 0; index < 6; index += 1)
+    rows.push(row("Geopolitical Zone", `Zone ${index}`, `Z${index}`, "Country", "NG"));
+  for (let index = 0; index < 37; index += 1)
+    rows.push(row("State/FCT", `State ${index}`, `S${index}`, "Geopolitical Zone", `Z${index % 6}`));
+  for (let index = 0; index < 774; index += 1)
+    rows.push(
+      row(
+        "Local Government Area/FCT Area Council",
+        `LGA ${index}`,
+        `L${index}`,
+        "State/FCT",
+        `S${index % 37}`,
+      ),
+    );
+  for (let index = 0; index < 8809; index += 1)
+    rows.push(
+      row(
+        "Ward/Registration Area",
+        `Ward ${index}`,
+        `W${index}`,
+        "Local Government Area/FCT Area Council",
+        `L${index % 774}`,
+      ),
+    );
+  assert.equal(rows.length, 9627);
+  const result = validateGeographicRows({
+    rows,
+    levels: productionLevels,
+    rowLimit: GEOGRAPHIC_IMPORT_LIMITS.validateRows,
+  });
+  assert.equal(result.rowsValid, 9627);
+  assert.equal(result.rowsRejected, 0);
+  assert.equal(result.plan.length, 9627);
+  assert.equal(result.plan[0].levelName, "Country");
+  assert.throws(
+    () =>
+      validateGeographicRows({
+        rows: Array(GEOGRAPHIC_IMPORT_LIMITS.validateRows + 1).fill(null),
+        levels: productionLevels,
+        rowLimit: GEOGRAPHIC_IMPORT_LIMITS.validateRows,
+      }),
+    /limit/,
+  );
+});
 test("level field has an explicit enforced boundary and type", () => {
   const maximumLevel = "L".repeat(GEOGRAPHIC_IMPORT_LIMITS.level);
   assert.equal(
