@@ -330,7 +330,9 @@ export function createOperationsRouter(repository) {
         rowLimit:
           mode === "VALIDATE"
             ? GEOGRAPHIC_IMPORT_LIMITS.validateRows
-            : GEOGRAPHIC_IMPORT_LIMITS.rows,
+            : mode === "PREVIEW"
+              ? GEOGRAPHIC_IMPORT_LIMITS.previewRows
+              : GEOGRAPHIC_IMPORT_LIMITS.rows,
       });
       report.sourceProvenance = provenance;
       if (mode !== "IMPORT") {

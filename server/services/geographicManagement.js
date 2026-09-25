@@ -10,6 +10,7 @@ export const NIGERIA_GEOGRAPHIC_LEVELS = Object.freeze([
 export const GEOGRAPHIC_IMPORT_LIMITS = Object.freeze({
   rows: 5000,
   validateRows: 12000,
+  previewRows: 12000,
   validateJsonBody: "2mb",
   level: 80,
   name: 120,
@@ -27,9 +28,7 @@ const isDateOnly = (value) => {
   const [, year, month, day] = match.map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
   return (
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day
+    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
   );
 };
 export function validateProvenance(input) {
@@ -88,8 +87,7 @@ export function validateGeographicRows({
   rowLimit = GEOGRAPHIC_IMPORT_LIMITS.rows,
 }) {
   if (!Array.isArray(rows)) throw fail("Import rows must be an array.", "ROWS_REQUIRED");
-  if (rows.length > rowLimit)
-    throw fail("Import row limit exceeded.", "ROW_LIMIT_EXCEEDED", 413);
+  if (rows.length > rowLimit) throw fail("Import row limit exceeded.", "ROW_LIMIT_EXCEEDED", 413);
   const activeLevels = new Map(
     levels.filter((item) => item.isActive !== false).map((item) => [item.name, item]),
   );

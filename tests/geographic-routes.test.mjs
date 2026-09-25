@@ -81,7 +81,13 @@ function appFor(role, repository) {
 }
 
 function routeRepository() {
-  const calls = { audits: [], importAudits: [], createdAreas: [], geographicWrites: 0, transactions: 0 };
+  const calls = {
+    audits: [],
+    importAudits: [],
+    createdAreas: [],
+    geographicWrites: 0,
+    transactions: 0,
+  };
   const levels = NIGERIA_GEOGRAPHIC_LEVELS.map((name, index) => ({
     id: index === 2 ? levelId : `level-${index}`,
     name,
@@ -110,7 +116,12 @@ function routeRepository() {
             return { id: areaId, ...data };
           },
         },
-        securityAuditEvent: { create: async ({ data }) => { calls.importAudits.push(data); return {}; } },
+        securityAuditEvent: {
+          create: async ({ data }) => {
+            calls.importAudits.push(data);
+            return {};
+          },
+        },
       };
       return callback(transaction);
     },
@@ -168,21 +179,59 @@ test("VALIDATE and PREVIEW write durable audits but no geographic business state
     assert.equal(calls.audits[0][5].retrievalDate, "2026-09-26");
   }
 });
-test("VALIDATE alone receives the enlarged server-controlled row allowance", async () => {
+test("VALIDATE and PREVIEW receive only their server-controlled row allowances", async () => {
   const largeRows = Array(GEOGRAPHIC_IMPORT_LIMITS.rows + 1).fill(null);
-  {
+  for (const mode of ["VALIDATE", "PREVIEW"]) {
     const { repository, calls } = routeRepository();
     const response = await request(appFor("SUPER_ADMINISTRATOR", repository))
       .post(`/operations/${campaignId}/geography/import`)
       .set("X-Organization-Id", tenantId)
-      .send({ mode: "VALIDATE", provenance, rows: largeRows })
+      .send({ mode, provenance, rows: largeRows })
       .expect(200);
     assert.equal(response.body.report.rowsReceived, largeRows.length);
     assert.equal(calls.geographicWrites, 0);
     assert.equal(calls.transactions, 0);
     assert.equal(calls.audits.length, 1);
   }
-  for (const mode of ["PREVIEW", "IMPORT"]) {
+  {
+    const { repository, calls } = routeRepository();
+    await request(appFor("SUPER_ADMINISTRATOR", repository))
+      .post(`/operations/${campaignId}/geography/import`)
+      .set("X-Organization-Id", tenantId)
+      .send({
+        mode: "IMPORT",
+        confirmation: "IMPORT AUTHORIZED GEOGRAPHIC DATA",
+        provenance,
+        rows: largeRows,
+      })
+      .expect(413);
+    assert.equal(calls.geographicWrites, 0);
+    assert.equal(calls.transactions, 0);
+    assert.equal(calls.audits.length, 0);
+  }
+});
+test("PREVIEW resolves and audits a complete 9,627-row hierarchy without business writes", async () => {
+  const { repository, calls } = routeRepository();
+  const rows = completeHierarchyRows();
+  const response = await request(appFor("SUPER_ADMINISTRATOR", repository))
+    .post(`/operations/${campaignId}/geography/import`)
+    .set("X-Organization-Id", tenantId)
+    .send({ mode: "PREVIEW", provenance, rows })
+    .expect(200);
+  assert.equal(response.body.report.rowsReceived, 9627);
+  assert.equal(response.body.report.rowsValid, 9627);
+  assert.equal(response.body.report.rowsRejected, 0);
+  assert.equal(calls.geographicWrites, 0);
+  assert.equal(calls.transactions, 0);
+  assert.equal(calls.audits.length, 1);
+  assert.equal(calls.audits[0][2], "GEOGRAPHIC_IMPORT_PREVIEW");
+});
+test("VALIDATE and PREVIEW fail closed above 12,000 rows while IMPORT remains capped at 5,000", async () => {
+  for (const [mode, limit] of [
+    ["VALIDATE", GEOGRAPHIC_IMPORT_LIMITS.validateRows],
+    ["PREVIEW", GEOGRAPHIC_IMPORT_LIMITS.previewRows],
+    ["IMPORT", GEOGRAPHIC_IMPORT_LIMITS.rows],
+  ]) {
     const { repository, calls } = routeRepository();
     await request(appFor("SUPER_ADMINISTRATOR", repository))
       .post(`/operations/${campaignId}/geography/import`)
@@ -191,7 +240,8 @@ test("VALIDATE alone receives the enlarged server-controlled row allowance", asy
         mode,
         confirmation: "IMPORT AUTHORIZED GEOGRAPHIC DATA",
         provenance,
-        rows: largeRows,
+        rows: Array(limit + 1).fill(null),
+        rowLimit: Number.MAX_SAFE_INTEGER,
       })
       .expect(413);
     assert.equal(calls.geographicWrites, 0);
@@ -216,19 +266,21 @@ test("VALIDATE resolves and audits a complete 9,627-row hierarchy without busine
   assert.equal(calls.audits.length, 1);
   assert.equal(calls.audits[0][2], "GEOGRAPHIC_IMPORT_VALIDATE");
 });
-test("ordinary administrators cannot use the enlarged VALIDATE path", async () => {
-  const { repository, calls } = routeRepository();
-  await request(appFor("CAMPAIGN_ADMINISTRATOR", repository))
-    .post(`/operations/${campaignId}/geography/import`)
-    .set("X-Organization-Id", tenantId)
-    .send({
-      mode: "VALIDATE",
-      provenance,
-      rows: Array(GEOGRAPHIC_IMPORT_LIMITS.rows + 1).fill(null),
-    })
-    .expect(403);
-  assert.equal(calls.geographicWrites, 0);
-  assert.equal(calls.audits.length, 0);
+test("ordinary administrators cannot use enlarged VALIDATE or PREVIEW paths", async () => {
+  for (const mode of ["VALIDATE", "PREVIEW"]) {
+    const { repository, calls } = routeRepository();
+    await request(appFor("CAMPAIGN_ADMINISTRATOR", repository))
+      .post(`/operations/${campaignId}/geography/import`)
+      .set("X-Organization-Id", tenantId)
+      .send({
+        mode,
+        provenance,
+        rows: Array(GEOGRAPHIC_IMPORT_LIMITS.rows + 1).fill(null),
+      })
+      .expect(403);
+    assert.equal(calls.geographicWrites, 0);
+    assert.equal(calls.audits.length, 0);
+  }
 });
 
 test("IMPORT requires exact confirmation before opening a transaction", async () => {
