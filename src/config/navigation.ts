@@ -42,7 +42,7 @@ export const navigation: NavigationItem[] = [
   { label: "Billing", icon: WalletCards, page: "billing", enabled: true, feature: "billing" },
   { label: "Compliance", icon: ShieldCheck, page: "compliance", enabled: true },
   { label: "Pre-launch Requests", icon: ClipboardCheck, page: "prelaunch-leads", enabled: true },
-  { label: "Administration", icon: Settings, page: "administration", enabled: false },
+  { label: "Geographic Administration", icon: Settings, page: "geography", enabled: true },
 ];
 
 export const readinessItems = [

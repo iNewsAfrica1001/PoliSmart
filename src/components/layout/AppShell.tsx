@@ -76,6 +76,7 @@ export function AppShell({
               (item.page !== "compliance" || canReadCompliance) &&
               (item.page !== "fundraising" || canReadFundraising) &&
               (item.page !== "prelaunch-leads" || canReviewPrelaunchLeads) &&
+              (item.page !== "geography" || role === "SUPER_ADMINISTRATOR") &&
               (!item.feature || features[item.feature] === true))
             .map(({ label, icon: Icon, page, enabled }) => (
               <button

@@ -71,6 +71,8 @@ export function createOperationsRepository(database) {
     },
     async create(tenantId, campaignId, kind, data) {
       await assertReferences(tenantId, campaignId, kind, data);
+      if (kind === "areas" && (await database.geographicArea.count({ where: { tenantId, campaignId, levelId: data.levelId, parentId: data.parentId || null, name: { equals: data.name, mode: "insensitive" } } })))
+        throw Object.assign(new Error("A geographic area with this name already exists in the selected scope."), { status: 409 });
       return scoped(kind).create({ data: { ...data, tenantId, campaignId } });
     },
     update(tenantId, campaignId, kind, id, data) {
@@ -103,6 +105,18 @@ export function createOperationsRepository(database) {
     createLevel(tenantId, data) {
       return database.geographicLevel.create({ data: { ...data, tenantId } });
     },
+    updateLevel(tenantId, id, data) {
+      return database.geographicLevel.updateMany({ where: { id, tenantId }, data });
+    },
+    async updateArea(tenantId, campaignId, id, data) {
+      await assertReferences(tenantId, campaignId, "areas", data);
+      return database.geographicArea.updateMany({ where: { id, tenantId, campaignId }, data });
+    },
+    listAreas(tenantId, campaignId) {
+      return database.geographicArea.findMany({ where: { tenantId, campaignId }, include: { level: true, parent: { select: { id: true, name: true } } }, orderBy: [{ level: { orderIndex: "asc" } }, { name: "asc" }] });
+    },
+    transaction(callback) { return database.$transaction(callback); },
+    database,
     async addLeader(tenantId, campaignId, data) {
       if (
         (await database.membership.count({

@@ -15,6 +15,7 @@ import { MarketingHomePage } from "./pages/MarketingHomePage";
 import { FundraisingPage } from "./pages/FundraisingPage";
 import { PrelaunchRequestPage } from "./pages/PrelaunchRequestPage";
 import { PrelaunchLeadReviewPage } from "./pages/PrelaunchLeadReviewPage";
+import { GeographicManagementPage } from "./pages/GeographicManagementPage";
 import {
   disabledFeatures,
   loadFeatureAvailability,
@@ -36,6 +37,7 @@ const pageTitles: Record<string, string> = {
   fundraising: "Fundraising Management",
   billing: "Billing",
   "prelaunch-leads": "Pre-launch Requests",
+  geography: "Geographic Administration",
 };
 
 export default function App() {
@@ -153,6 +155,8 @@ function WorkspaceApp() {
         membership?.canReviewPrelaunchLeads
           ? <PrelaunchLeadReviewPage />
           : <section className="restricted-state"><h1>Restricted access</h1><p>Pre-launch requests are available only to authorized internal administrators.</p></section>
+      ) : page === "geography" ? (
+        membership?.role === "SUPER_ADMINISTRATOR" ? <GeographicManagementPage user={user} /> : <section className="restricted-state"><h1>Restricted access</h1><p>Geographic administration requires Super Administrator authorization.</p></section>
       ) : (
         <OperationsPage
           user={user}

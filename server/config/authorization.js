@@ -29,6 +29,7 @@ export const PERMISSIONS = Object.freeze({
   POLICY_MANAGE: "policy:manage",
   COMMUNICATIONS_MANAGE: "communications:manage",
   FIELD_MANAGE: "field:manage",
+  GEOGRAPHY_MANAGE: "geography:manage",
   EVENTS_CREATE: "events:create",
   VOLUNTEERS_CREATE: "volunteers:create",
   VOLUNTEERS_MANAGE: "volunteers:manage",

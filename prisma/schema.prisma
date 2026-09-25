@@ -552,6 +552,7 @@ model GeographicLevel {
   tenantId     String           @map("tenant_id") @db.Uuid
   name         String
   orderIndex   Int              @map("order_index")
+  isActive     Boolean          @default(true) @map("is_active")
   createdAt    DateTime         @default(now()) @map("created_at")
   updatedAt    DateTime         @updatedAt @map("updated_at")
   organization Organization     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -570,6 +571,12 @@ model GeographicArea {
   parentId   String?          @map("parent_id") @db.Uuid
   name       String
   code       String?
+  isActive   Boolean          @default(true) @map("is_active")
+  sourceInstitution String?   @map("source_institution")
+  sourceDocument String?      @map("source_document")
+  sourceVersionDate DateTime? @map("source_version_date") @db.Date
+  importedAt DateTime?        @map("imported_at")
+  validationStatus String?    @map("validation_status")
   createdAt  DateTime         @default(now()) @map("created_at")
   updatedAt  DateTime         @updatedAt @map("updated_at")
   campaign   Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
