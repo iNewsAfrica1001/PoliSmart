@@ -50,6 +50,7 @@ export function createOperationsRepository(database) {
       rejectReference();
     if (
       kind === "areas" &&
+      data.levelId &&
       (await database.geographicLevel.count({ where: { id: data.levelId, tenantId } })) !== 1
     )
       rejectReference();
@@ -71,8 +72,42 @@ export function createOperationsRepository(database) {
     },
     async create(tenantId, campaignId, kind, data) {
       await assertReferences(tenantId, campaignId, kind, data);
-      if (kind === "areas" && (await database.geographicArea.count({ where: { tenantId, campaignId, levelId: data.levelId, parentId: data.parentId || null, name: { equals: data.name, mode: "insensitive" } } })))
-        throw Object.assign(new Error("A geographic area with this name already exists in the selected scope."), { status: 409 });
+      if (
+        kind === "areas" &&
+        (await database.geographicLevel.count({
+          where: { id: data.levelId, tenantId, isActive: true },
+        })) !== 1
+      )
+        throw Object.assign(
+          new Error("The selected geographic level is inactive or unavailable."),
+          { status: 400 },
+        );
+      if (
+        kind === "areas" &&
+        data.parentId &&
+        (await database.geographicArea.count({
+          where: { id: data.parentId, tenantId, campaignId, isActive: true },
+        })) !== 1
+      )
+        throw Object.assign(new Error("The selected parent is inactive or unavailable."), {
+          status: 400,
+        });
+      if (
+        kind === "areas" &&
+        (await database.geographicArea.count({
+          where: {
+            tenantId,
+            campaignId,
+            levelId: data.levelId,
+            parentId: data.parentId || null,
+            name: { equals: data.name, mode: "insensitive" },
+          },
+        }))
+      )
+        throw Object.assign(
+          new Error("A geographic area with this name already exists in the selected scope."),
+          { status: 409 },
+        );
       return scoped(kind).create({ data: { ...data, tenantId, campaignId } });
     },
     update(tenantId, campaignId, kind, id, data) {
@@ -110,13 +145,43 @@ export function createOperationsRepository(database) {
     },
     async updateArea(tenantId, campaignId, id, data) {
       await assertReferences(tenantId, campaignId, "areas", data);
+      if (
+        data.levelId &&
+        (await database.geographicLevel.count({
+          where: { id: data.levelId, tenantId, isActive: true },
+        })) !== 1
+      )
+        throw Object.assign(
+          new Error("The selected geographic level is inactive or unavailable."),
+          { status: 400 },
+        );
+      if (
+        data.parentId &&
+        (await database.geographicArea.count({
+          where: { id: data.parentId, tenantId, campaignId, isActive: true },
+        })) !== 1
+      )
+        throw Object.assign(new Error("The selected parent is inactive or unavailable."), {
+          status: 400,
+        });
       return database.geographicArea.updateMany({ where: { id, tenantId, campaignId }, data });
     },
     listAreas(tenantId, campaignId) {
-      return database.geographicArea.findMany({ where: { tenantId, campaignId }, include: { level: true, parent: { select: { id: true, name: true } } }, orderBy: [{ level: { orderIndex: "asc" } }, { name: "asc" }] });
+      return database.geographicArea.findMany({
+        where: { tenantId, campaignId },
+        include: { level: true, parent: { select: { id: true, name: true } } },
+        orderBy: [{ level: { orderIndex: "asc" } }, { name: "asc" }],
+      });
     },
-    transaction(callback) { return database.$transaction(callback); },
+    transaction(callback) {
+      return database.$transaction(callback);
+    },
     database,
+    appendGeographicAudit(tenantId, actorId, action, entity, entityId, metadata = {}) {
+      return database.securityAuditEvent.create({
+        data: { tenantId, actorId, action, entity, entityId, metadata },
+      });
+    },
     async addLeader(tenantId, campaignId, data) {
       if (
         (await database.membership.count({

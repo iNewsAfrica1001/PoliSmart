@@ -12,7 +12,11 @@ import {
   workStatus,
 } from "../services/operationsValidation.js";
 import { requireString } from "../services/validation.js";
-import { assertNoAreaCycle, validateGeographicRows, validateProvenance } from "../services/geographicManagement.js";
+import {
+  assertNoAreaCycle,
+  validateGeographicRows,
+  validateProvenance,
+} from "../services/geographicManagement.js";
 
 function workData(body) {
   return {
@@ -230,24 +234,49 @@ export function createOperationsRouter(repository) {
   router.post(
     "/geography/levels",
     requireTenantPermission(PERMISSIONS.GEOGRAPHY_MANAGE),
-    asyncRoute(async (request, response) =>
-      response.status(201).json({
-        level: await repository.createLevel(request.tenant.id, {
-          name: requireString(request.body, "name", { min: 2, max: 80 }),
-          orderIndex: Number(request.body?.orderIndex),
-        }),
-      }),
-    ),
+    asyncRoute(async (request, response) => {
+      const level = await repository.createLevel(request.tenant.id, {
+        name: requireString(request.body, "name", { min: 2, max: 80 }),
+        orderIndex: Number(request.body?.orderIndex),
+      });
+      await repository.appendGeographicAudit(
+        request.tenant.id,
+        request.auth.user.id,
+        "GEOGRAPHIC_LEVEL_CREATED",
+        "geographic_level",
+        level.id,
+        { orderIndex: level.orderIndex, isActive: level.isActive },
+      );
+      response.status(201).json({ level });
+    }),
   );
-  router.patch("/geography/levels/:id", requireTenantPermission(PERMISSIONS.GEOGRAPHY_MANAGE), asyncRoute(async (request, response) => {
-    const data = {};
-    if (request.body?.name !== undefined) data.name = requireString(request.body, "name", { min: 2, max: 80 });
-    if (request.body?.orderIndex !== undefined) data.orderIndex = Number(request.body.orderIndex);
-    if (request.body?.isActive !== undefined) data.isActive = request.body.isActive === true;
-    const result = await repository.updateLevel(request.tenant.id, request.params.id, data);
-    if (!result.count) throw Object.assign(new Error("Geographic level not found."), { status: 404 });
-    response.json({ updated: true });
-  }));
+  router.patch(
+    "/geography/levels/:id",
+    requireTenantPermission(PERMISSIONS.GEOGRAPHY_MANAGE),
+    asyncRoute(async (request, response) => {
+      const data = {};
+      if (request.body?.name !== undefined)
+        data.name = requireString(request.body, "name", { min: 2, max: 80 });
+      if (request.body?.orderIndex !== undefined) data.orderIndex = Number(request.body.orderIndex);
+      if (request.body?.isActive !== undefined) data.isActive = request.body.isActive === true;
+      const result = await repository.updateLevel(request.tenant.id, request.params.id, data);
+      if (!result.count)
+        throw Object.assign(new Error("Geographic level not found."), { status: 404 });
+      await repository.appendGeographicAudit(
+        request.tenant.id,
+        request.auth.user.id,
+        data.isActive === undefined
+          ? "GEOGRAPHIC_LEVEL_CHANGED"
+          : data.isActive
+            ? "GEOGRAPHIC_LEVEL_ACTIVATED"
+            : "GEOGRAPHIC_LEVEL_DEACTIVATED",
+        "geographic_level",
+        request.params.id,
+        { changedFields: Object.keys(data) },
+      );
+      response.json({ updated: true });
+    }),
+  );
   router.get(
     "/:campaignId/geography/areas",
     requireTenantPermission(PERMISSIONS.CAMPAIGN_READ),
@@ -260,48 +289,154 @@ export function createOperationsRouter(repository) {
   router.post(
     "/:campaignId/geography/areas",
     requireTenantPermission(PERMISSIONS.GEOGRAPHY_MANAGE),
-    asyncRoute(async (request, response) =>
-      response.status(201).json({
-        item: await repository.create(request.tenant.id, request.params.campaignId, "areas", {
-          name: requireString(request.body, "name", { min: 1, max: 120 }),
-          code: request.body?.code || undefined,
-          levelId: requireString(request.body, "levelId", { min: 36, max: 36 }),
-          parentId: request.body?.parentId || undefined,
-        }),
-      }),
-    ),
+    asyncRoute(async (request, response) => {
+      const item = await repository.create(request.tenant.id, request.params.campaignId, "areas", {
+        name: requireString(request.body, "name", { min: 1, max: 120 }),
+        code: request.body?.code || undefined,
+        levelId: requireString(request.body, "levelId", { min: 36, max: 36 }),
+        parentId: request.body?.parentId || undefined,
+      });
+      await repository.appendGeographicAudit(
+        request.tenant.id,
+        request.auth.user.id,
+        "GEOGRAPHIC_AREA_CREATED",
+        "geographic_area",
+        item.id,
+        {
+          campaignId: request.params.campaignId,
+          levelId: item.levelId,
+          hasParent: Boolean(item.parentId),
+        },
+      );
+      response.status(201).json({ item });
+    }),
   );
-  router.patch("/:campaignId/geography/areas/:id", requireTenantPermission(PERMISSIONS.GEOGRAPHY_MANAGE), asyncRoute(async (request, response) => {
-    const areas = await repository.listAreas(request.tenant.id, request.params.campaignId);
-    assertNoAreaCycle({ areaId: request.params.id, parentId: request.body?.parentId || null, areas });
-    const data = {};
-    for (const key of ["name", "code", "parentId", "levelId"]) if (request.body?.[key] !== undefined) data[key] = request.body[key] || null;
-    if (request.body?.isActive !== undefined) data.isActive = request.body.isActive === true;
-    const result = await repository.updateArea(request.tenant.id, request.params.campaignId, request.params.id, data);
-    if (!result.count) throw Object.assign(new Error("Geographic area not found."), { status: 404 });
-    response.json({ updated: true });
-  }));
-  router.post("/:campaignId/geography/import", requireTenantPermission(PERMISSIONS.GEOGRAPHY_MANAGE), asyncRoute(async (request, response) => {
-    const mode = String(request.body?.mode || "").toUpperCase();
-    if (!["VALIDATE", "PREVIEW", "IMPORT"].includes(mode)) throw Object.assign(new Error("Mode must be VALIDATE, PREVIEW, or IMPORT."), { status: 400 });
-    const provenance = validateProvenance(request.body?.provenance);
-    const [levels, areas] = await Promise.all([repository.listLevels(request.tenant.id), repository.listAreas(request.tenant.id, request.params.campaignId)]);
-    const report = validateGeographicRows({ rows: request.body?.rows, levels, existingAreas: areas });
-    report.sourceProvenance = provenance;
-    if (mode !== "IMPORT") return response.json({ mode, report });
-    if (request.body?.confirmation !== "IMPORT AUTHORIZED GEOGRAPHIC DATA" || report.rowsRejected)
-      throw Object.assign(new Error("Import requires exact confirmation and a fully valid preview."), { status: 400 });
-    const inserted = await repository.transaction(async (transaction) => {
-      const codeIds = new Map(areas.filter((item) => item.code).map((item) => [item.code, item.id]));
-      let count = 0;
-      for (const row of report.proposedInserts) {
-        const item = await transaction.geographicArea.create({ data: { tenantId: request.tenant.id, campaignId: request.params.campaignId, levelId: row.levelId, parentId: row.parentCode ? codeIds.get(row.parentCode) : null, name: row.name, code: row.code, sourceInstitution: provenance.sourceInstitution, sourceDocument: provenance.sourceDocument, sourceVersionDate: new Date(provenance.sourceVersionDate), importedAt: new Date(), validationStatus: provenance.validationStatus } });
-        if (row.code) codeIds.set(row.code, item.id); count += 1;
+  router.patch(
+    "/:campaignId/geography/areas/:id",
+    requireTenantPermission(PERMISSIONS.GEOGRAPHY_MANAGE),
+    asyncRoute(async (request, response) => {
+      const areas = await repository.listAreas(request.tenant.id, request.params.campaignId);
+      assertNoAreaCycle({
+        areaId: request.params.id,
+        parentId: request.body?.parentId || null,
+        areas,
+      });
+      const data = {};
+      for (const key of ["name", "code", "parentId", "levelId"])
+        if (request.body?.[key] !== undefined) data[key] = request.body[key] || null;
+      if (request.body?.isActive !== undefined) data.isActive = request.body.isActive === true;
+      const result = await repository.updateArea(
+        request.tenant.id,
+        request.params.campaignId,
+        request.params.id,
+        data,
+      );
+      if (!result.count)
+        throw Object.assign(new Error("Geographic area not found."), { status: 404 });
+      await repository.appendGeographicAudit(
+        request.tenant.id,
+        request.auth.user.id,
+        data.isActive === undefined
+          ? "GEOGRAPHIC_AREA_CHANGED"
+          : data.isActive
+            ? "GEOGRAPHIC_AREA_ACTIVATED"
+            : "GEOGRAPHIC_AREA_DEACTIVATED",
+        "geographic_area",
+        request.params.id,
+        { campaignId: request.params.campaignId, changedFields: Object.keys(data) },
+      );
+      response.json({ updated: true });
+    }),
+  );
+  router.post(
+    "/:campaignId/geography/import",
+    requireTenantPermission(PERMISSIONS.GEOGRAPHY_MANAGE),
+    asyncRoute(async (request, response) => {
+      const mode = String(request.body?.mode || "").toUpperCase();
+      if (!["VALIDATE", "PREVIEW", "IMPORT"].includes(mode))
+        throw Object.assign(new Error("Mode must be VALIDATE, PREVIEW, or IMPORT."), {
+          status: 400,
+        });
+      const provenance = validateProvenance(request.body?.provenance);
+      const [levels, areas] = await Promise.all([
+        repository.listLevels(request.tenant.id),
+        repository.listAreas(request.tenant.id, request.params.campaignId),
+      ]);
+      const report = validateGeographicRows({
+        rows: request.body?.rows,
+        levels,
+        existingAreas: areas,
+      });
+      report.sourceProvenance = provenance;
+      if (mode !== "IMPORT") {
+        console.info(
+          JSON.stringify({
+            event: "geographic-import-review",
+            mode,
+            tenantScoped: true,
+            campaignScoped: true,
+            rowsReceived: report.rowsReceived,
+            rowsValid: report.rowsValid,
+            rowsRejected: report.rowsRejected,
+            sourceInstitution: provenance.sourceInstitution,
+            validationStatus: provenance.validationStatus,
+          }),
+        );
+        return response.json({ mode, report });
       }
-      await transaction.securityAuditEvent.create({ data: { tenantId: request.tenant.id, actorId: request.auth.user.id, action: "GEOGRAPHIC_IMPORT_EXECUTED", entity: "campaign", entityId: request.params.campaignId, metadata: { rowsReceived: report.rowsReceived, rowsImported: count, sourceInstitution: provenance.sourceInstitution, sourceDocument: provenance.sourceDocument, sourceVersionDate: provenance.sourceVersionDate, validationStatus: provenance.validationStatus } } });
-      return count;
-    });
-    response.status(201).json({ mode, imported: inserted, report });
-  }));
+      if (request.body?.confirmation !== "IMPORT AUTHORIZED GEOGRAPHIC DATA" || report.rowsRejected)
+        throw Object.assign(
+          new Error("Import requires exact confirmation and a fully valid preview."),
+          { status: 400 },
+        );
+      const inserted = await repository.transaction(async (transaction) => {
+        const codeIds = new Map(
+          areas
+            .filter((item) => item.code)
+            .map((item) => [`${item.level.name}\0${item.code}`, item.id]),
+        );
+        let count = 0;
+        for (const row of report.plan) {
+          const key = `${row.levelName}\0${row.code}`;
+          const item = await transaction.geographicArea.create({
+            data: {
+              tenantId: request.tenant.id,
+              campaignId: request.params.campaignId,
+              levelId: row.levelId,
+              parentId: row.parentKey ? codeIds.get(row.parentKey) : null,
+              name: row.name,
+              code: row.code,
+              sourceInstitution: provenance.sourceInstitution,
+              sourceDocument: provenance.sourceDocument,
+              sourceVersionDate: new Date(provenance.sourceVersionDate),
+              importedAt: new Date(),
+              validationStatus: provenance.validationStatus,
+            },
+          });
+          codeIds.set(key, item.id);
+          count += 1;
+        }
+        await transaction.securityAuditEvent.create({
+          data: {
+            tenantId: request.tenant.id,
+            actorId: request.auth.user.id,
+            action: "GEOGRAPHIC_IMPORT_EXECUTED",
+            entity: "campaign",
+            entityId: request.params.campaignId,
+            metadata: {
+              rowsReceived: report.rowsReceived,
+              rowsImported: count,
+              sourceInstitution: provenance.sourceInstitution,
+              sourceDocument: provenance.sourceDocument,
+              sourceVersionDate: provenance.sourceVersionDate,
+              validationStatus: provenance.validationStatus,
+            },
+          },
+        });
+        return count;
+      });
+      response.status(201).json({ mode, imported: inserted, report });
+    }),
+  );
   return router;
 }

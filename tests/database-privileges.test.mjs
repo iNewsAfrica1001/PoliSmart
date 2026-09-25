@@ -42,11 +42,12 @@ test("every column-limited update names a real database column", () => {
       assert.equal(columnsByTable[table]?.has(column), true, `${table}.${column} is not in Prisma`);
 });
 
-test("migration 0015 exactly implements the reviewed table and column policy", () => {
+test("migrations 0015-0016 exactly implement the reviewed table and column policy", () => {
   const sql = readFileSync(
     "prisma/migrations/0015_runtime_privilege_catalog/migration.sql",
     "utf8",
   );
+  const grantsSql = `${sql}\n${readFileSync("prisma/migrations/0016_geographic_management/migration.sql", "utf8")}`;
   const revoke = sql.match(/REVOKE ALL PRIVILEGES ON TABLE([\s\S]*?)FROM "polismart_runtime";/);
   assert.ok(revoke);
   assert.deepEqual(identifiers(revoke[1]).sort(), Object.keys(RUNTIME_DATABASE_PRIVILEGES).sort());
@@ -57,14 +58,14 @@ test("migration 0015 exactly implements the reviewed table and column policy", (
       { tablePrivileges: new Set(), updateColumns: new Set() },
     ]),
   );
-  for (const match of sql.matchAll(
+  for (const match of grantsSql.matchAll(
     /GRANT\s+((?:SELECT|INSERT|DELETE)(?:\s*,\s*(?:SELECT|INSERT|DELETE))*)\s+ON TABLE([\s\S]*?)TO "polismart_runtime";/g,
   ))
     for (const table of identifiers(match[2]))
       for (const privilege of match[1].split(",").map((value) => value.trim()))
         actual[table].tablePrivileges.add(privilege);
 
-  for (const match of sql.matchAll(
+  for (const match of grantsSql.matchAll(
     /GRANT UPDATE\s*\(([^)]+)\)\s*ON TABLE([\s\S]*?)TO "polismart_runtime";/g,
   ))
     for (const table of identifiers(match[2]))
