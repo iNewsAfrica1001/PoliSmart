@@ -80,6 +80,24 @@ export function createAuthenticationService(
     );
   }
 
+  async function runRegistrationOperation(operation, callback) {
+    try {
+      return await callback();
+    } catch (error) {
+      logger.error?.(
+        JSON.stringify({
+          at: now().toISOString(),
+          level: "error",
+          event: "registration-database-failure",
+          operation,
+          prismaCode: typeof error?.code === "string" ? error.code : "UNKNOWN",
+          errorType: error?.name || "Error",
+        }),
+      );
+      throw error;
+    }
+  }
+
   async function deliverNotification(method, payload) {
     if (!notifications?.[method]) return false;
     try {
@@ -160,19 +178,29 @@ export function createAuthenticationService(
       for (let attempt = 0; attempt < 3; attempt += 1) {
         try {
           result = await database.$transaction(async (tx) => {
-            const user = await tx.authUser.create({
-              data: { email: normalizedEmail, passwordHash, displayName: displayName.trim() },
-            });
-            const organization = await tx.organization.create({
-              data: {
-                name: organizationName.trim(),
-                slug: `${slugBase}-${randomBytes(4).toString("hex")}`,
-                country: country.trim(),
-              },
-            });
-            const membership = await tx.membership.create({
-              data: { userId: user.id, tenantId: organization.id, role: "CAMPAIGN_ADMINISTRATOR" },
-            });
+            const user = await runRegistrationOperation("authUser.create", () =>
+              tx.authUser.create({
+                data: { email: normalizedEmail, passwordHash, displayName: displayName.trim() },
+              }),
+            );
+            const organization = await runRegistrationOperation("organization.create", () =>
+              tx.organization.create({
+                data: {
+                  name: organizationName.trim(),
+                  slug: `${slugBase}-${randomBytes(4).toString("hex")}`,
+                  country: country.trim(),
+                },
+              }),
+            );
+            const membership = await runRegistrationOperation("membership.create", () =>
+              tx.membership.create({
+                data: {
+                  userId: user.id,
+                  tenantId: organization.id,
+                  role: "CAMPAIGN_ADMINISTRATOR",
+                },
+              }),
+            );
             return { user, organization, membership };
           });
           break;
