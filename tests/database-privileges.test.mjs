@@ -128,6 +128,26 @@ test("Production validator consumes the catalog and rejects excess effective pri
   assert.doesNotMatch(source, /organizations', 'DELETE'/);
 });
 
+test("Production validator does not require runtime access to Prisma migration history", () => {
+  const source = readFileSync("scripts/validate-production-database.mjs", "utf8");
+  assert.equal("_prisma_migrations" in RUNTIME_DATABASE_PRIVILEGES, false);
+  assert.match(source, /to_regclass\('public\."_prisma_migrations"'\)/);
+  assert.match(
+    source,
+    /has_table_privilege\(current_user, 'public\."_prisma_migrations"', 'SELECT'\)/,
+  );
+  assert.match(source, /const applied = migrationHistoryAccess\.can_select/);
+  assert.match(source, /separateMigratorStatusRequired: !migrationHistoryAccess\.can_select/);
+  assert.match(source, /migrationHistoryAccess\.exists/);
+  assert.doesNotMatch(
+    readFileSync(
+      "prisma/migrations/0015_runtime_privilege_catalog/migration.sql",
+      "utf8",
+    ),
+    /GRANT\s+SELECT[^;]*_prisma_migrations/is,
+  );
+});
+
 test("previously reviewed migrations retain their exact checksums", () => {
   const expected = {
     "0011_prelaunch_lead_capture":

@@ -46,10 +46,20 @@ try {
   const extensions = await prisma.$queryRaw`
     SELECT extname, extversion FROM pg_extension WHERE extname IN ('vector', 'pgcrypto') ORDER BY extname
   `;
-  const applied = await prisma.$queryRaw`
-    SELECT migration_name, finished_at, rolled_back_at, logs
-    FROM "_prisma_migrations" ORDER BY started_at
+  const [migrationHistoryAccess] = await prisma.$queryRaw`
+    SELECT
+      to_regclass('public."_prisma_migrations"') IS NOT NULL AS exists,
+      CASE
+        WHEN to_regclass('public."_prisma_migrations"') IS NULL THEN false
+        ELSE has_table_privilege(current_user, 'public."_prisma_migrations"', 'SELECT')
+      END AS can_select
   `;
+  const applied = migrationHistoryAccess.can_select
+    ? await prisma.$queryRaw`
+        SELECT migration_name, finished_at, rolled_back_at, logs
+        FROM "_prisma_migrations" ORDER BY started_at
+      `
+    : null;
   const indexStatus = await prisma.$queryRaw`
     SELECT COUNT(*)::int AS total,
       COUNT(*) FILTER (WHERE NOT i.indisvalid OR NOT i.indisready)::int AS invalid
@@ -123,12 +133,20 @@ try {
   `;
 
   const appliedNames = new Set(
-    applied
+    (applied ?? [])
       .filter((item) => item.finished_at && !item.rolled_back_at)
       .map((item) => item.migration_name),
   );
-  const failedMigrations = applied.filter((item) => !item.finished_at && !item.rolled_back_at);
-  const missingMigrations = migrations.filter((name) => !appliedNames.has(name));
+  const failedMigrations = (applied ?? []).filter(
+    (item) => !item.finished_at && !item.rolled_back_at,
+  );
+  const missingMigrations = applied
+    ? migrations.filter((name) => !appliedNames.has(name))
+    : null;
+  const migrationHistoryValid =
+    migrationHistoryAccess.exists &&
+    (!migrationHistoryAccess.can_select ||
+      (missingMigrations.length === 0 && failedMigrations.length === 0));
   const isolationErrors = Object.values(isolationChecks[0]).reduce(
     (total, value) => total + Number(value),
     0,
@@ -163,8 +181,7 @@ try {
     columnPrivilegeErrors.length === 0 &&
     sequencePrivilegeErrors.length === 0 &&
     Boolean(vector) &&
-    missingMigrations.length === 0 &&
-    failedMigrations.length === 0 &&
+    migrationHistoryValid &&
     Number(indexStatus[0].invalid) === 0 &&
     isolationErrors === 0 &&
     permissionWarnings.length === 0;
@@ -180,9 +197,12 @@ try {
         },
         migrations: {
           expected: migrations.length,
-          applied: appliedNames.size,
+          applied: applied ? appliedNames.size : null,
           missing: missingMigrations,
-          failed: failedMigrations.map((item) => item.migration_name),
+          failed: applied ? failedMigrations.map((item) => item.migration_name) : null,
+          historyTableExists: migrationHistoryAccess.exists,
+          historyReadableByRuntime: migrationHistoryAccess.can_select,
+          separateMigratorStatusRequired: !migrationHistoryAccess.can_select,
         },
         extensions: extensions.map(({ extname, extversion }) => ({
           name: extname,
