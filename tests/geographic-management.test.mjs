@@ -237,6 +237,41 @@ test("inactive levels and inactive parents are rejected", () => {
     "INACTIVE_PARENT",
   );
 });
+
+test("IMPORT-only staged validation accepts reviewed inactive imported parents", () => {
+  const inactiveImportedCountry = {
+    id: "country",
+    level: { name: "Country" },
+    code: "NG",
+    isActive: false,
+    importedAt: new Date("2026-09-25T00:00:00Z"),
+    validationStatus: "VALIDATED",
+  };
+  const child = row("Geopolitical Zone", "North Central", "NC", "Country", "NG");
+  assert.equal(
+    validateGeographicRows({ rows: [child], levels, existingAreas: [inactiveImportedCountry] })
+      .rowsRejected,
+    1,
+  );
+  assert.equal(
+    validateGeographicRows({
+      rows: [child],
+      levels,
+      existingAreas: [inactiveImportedCountry],
+      allowInactiveImportedParents: true,
+    }).rowsRejected,
+    0,
+  );
+  assert.equal(
+    validateGeographicRows({
+      rows: [child],
+      levels,
+      existingAreas: [{ ...inactiveImportedCountry, importedAt: null }],
+      allowInactiveImportedParents: true,
+    }).rowsRejected,
+    1,
+  );
+});
 test("forward parents resolve deterministically and reports contain no internal ids", () => {
   const r = validateGeographicRows({
     rows: [

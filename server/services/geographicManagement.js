@@ -85,6 +85,7 @@ export function validateGeographicRows({
   levels,
   existingAreas = [],
   rowLimit = GEOGRAPHIC_IMPORT_LIMITS.rows,
+  allowInactiveImportedParents = false,
 }) {
   if (!Array.isArray(rows)) throw fail("Import rows must be an array.", "ROWS_REQUIRED");
   if (rows.length > rowLimit) throw fail("Import row limit exceeded.", "ROW_LIMIT_EXCEEDED", 413);
@@ -104,6 +105,8 @@ export function validateGeographicRows({
         key,
         id: area.id,
         active: area.isActive !== false,
+        importedInactive:
+          area.isActive === false && Boolean(area.importedAt) && Boolean(area.validationStatus),
         parentId: area.parentId,
         imported: false,
       });
@@ -189,7 +192,11 @@ export function validateGeographicRows({
       const parent = nodes.get(item.parentKey);
       if (!parent || ambiguous.has(item.parentKey))
         rejected.push({ row: item.row, reason: parent ? "AMBIGUOUS_PARENT" : "INVALID_PARENT" });
-      else if (!parent.active) rejected.push({ row: item.row, reason: "INACTIVE_PARENT" });
+      else if (
+        !parent.active &&
+        !(allowInactiveImportedParents && (parent.imported || parent.importedInactive))
+      )
+        rejected.push({ row: item.row, reason: "INACTIVE_PARENT" });
     }
   const badRows = new Set(rejected.map((item) => item.row));
   let changed = true;

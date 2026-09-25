@@ -272,6 +272,11 @@ The server applies separate, fixed limits to the controlled geographic modes:
   zero-business-write request with all parent references available.
 - `IMPORT` remains limited to 5,000 rows. Neither read-only allowance authorizes the
   state-changing mode to accept a larger batch.
+- `IMPORT` explicitly creates every geographic area inactive. Parent-first batches may reference
+  inactive, campaign-scoped parents created by an earlier reviewed import, but imported geography
+  does not become operational until a separately authorized activation step.
+- Never blindly retry a successful batch: an existing `(level, code)` is rejected as a duplicate.
+  Verify cumulative counts and the durable import audit after every batch before continuing.
 - The geographic import endpoint has a dedicated 2 MiB JSON parser ceiling. The reviewed Nigeria
   payload is approximately 1.35 MiB when serialized, while the byte ceiling and row ceilings keep
   memory use bounded.

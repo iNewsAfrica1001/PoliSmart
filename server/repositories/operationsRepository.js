@@ -46,7 +46,7 @@ export function createOperationsRepository(database) {
       (kind === "events" || kind === "areas") &&
       data.geographicAreaId &&
       (await database.geographicArea.count({
-        where: { id: data.geographicAreaId, tenantId, campaignId },
+        where: { id: data.geographicAreaId, tenantId, campaignId, isActive: true },
       })) !== 1
     )
       rejectReference();

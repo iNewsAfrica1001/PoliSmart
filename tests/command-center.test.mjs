@@ -105,6 +105,24 @@ test("command center aggregate relations are covered by the runtime read model",
     assert.deepEqual(RUNTIME_DATABASE_PRIVILEGES[table].tablePrivileges, ["SELECT"]);
 });
 
+test("command center operational geography excludes inactive staged imports", async () => {
+  let query;
+  const repository = createCommandCenterRepository({
+    geographicArea: {
+      findMany: async (input) => {
+        query = input;
+        return [];
+      },
+    },
+  });
+  await repository.geography("tenant-a", "campaign-a");
+  assert.deepEqual(query.where, {
+    tenantId: "tenant-a",
+    campaignId: "campaign-a",
+    isActive: true,
+  });
+});
+
 test("public visualization contract contains source, sample, round, and weighting", () => {
   const result = buildCommandCenter({
     ...snapshot,

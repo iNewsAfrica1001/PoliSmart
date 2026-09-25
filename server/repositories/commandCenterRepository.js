@@ -181,7 +181,7 @@ export function createCommandCenterRepository(database) {
     },
     geography(tenantId, campaignId) {
       return database.geographicArea.findMany({
-        where: { tenantId, campaignId },
+        where: { tenantId, campaignId, isActive: true },
         select: { id: true, name: true, level: { select: { name: true, orderIndex: true } } },
         orderBy: [{ level: { orderIndex: "asc" } }, { name: "asc" }],
       });

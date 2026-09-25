@@ -327,6 +327,7 @@ export function createOperationsRouter(repository) {
         rows: request.body?.rows,
         levels,
         existingAreas: areas,
+        allowInactiveImportedParents: mode === "IMPORT",
         rowLimit:
           mode === "VALIDATE"
             ? GEOGRAPHIC_IMPORT_LIMITS.validateRows
@@ -385,6 +386,7 @@ export function createOperationsRouter(repository) {
               retrievalDate: new Date(provenance.retrievalDate),
               importedAt: new Date(),
               validationStatus: provenance.validationStatus,
+              isActive: false,
             },
           });
           codeIds.set(key, item.id);
@@ -405,6 +407,7 @@ export function createOperationsRouter(repository) {
               sourceVersionDate: provenance.sourceVersionDate || null,
               retrievalDate: provenance.retrievalDate,
               validationStatus: provenance.validationStatus,
+              importedInactive: true,
             },
           },
         });

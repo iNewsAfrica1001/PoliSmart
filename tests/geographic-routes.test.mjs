@@ -307,10 +307,102 @@ test("IMPORT requires exact confirmation before opening a transaction", async ()
     .expect(201);
   assert.equal(calls.transactions, 1);
   assert.equal(calls.geographicWrites, 1);
+  assert.equal(calls.createdAreas[0].isActive, false);
   assert.equal(calls.createdAreas[0].sourceVersionDate.toISOString().slice(0, 10), "2026-09-25");
   assert.equal(calls.createdAreas[0].retrievalDate.toISOString().slice(0, 10), "2026-09-26");
   assert.equal(calls.importAudits[0].metadata.sourceVersionDate, "2026-09-25");
   assert.equal(calls.importAudits[0].metadata.retrievalDate, "2026-09-26");
+  assert.equal(calls.importAudits[0].metadata.importedInactive, true);
+});
+
+test("IMPORT ignores client activation input and always creates inactive areas", async () => {
+  const { repository, calls } = routeRepository();
+  await request(appFor("SUPER_ADMINISTRATOR", repository))
+    .post(`/operations/${campaignId}/geography/import`)
+    .set("X-Organization-Id", tenantId)
+    .send({
+      mode: "IMPORT",
+      confirmation: "IMPORT AUTHORIZED GEOGRAPHIC DATA",
+      provenance,
+      rows: [{ ...importRow, isActive: true }],
+    })
+    .expect(201);
+  assert.equal(calls.createdAreas[0].isActive, false);
+});
+
+test("four staged IMPORT batches resolve inactive parents and remain inactive", async () => {
+  const allRows = completeHierarchyRows();
+  const batches = [
+    allRows.slice(0, 44),
+    allRows.slice(44, 818),
+    allRows.slice(818, 5318),
+    allRows.slice(5318),
+  ];
+  const state = { areas: [], audits: [] };
+  const levels = NIGERIA_GEOGRAPHIC_LEVELS.map((name, index) => ({
+    id: `level-${index}`,
+    name,
+    isActive: true,
+  }));
+  const repository = {
+    listLevels: async () => levels,
+    listAreas: async (_tenant, requestedCampaign) =>
+      state.areas.filter((item) => item.campaignId === requestedCampaign),
+    appendGeographicAudit: async () => {
+      throw new Error("not expected");
+    },
+    transaction: async (callback) => {
+      const draft = structuredClone(state);
+      const transaction = {
+        geographicArea: {
+          create: async ({ data }) => {
+            const level = levels.find((item) => item.id === data.levelId);
+            const item = { id: `area-${draft.areas.length + 1}`, ...data, level };
+            draft.areas.push(item);
+            return item;
+          },
+        },
+        securityAuditEvent: {
+          create: async ({ data }) => {
+            draft.audits.push(data);
+            return data;
+          },
+        },
+      };
+      const result = await callback(transaction);
+      state.areas = draft.areas;
+      state.audits = draft.audits;
+      return result;
+    },
+  };
+  const expectedCounts = [44, 818, 5318, 9627];
+  for (let index = 0; index < batches.length; index += 1) {
+    await request(appFor("SUPER_ADMINISTRATOR", repository))
+      .post(`/operations/${campaignId}/geography/import`)
+      .set("X-Organization-Id", tenantId)
+      .send({
+        mode: "IMPORT",
+        confirmation: "IMPORT AUTHORIZED GEOGRAPHIC DATA",
+        provenance,
+        rows: batches[index],
+      })
+      .expect(201);
+    assert.equal(state.areas.length, expectedCounts[index]);
+    assert.equal(state.areas.every((item) => item.isActive === false), true);
+  }
+  assert.equal(state.audits.length, 4);
+
+  await request(appFor("SUPER_ADMINISTRATOR", repository))
+    .post(`/operations/${campaignId}/geography/import`)
+    .set("X-Organization-Id", tenantId)
+    .send({
+      mode: "IMPORT",
+      confirmation: "IMPORT AUTHORIZED GEOGRAPHIC DATA",
+      provenance,
+      rows: batches[0],
+    })
+    .expect(400);
+  assert.equal(state.areas.length, 9627);
 });
 
 test("imports preserve a null unpublished source version and distinct required retrieval date", async () => {
