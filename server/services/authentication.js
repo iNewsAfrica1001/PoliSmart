@@ -67,6 +67,7 @@ export function createAuthenticationService(
   if (!tokenSecret || tokenSecret.length < 32)
     throw new Error("Authentication token secret must be at least 32 characters.");
   const expiresFromNow = (milliseconds) => new Date(now().getTime() + milliseconds);
+  const operationFailures = new WeakSet();
 
   function recordRegistrationEvent(code, metadata = {}) {
     logger.info?.(
@@ -80,20 +81,25 @@ export function createAuthenticationService(
     );
   }
 
+  function recordRegistrationDatabaseFailure(operation, error) {
+    logger.error?.(
+      JSON.stringify({
+        at: now().toISOString(),
+        level: "error",
+        event: "registration-database-failure",
+        operation,
+        prismaCode: typeof error?.code === "string" ? error.code : "UNKNOWN",
+        errorType: error?.name || "Error",
+      }),
+    );
+  }
+
   async function runRegistrationOperation(operation, callback) {
     try {
       return await callback();
     } catch (error) {
-      logger.error?.(
-        JSON.stringify({
-          at: now().toISOString(),
-          level: "error",
-          event: "registration-database-failure",
-          operation,
-          prismaCode: typeof error?.code === "string" ? error.code : "UNKNOWN",
-          errorType: error?.name || "Error",
-        }),
-      );
+      if (error && typeof error === "object") operationFailures.add(error);
+      recordRegistrationDatabaseFailure(operation, error);
       throw error;
     }
   }
@@ -205,6 +211,9 @@ export function createAuthenticationService(
           });
           break;
         } catch (error) {
+          if (!operationFailures.has(error)) {
+            recordRegistrationDatabaseFailure("transaction.start-or-commit", error);
+          }
           if (error?.code !== "P2002") throw error;
           const racedUser = await database.authUser.findUnique({
             where: { email: normalizedEmail },

@@ -301,6 +301,70 @@ for (const failingOperation of ["authUser.create", "organization.create", "membe
   });
 }
 
+test("registration safely identifies an outer transaction boundary failure", async () => {
+  const logs = [];
+  const sensitiveValues = [
+    "private@example.test",
+    "SensitivePass2026",
+    "Private Organization",
+    "secret-database-url",
+    "constraint_private_name",
+  ];
+  const transactionError = Object.assign(new Error("sensitive transaction message"), {
+    name: "PrismaClientKnownRequestError",
+    code: "P2028",
+    meta: { constraint: "constraint_private_name", databaseUrl: "secret-database-url" },
+  });
+  const database = {
+    authUser: { findUnique: async () => null },
+    $transaction: async () => {
+      throw transactionError;
+    },
+    emailVerificationToken: { create: async () => assert.fail("token must not be created") },
+  };
+  const service = createAuthenticationService(database, {
+    tokenSecret: "test-only-token-secret-that-is-long-enough",
+    logger: { info: () => undefined, error: (entry) => logs.push(entry) },
+  });
+  const app = registrationTestApp(service, {
+    minimumMs: 0,
+    jitterMs: 0,
+    sleep: async () => undefined,
+  });
+
+  const response = await request(app).post("/api/auth/register").send({
+    email: sensitiveValues[0],
+    password: sensitiveValues[1],
+    displayName: "Private Person",
+    organizationName: sensitiveValues[2],
+    country: "Nigeria",
+  });
+
+  assert.equal(response.status, 500);
+  assert.equal(response.body.message, "Unexpected server error.");
+  assert.equal(logs.length, 1);
+  const diagnostic = JSON.parse(logs[0]);
+  assert.deepEqual(
+    {
+      event: diagnostic.event,
+      operation: diagnostic.operation,
+      prismaCode: diagnostic.prismaCode,
+      errorType: diagnostic.errorType,
+    },
+    {
+      event: "registration-database-failure",
+      operation: "transaction.start-or-commit",
+      prismaCode: "P2028",
+      errorType: "PrismaClientKnownRequestError",
+    },
+  );
+  for (const sensitiveValue of sensitiveValues) {
+    assert.equal(logs[0].includes(sensitiveValue), false);
+  }
+  assert.equal(logs[0].includes("meta"), false);
+  assert.equal(logs[0].includes("sensitive transaction message"), false);
+});
+
 test("registration returns identical neutral 202 responses and normalizes timing", async () => {
   const delays = [];
   let calls = 0;
