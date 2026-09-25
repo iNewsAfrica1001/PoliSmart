@@ -33,6 +33,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:production": "node scripts/migrate-production.mjs",
     "db:validate:production": "node scripts/validate-production-database.mjs",
+    "db:bootstrap:production": "node scripts/bootstrap-production-application.mjs",
     "db:seed": "prisma db seed",
     "import:afrobarometer": "node scripts/import-afrobarometer.mjs",
     "import:afrobarometer:production": "node scripts/import-afrobarometer-production.mjs"
