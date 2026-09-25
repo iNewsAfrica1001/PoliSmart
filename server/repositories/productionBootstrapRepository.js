@@ -6,6 +6,11 @@ function catalogError(message, code) {
   return Object.assign(new Error(message), { code });
 }
 
+export const PRODUCTION_BOOTSTRAP_TRANSACTION_OPTIONS = Object.freeze({
+  maxWait: 10_000,
+  timeout: 30_000,
+});
+
 export function createProductionBootstrapRepository(db) {
   return {
     async getDatabaseIdentity() {
@@ -30,12 +35,13 @@ export function createProductionBootstrapRepository(db) {
             "STALE_PERMISSION_CATALOG",
           );
 
-        for (const permissionKey of expected.permissionKeys)
-          await transaction.permission.upsert({
-            where: { key: permissionKey },
-            update: { description: `${permissionKey} permission` },
-            create: { key: permissionKey, description: `${permissionKey} permission` },
-          });
+        await transaction.permission.createMany({
+          data: expected.permissionKeys.map((permissionKey) => ({
+            key: permissionKey,
+            description: `${permissionKey} permission`,
+          })),
+          skipDuplicates: true,
+        });
 
         const permissions = await transaction.permission.findMany({
           select: { id: true, key: true },
@@ -61,17 +67,13 @@ export function createProductionBootstrapRepository(db) {
             "STALE_ROLE_MAPPING",
           );
 
-        for (const mapping of expected.mappings)
-          await transaction.rolePermission.upsert({
-            where: {
-              role_permissionId: {
-                role: mapping.role,
-                permissionId: permissionIds.get(mapping.permissionKey),
-              },
-            },
-            update: {},
-            create: { role: mapping.role, permissionId: permissionIds.get(mapping.permissionKey) },
-          });
+        await transaction.rolePermission.createMany({
+          data: expected.mappings.map((mapping) => ({
+            role: mapping.role,
+            permissionId: permissionIds.get(mapping.permissionKey),
+          })),
+          skipDuplicates: true,
+        });
 
         const finalMappings = await transaction.rolePermission.findMany({
           include: { permission: { select: { key: true } } },
@@ -85,7 +87,7 @@ export function createProductionBootstrapRepository(db) {
         )
           throw catalogError("The role-permission catalog is incomplete.", "ROLE_MAPPING_MISMATCH");
         return { permissions: permissions.length, mappings: finalMappings.length };
-      });
+      }, PRODUCTION_BOOTSTRAP_TRANSACTION_OPTIONS);
     },
     findUserById(id) {
       return db.authUser.findUnique({

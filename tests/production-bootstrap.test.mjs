@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 import { PERMISSIONS, ROLE_PERMISSION_POLICY } from "../server/config/authorization.js";
-import { createProductionBootstrapRepository } from "../server/repositories/productionBootstrapRepository.js";
+import {
+  createProductionBootstrapRepository,
+  PRODUCTION_BOOTSTRAP_TRANSACTION_OPTIONS,
+} from "../server/repositories/productionBootstrapRepository.js";
 import {
   PRODUCTION_SUPER_ADMIN_CONFIRMATION,
   assignProductionSuperAdmin,
@@ -17,34 +20,41 @@ function memoryDatabase({ permissions = [], mappings = [], failAudit = false } =
     mappings: structuredClone(mappings),
     membershipRole: "CAMPAIGN_ADMINISTRATOR",
     audits: [],
+    transactionOptions: null,
+    permissionBulkWrites: 0,
+    mappingBulkWrites: 0,
   };
   let nextId = 1;
   const tx = {
     permission: {
       findMany: async () => structuredClone(state.permissions),
-      upsert: async ({ where, update, create }) => {
-        const found = state.permissions.find((item) => item.key === where.key);
-        if (found) Object.assign(found, update);
-        else state.permissions.push({ id: `p${nextId++}`, ...create });
+      createMany: async ({ data, skipDuplicates }) => {
+        state.permissionBulkWrites += 1;
+        for (const create of data)
+          if (!skipDuplicates || !state.permissions.some((item) => item.key === create.key))
+            state.permissions.push({ id: `p${nextId++}`, ...create });
       },
     },
     rolePermission: {
       findMany: async () =>
         state.mappings.map((item) => ({ ...item, permission: { key: item.permissionKey } })),
-      upsert: async ({ where, create }) => {
-        const permission = state.permissions.find((item) => item.id === create.permissionId);
-        const identity = where.role_permissionId;
-        if (
-          !state.mappings.some(
-            (item) => item.role === identity.role && item.permissionId === identity.permissionId,
+      createMany: async ({ data, skipDuplicates }) => {
+        state.mappingBulkWrites += 1;
+        for (const create of data) {
+          const permission = state.permissions.find((item) => item.id === create.permissionId);
+          if (
+            !skipDuplicates ||
+            !state.mappings.some(
+              (item) => item.role === create.role && item.permissionId === create.permissionId,
+            )
           )
-        )
-          state.mappings.push({
-            id: `rp${nextId++}`,
-            role: create.role,
-            permissionId: create.permissionId,
-            permissionKey: permission.key,
-          });
+            state.mappings.push({
+              id: `rp${nextId++}`,
+              role: create.role,
+              permissionId: create.permissionId,
+              permissionKey: permission.key,
+            });
+        }
       },
     },
     membership: {
@@ -63,7 +73,8 @@ function memoryDatabase({ permissions = [], mappings = [], failAudit = false } =
   };
   return {
     state,
-    $transaction: async (callback) => {
+    $transaction: async (callback, options) => {
+      state.transactionOptions = options;
       const snapshot = structuredClone(state);
       try {
         return await callback(tx);
@@ -116,6 +127,18 @@ test("catalog uses exactly the authorization source of truth and is idempotent",
   assert.deepEqual(second, first);
   assert.equal(db.state.permissions.length, expected.permissionKeys.length);
   assert.equal(db.state.mappings.length, expected.mappings.length);
+  assert.deepEqual(db.state.transactionOptions, PRODUCTION_BOOTSTRAP_TRANSACTION_OPTIONS);
+  assert.equal(db.state.permissionBulkWrites, 2);
+  assert.equal(db.state.mappingBulkWrites, 2);
+});
+
+test("catalog avoids per-row writes and has a finite timeout above Prisma's five-second default", () => {
+  const source = fs.readFileSync("server/repositories/productionBootstrapRepository.js", "utf8");
+  assert.doesNotMatch(source, /permission\.upsert|rolePermission\.upsert/);
+  assert.match(source, /permission\.createMany/);
+  assert.match(source, /rolePermission\.createMany/);
+  assert.ok(PRODUCTION_BOOTSTRAP_TRANSACTION_OPTIONS.timeout > 5_000);
+  assert.ok(PRODUCTION_BOOTSTRAP_TRANSACTION_OPTIONS.timeout <= 30_000);
 });
 
 test("catalog rejects stale permissions and stale role mappings", async () => {
