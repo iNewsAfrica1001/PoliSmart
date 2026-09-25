@@ -132,7 +132,7 @@ test("every migration contains a substantive schema change", () => {
     assert.ok(sql.trim().length > 100, `${directory.name} is unexpectedly empty`);
     assert.match(
       sql,
-      /(?:CONSTRAINT|CREATE (?:UNIQUE )?INDEX|CREATE TABLE|CREATE TYPE|ALTER TYPE|ALTER TABLE[\s\S]*ADD COLUMN|CREATE (?:OR REPLACE )?FUNCTION|CREATE TRIGGER|REVOKE ALL PRIVILEGES)/,
+      /(?:CONSTRAINT|CREATE (?:UNIQUE )?INDEX|CREATE TABLE|CREATE TYPE|ALTER TYPE|ALTER TABLE[\s\S]*ADD COLUMN|CREATE (?:OR REPLACE )?FUNCTION|CREATE TRIGGER|REVOKE ALL PRIVILEGES|GRANT\s+(?:SELECT|INSERT|UPDATE|DELETE)[\s\S]*\sON TABLE)/,
       `${directory.name} lacks a substantive schema or security operation`,
     );
   }

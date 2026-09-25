@@ -70,12 +70,12 @@ test("runtime geographic updates allow required fields and prohibit provenance m
     );
 });
 
-test("migrations 0015-0017 exactly implement the reviewed table and column policy", () => {
+test("migrations 0015-0018 exactly implement the reviewed table and column policy", () => {
   const sql = readFileSync(
     "prisma/migrations/0015_runtime_privilege_catalog/migration.sql",
     "utf8",
   );
-  const grantsSql = `${sql}\n${readFileSync("prisma/migrations/0016_geographic_management/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0017_geographic_provenance_retrieval_date/migration.sql", "utf8")}`;
+  const grantsSql = `${sql}\n${readFileSync("prisma/migrations/0016_geographic_management/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0017_geographic_provenance_retrieval_date/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0018_command_center_reference_table_read_privileges/migration.sql", "utf8")}`;
   const revoke = sql.match(/REVOKE ALL PRIVILEGES ON TABLE([\s\S]*?)FROM "polismart_runtime";/);
   assert.ok(revoke);
   assert.deepEqual(identifiers(revoke[1]).sort(), Object.keys(RUNTIME_DATABASE_PRIVILEGES).sort());
@@ -109,6 +109,32 @@ test("migrations 0015-0017 exactly implement the reviewed table and column polic
   assert.doesNotMatch(sql, /GRANT\s+UPDATE\s+ON\s+TABLE/i);
   assert.doesNotMatch(sql, /GRANT[\s\S]*\bTRUNCATE\b/i);
   assert.doesNotMatch(sql, /ALTER\s+TABLE|CREATE\s+TABLE|DROP\s+TABLE|DELETE\s+FROM/i);
+});
+
+test("Command Center shared reference catalogs are read-only for runtime", () => {
+  for (const table of [
+    "data_sources",
+    "survey_countries",
+    "survey_indicator_definitions",
+  ]) {
+    assert.deepEqual(RUNTIME_DATABASE_PRIVILEGES[table], {
+      tablePrivileges: ["SELECT"],
+      updateColumns: [],
+    });
+  }
+
+  const sql = readFileSync(
+    "prisma/migrations/0018_command_center_reference_table_read_privileges/migration.sql",
+    "utf8",
+  );
+  assert.match(
+    sql,
+    /GRANT SELECT ON TABLE[\s\S]*"data_sources"[\s\S]*"survey_countries"[\s\S]*"survey_indicator_definitions"[\s\S]*TO "polismart_runtime";/,
+  );
+  assert.doesNotMatch(
+    sql,
+    /\b(?:INSERT|UPDATE|DELETE|TRUNCATE|REFERENCES|TRIGGER|CREATE|ALTER|DROP|OWNERSHIP|BYPASSRLS|CREATEDB|CREATEROLE)\b/i,
+  );
 });
 
 test("disabled financial tables receive no runtime privilege", () => {

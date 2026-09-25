@@ -5,6 +5,7 @@ import {
   COMMAND_CENTER_QUERY_COUNT,
 } from "../server/repositories/commandCenterRepository.js";
 import { buildCommandCenter } from "../server/services/commandCenter.js";
+import { RUNTIME_DATABASE_PRIVILEGES } from "../server/config/databasePrivileges.js";
 
 const snapshot = {
   campaign: { id: "campaign", status: "ACTIVE" },
@@ -91,6 +92,17 @@ test("command center uses a bounded query plan and aggregate survey table only",
   assert.equal(eventQuery.where.campaignId, "campaign-a");
   assert.equal(eventQuery.where.geographicAreaId, "area-a");
   assert.equal(eventQuery.take, 6);
+});
+
+test("command center aggregate relations are covered by the runtime read model", () => {
+  for (const table of [
+    "survey_aggregate_results",
+    "survey_imports",
+    "data_sources",
+    "survey_countries",
+    "survey_indicator_definitions",
+  ])
+    assert.deepEqual(RUNTIME_DATABASE_PRIVILEGES[table].tablePrivileges, ["SELECT"]);
 });
 
 test("public visualization contract contains source, sample, round, and weighting", () => {
