@@ -133,13 +133,17 @@ export function createAuthenticationService(
     if (user.emailVerifiedAt) {
       return false;
     }
-    await database.emailVerificationToken.deleteMany({
-      where: { userId: user.id, usedAt: null },
-    });
-    const token = await issueToken(
-      database.emailVerificationToken,
-      user.id,
-      VERIFY_HOURS * 60 * 60 * 1000,
+    await runRegistrationOperation("emailVerificationToken.deleteMany", () =>
+      database.emailVerificationToken.deleteMany({
+        where: { userId: user.id, usedAt: null },
+      }),
+    );
+    const token = await runRegistrationOperation("emailVerificationToken.create", () =>
+      issueToken(
+        database.emailVerificationToken,
+        user.id,
+        VERIFY_HOURS * 60 * 60 * 1000,
+      ),
     );
     recordRegistrationEvent("VERIFICATION_RESEND_ATTEMPTED");
     return deliverNotification("sendEmailVerification", { email: user.email, token });
@@ -171,10 +175,12 @@ export function createAuthenticationService(
         });
       }
 
-      const existingUser = await database.authUser.findUnique({
-        where: { email: normalizedEmail },
-        select: { id: true, email: true, emailVerifiedAt: true },
-      });
+      const existingUser = await runRegistrationOperation("authUser.findUnique", () =>
+        database.authUser.findUnique({
+          where: { email: normalizedEmail },
+          select: { id: true, email: true, emailVerifiedAt: true },
+        }),
+      );
       if (existingUser) {
         const notificationDelivered = await resendVerificationForExistingUser(existingUser);
         return { created: false, notificationDelivered };
@@ -215,10 +221,12 @@ export function createAuthenticationService(
             recordRegistrationDatabaseFailure("transaction.start-or-commit", error);
           }
           if (error?.code !== "P2002") throw error;
-          const racedUser = await database.authUser.findUnique({
-            where: { email: normalizedEmail },
-            select: { id: true, email: true, emailVerifiedAt: true },
-          });
+          const racedUser = await runRegistrationOperation("authUser.findUnique", () =>
+            database.authUser.findUnique({
+              where: { email: normalizedEmail },
+              select: { id: true, email: true, emailVerifiedAt: true },
+            }),
+          );
           if (racedUser) {
             const notificationDelivered = await resendVerificationForExistingUser(racedUser);
             return { created: false, notificationDelivered };

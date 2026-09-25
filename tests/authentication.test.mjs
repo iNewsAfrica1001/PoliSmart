@@ -217,6 +217,99 @@ function registrationTestApp(authService, registrationTiming = {}) {
   return app;
 }
 
+for (const failingOperation of [
+  "authUser.findUnique",
+  "emailVerificationToken.deleteMany",
+  "emailVerificationToken.create",
+]) {
+  test(`registration safely identifies pre-transaction ${failingOperation} failures`, async () => {
+    const logs = [];
+    let transactionEntered = false;
+    let createdRecords = 0;
+    const sensitiveValues = [
+      "private@example.test",
+      "SensitivePass2026",
+      "Private Organization",
+      "secret-database-url",
+      "constraint_private_name",
+      "sensitive database message",
+    ];
+    const failure = Object.assign(new Error(sensitiveValues[5]), {
+      name: "PrismaClientKnownRequestError",
+      code: "P2024",
+      meta: { constraint: sensitiveValues[4], databaseUrl: sensitiveValues[3] },
+    });
+    const existingUser = {
+      id: "private-user-id",
+      email: sensitiveValues[0],
+      emailVerifiedAt: null,
+    };
+    const database = {
+      authUser: {
+        findUnique: async () => {
+          if (failingOperation === "authUser.findUnique") throw failure;
+          return existingUser;
+        },
+      },
+      emailVerificationToken: {
+        deleteMany: async () => {
+          if (failingOperation === "emailVerificationToken.deleteMany") throw failure;
+        },
+        create: async () => {
+          if (failingOperation === "emailVerificationToken.create") throw failure;
+          createdRecords += 1;
+        },
+      },
+      $transaction: async () => {
+        transactionEntered = true;
+        assert.fail("transaction must not be entered after a pre-transaction failure");
+      },
+    };
+    const service = createAuthenticationService(database, {
+      tokenSecret: "test-only-token-secret-that-is-long-enough",
+      logger: { info: () => undefined, error: (entry) => logs.push(entry) },
+    });
+    const app = registrationTestApp(service, {
+      minimumMs: 0,
+      jitterMs: 0,
+      sleep: async () => undefined,
+    });
+
+    const response = await request(app).post("/api/auth/register").send({
+      email: sensitiveValues[0],
+      password: sensitiveValues[1],
+      displayName: "Private Person",
+      organizationName: sensitiveValues[2],
+      country: "Nigeria",
+    });
+
+    assert.equal(response.status, 500);
+    assert.equal(response.body.message, "Unexpected server error.");
+    assert.equal(transactionEntered, false);
+    assert.equal(createdRecords, 0);
+    assert.equal(logs.length, 1);
+    const diagnostic = JSON.parse(logs[0]);
+    assert.deepEqual(
+      {
+        event: diagnostic.event,
+        operation: diagnostic.operation,
+        prismaCode: diagnostic.prismaCode,
+        errorType: diagnostic.errorType,
+      },
+      {
+        event: "registration-database-failure",
+        operation: failingOperation,
+        prismaCode: "P2024",
+        errorType: "PrismaClientKnownRequestError",
+      },
+    );
+    for (const sensitiveValue of sensitiveValues) {
+      assert.equal(logs[0].includes(sensitiveValue), false);
+    }
+    assert.equal(logs[0].includes("meta"), false);
+  });
+}
+
 for (const failingOperation of ["authUser.create", "organization.create", "membership.create"]) {
   test(`registration safely identifies ${failingOperation} failures and preserves rollback`, async () => {
     const logs = [];
