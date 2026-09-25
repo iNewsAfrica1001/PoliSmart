@@ -99,7 +99,8 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
         provenance: {
           sourceInstitution: data.sourceInstitution,
           sourceDocument: data.sourceDocument,
-          sourceVersionDate: data.sourceVersionDate,
+          sourceVersionDate: data.sourceVersionDate || undefined,
+          retrievalDate: data.retrievalDate,
           validationStatus: data.validationStatus,
         },
       });
@@ -340,7 +341,12 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
             </label>
             <label>
               Source version date
-              <input name="sourceVersionDate" type="date" required />
+              <span className="field-hint">Enter only when the source publishes a version date.</span>
+              <input name="sourceVersionDate" type="date" />
+            </label>
+            <label>
+              Retrieval date
+              <input name="retrievalDate" type="date" required />
             </label>
             <label>
               Validation status

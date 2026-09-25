@@ -19,17 +19,35 @@ export const GEOGRAPHIC_IMPORT_LIMITS = Object.freeze({
 const fail = (message, code, status = 400) => Object.assign(new Error(message), { status, code });
 const clean = (value) => (typeof value === "string" ? value.trim() : "");
 const areaKey = (level, code) => `${level}\0${code}`;
+const isDateOnly = (value) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+  const [, year, month, day] = match.map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+};
 export function validateProvenance(input) {
+  if (
+    input?.sourceVersionDate !== undefined &&
+    input?.sourceVersionDate !== null &&
+    typeof input.sourceVersionDate !== "string"
+  )
+    throw fail("Source version date is invalid.", "PROVENANCE_DATE_INVALID");
   const value = {
     sourceInstitution: clean(input?.sourceInstitution),
     sourceDocument: clean(input?.sourceDocument),
     sourceVersionDate: clean(input?.sourceVersionDate),
+    retrievalDate: clean(input?.retrievalDate),
     validationStatus: clean(input?.validationStatus),
   };
   for (const [key, max] of [
     ["sourceInstitution", GEOGRAPHIC_IMPORT_LIMITS.source],
     ["sourceDocument", GEOGRAPHIC_IMPORT_LIMITS.source],
-    ["sourceVersionDate", 10],
+    ["retrievalDate", 10],
     ["validationStatus", GEOGRAPHIC_IMPORT_LIMITS.validationStatus],
   ])
     if (!value[key] || value[key].length > max)
@@ -37,8 +55,10 @@ export function validateProvenance(input) {
         "Source provenance is missing or exceeds an approved limit.",
         "PROVENANCE_INVALID",
       );
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value.sourceVersionDate))
+  if (value.sourceVersionDate && !isDateOnly(value.sourceVersionDate))
     throw fail("Source version date is invalid.", "PROVENANCE_DATE_INVALID");
+  if (!isDateOnly(value.retrievalDate))
+    throw fail("Retrieval date is invalid.", "PROVENANCE_RETRIEVAL_DATE_INVALID");
   return value;
 }
 function detectCycles(nodes) {

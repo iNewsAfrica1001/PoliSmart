@@ -98,6 +98,7 @@ test("every geographic import field boundary is enforced", () => {
         sourceInstitution: "S".repeat(GEOGRAPHIC_IMPORT_LIMITS.source + 1),
         sourceDocument: "Dataset",
         sourceVersionDate: "2026-09-25",
+        retrievalDate: "2026-09-26",
         validationStatus: "REVIEWED",
       }),
     /provenance/,
@@ -108,6 +109,7 @@ test("every geographic import field boundary is enforced", () => {
         sourceInstitution: "Institution",
         sourceDocument: "Dataset",
         sourceVersionDate: "2026-09-25",
+        retrievalDate: "2026-09-26",
         validationStatus: "V".repeat(GEOGRAPHIC_IMPORT_LIMITS.validationStatus + 1),
       }),
     /provenance/,
@@ -288,15 +290,41 @@ test("partial activation is accepted while parent isolation and cycles are rejec
 });
 test("provenance is bounded and complete", () => {
   assert.throws(() => validateProvenance({ sourceInstitution: "INEC" }), /provenance/);
-  assert.equal(
-    validateProvenance({
+  const complete = validateProvenance({
+    sourceInstitution: "INEC",
+    sourceDocument: "Dataset",
+    sourceVersionDate: "2026-09-25",
+    retrievalDate: "2026-09-26",
+    validationStatus: "APPROVED",
+  });
+  assert.equal(complete.sourceInstitution, "INEC");
+  assert.equal(complete.sourceVersionDate, "2026-09-25");
+  assert.equal(complete.retrievalDate, "2026-09-26");
+});
+test("provenance accepts an unpublished source version without substituting retrieval date", () => {
+  for (const sourceVersionDate of [undefined, null, "", "   "]) {
+    const value = validateProvenance({
       sourceInstitution: "INEC",
-      sourceDocument: "Dataset",
-      sourceVersionDate: "2026-09-25",
-      validationStatus: "APPROVED",
-    }).sourceInstitution,
-    "INEC",
-  );
+      sourceDocument: "Live locator",
+      sourceVersionDate,
+      retrievalDate: "2026-09-25",
+      validationStatus: "VALIDATED",
+    });
+    assert.equal(value.sourceVersionDate, "");
+    assert.equal(value.retrievalDate, "2026-09-25");
+  }
+});
+test("provenance rejects malformed supplied version dates and missing or malformed retrieval dates", () => {
+  const base = {
+    sourceInstitution: "INEC",
+    sourceDocument: "Live locator",
+    retrievalDate: "2026-09-25",
+    validationStatus: "VALIDATED",
+  };
+  for (const sourceVersionDate of ["25-09-2026", "2026/09/25", "2026-02-30", "not-published", 123, true, {}])
+    assert.throws(() => validateProvenance({ ...base, sourceVersionDate }), /version date/);
+  for (const retrievalDate of [undefined, null, "", "25-09-2026", "2026/09/25", "2026-02-30"])
+    assert.throws(() => validateProvenance({ ...base, retrievalDate }), /provenance|Retrieval date/);
 });
 test("Super Administrator UI exposes search, filter, edit, path, and controlled modes", () => {
   const page = readFileSync(
@@ -315,4 +343,6 @@ test("Super Administrator UI exposes search, filter, edit, path, and controlled 
   ])
     assert.match(compactPage, new RegExp(label));
   assert.match(page, /IMPORT AUTHORIZED GEOGRAPHIC DATA/);
+  assert.match(page, /Enter only when the source publishes a version date/);
+  assert.match(page, /name="retrievalDate" type="date" required/);
 });

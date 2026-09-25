@@ -564,27 +564,28 @@ model GeographicLevel {
 }
 
 model GeographicArea {
-  id         String           @id @default(uuid()) @db.Uuid
-  tenantId   String           @map("tenant_id") @db.Uuid
-  campaignId String           @map("campaign_id") @db.Uuid
-  levelId    String           @map("level_id") @db.Uuid
-  parentId   String?          @map("parent_id") @db.Uuid
-  name       String
-  code       String?
-  isActive   Boolean          @default(true) @map("is_active")
-  sourceInstitution String?   @map("source_institution")
-  sourceDocument String?      @map("source_document")
-  sourceVersionDate DateTime? @map("source_version_date") @db.Date
-  importedAt DateTime?        @map("imported_at")
-  validationStatus String?    @map("validation_status")
-  createdAt  DateTime         @default(now()) @map("created_at")
-  updatedAt  DateTime         @updatedAt @map("updated_at")
-  campaign   Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  level      GeographicLevel  @relation(fields: [levelId], references: [id], onDelete: Restrict)
-  parent     GeographicArea?  @relation("AreaHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
-  children   GeographicArea[] @relation("AreaHierarchy")
-  events     CampaignEvent[]
-  volunteers Volunteer[]
+  id                String           @id @default(uuid()) @db.Uuid
+  tenantId          String           @map("tenant_id") @db.Uuid
+  campaignId        String           @map("campaign_id") @db.Uuid
+  levelId           String           @map("level_id") @db.Uuid
+  parentId          String?          @map("parent_id") @db.Uuid
+  name              String
+  code              String?
+  isActive          Boolean          @default(true) @map("is_active")
+  sourceInstitution String?          @map("source_institution")
+  sourceDocument    String?          @map("source_document")
+  sourceVersionDate DateTime?        @map("source_version_date") @db.Date
+  retrievalDate     DateTime?        @map("retrieval_date") @db.Date
+  importedAt        DateTime?        @map("imported_at")
+  validationStatus  String?          @map("validation_status")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+  campaign          Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  level             GeographicLevel  @relation(fields: [levelId], references: [id], onDelete: Restrict)
+  parent            GeographicArea?  @relation("AreaHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children          GeographicArea[] @relation("AreaHierarchy")
+  events            CampaignEvent[]
+  volunteers        Volunteer[]
 
   @@unique([campaignId, levelId, parentId, name])
   @@index([tenantId, campaignId, parentId])

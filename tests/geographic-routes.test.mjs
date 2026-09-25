@@ -15,6 +15,7 @@ const provenance = {
   sourceInstitution: "Reviewed institution",
   sourceDocument: "Reviewed dataset",
   sourceVersionDate: "2026-09-25",
+  retrievalDate: "2026-09-26",
   validationStatus: "REVIEWED",
 };
 const importRow = {
@@ -41,7 +42,7 @@ function appFor(role, repository) {
 }
 
 function routeRepository() {
-  const calls = { audits: [], geographicWrites: 0, transactions: 0 };
+  const calls = { audits: [], importAudits: [], createdAreas: [], geographicWrites: 0, transactions: 0 };
   const levels = NIGERIA_GEOGRAPHIC_LEVELS.map((name, index) => ({
     id: index === 2 ? levelId : `level-${index}`,
     name,
@@ -65,11 +66,12 @@ function routeRepository() {
         geographicArea: {
           create: async ({ data }) => {
             created.push(data);
+            calls.createdAreas.push(data);
             calls.geographicWrites += 1;
             return { id: areaId, ...data };
           },
         },
-        securityAuditEvent: { create: async () => ({}) },
+        securityAuditEvent: { create: async ({ data }) => { calls.importAudits.push(data); return {}; } },
       };
       return callback(transaction);
     },
@@ -123,6 +125,8 @@ test("VALIDATE and PREVIEW write durable audits but no geographic business state
     assert.equal(calls.transactions, 0);
     assert.equal(calls.audits.length, 1);
     assert.equal(calls.audits[0][2], `GEOGRAPHIC_IMPORT_${mode}`);
+    assert.equal(calls.audits[0][5].sourceVersionDate, "2026-09-25");
+    assert.equal(calls.audits[0][5].retrievalDate, "2026-09-26");
   }
 });
 
@@ -150,6 +154,28 @@ test("IMPORT requires exact confirmation before opening a transaction", async ()
     .expect(201);
   assert.equal(calls.transactions, 1);
   assert.equal(calls.geographicWrites, 1);
+  assert.equal(calls.createdAreas[0].sourceVersionDate.toISOString().slice(0, 10), "2026-09-25");
+  assert.equal(calls.createdAreas[0].retrievalDate.toISOString().slice(0, 10), "2026-09-26");
+  assert.equal(calls.importAudits[0].metadata.sourceVersionDate, "2026-09-25");
+  assert.equal(calls.importAudits[0].metadata.retrievalDate, "2026-09-26");
+});
+
+test("imports preserve a null unpublished source version and distinct required retrieval date", async () => {
+  const { repository, calls } = routeRepository();
+  await request(appFor("SUPER_ADMINISTRATOR", repository))
+    .post(`/operations/${campaignId}/geography/import`)
+    .set("X-Organization-Id", tenantId)
+    .send({
+      mode: "IMPORT",
+      confirmation: "IMPORT AUTHORIZED GEOGRAPHIC DATA",
+      provenance: { ...provenance, sourceVersionDate: undefined },
+      rows: [importRow],
+    })
+    .expect(201);
+  assert.equal(calls.createdAreas[0].sourceVersionDate, null);
+  assert.equal(calls.createdAreas[0].retrievalDate.toISOString().slice(0, 10), "2026-09-26");
+  assert.equal(calls.importAudits[0].metadata.sourceVersionDate, null);
+  assert.equal(calls.importAudits[0].metadata.retrievalDate, "2026-09-26");
 });
 
 test("IMPORT audit failure rolls back every geographic insert", async () => {

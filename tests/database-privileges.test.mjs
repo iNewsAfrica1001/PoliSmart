@@ -60,6 +60,7 @@ test("runtime geographic updates allow required fields and prohibit provenance m
     "source_institution",
     "source_document",
     "source_version_date",
+    "retrieval_date",
     "imported_at",
     "validation_status",
   ])
@@ -69,12 +70,12 @@ test("runtime geographic updates allow required fields and prohibit provenance m
     );
 });
 
-test("migrations 0015-0016 exactly implement the reviewed table and column policy", () => {
+test("migrations 0015-0017 exactly implement the reviewed table and column policy", () => {
   const sql = readFileSync(
     "prisma/migrations/0015_runtime_privilege_catalog/migration.sql",
     "utf8",
   );
-  const grantsSql = `${sql}\n${readFileSync("prisma/migrations/0016_geographic_management/migration.sql", "utf8")}`;
+  const grantsSql = `${sql}\n${readFileSync("prisma/migrations/0016_geographic_management/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0017_geographic_provenance_retrieval_date/migration.sql", "utf8")}`;
   const revoke = sql.match(/REVOKE ALL PRIVILEGES ON TABLE([\s\S]*?)FROM "polismart_runtime";/);
   assert.ok(revoke);
   assert.deepEqual(identifiers(revoke[1]).sort(), Object.keys(RUNTIME_DATABASE_PRIVILEGES).sort());

@@ -337,6 +337,9 @@ export function createOperationsRouter(repository) {
             rowsValid: report.rowsValid,
             rowsRejected: report.rowsRejected,
             sourceInstitution: provenance.sourceInstitution,
+            sourceDocument: provenance.sourceDocument,
+            sourceVersionDate: provenance.sourceVersionDate || null,
+            retrievalDate: provenance.retrievalDate,
             validationStatus: provenance.validationStatus,
           },
         );
@@ -366,7 +369,10 @@ export function createOperationsRouter(repository) {
               code: row.code,
               sourceInstitution: provenance.sourceInstitution,
               sourceDocument: provenance.sourceDocument,
-              sourceVersionDate: new Date(provenance.sourceVersionDate),
+              sourceVersionDate: provenance.sourceVersionDate
+                ? new Date(provenance.sourceVersionDate)
+                : null,
+              retrievalDate: new Date(provenance.retrievalDate),
               importedAt: new Date(),
               validationStatus: provenance.validationStatus,
             },
@@ -386,7 +392,8 @@ export function createOperationsRouter(repository) {
               rowsImported: count,
               sourceInstitution: provenance.sourceInstitution,
               sourceDocument: provenance.sourceDocument,
-              sourceVersionDate: provenance.sourceVersionDate,
+              sourceVersionDate: provenance.sourceVersionDate || null,
+              retrievalDate: provenance.retrievalDate,
               validationStatus: provenance.validationStatus,
             },
           },
