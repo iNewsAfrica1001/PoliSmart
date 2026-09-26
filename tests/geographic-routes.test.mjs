@@ -63,6 +63,14 @@ function completeHierarchyRows() {
   return rows;
 }
 
+function independentImportRows(count) {
+  return Array.from({ length: count }, (_, index) => ({
+    level: "State / FCT",
+    name: `Reviewed area ${index}`,
+    code: `PERF-${index}`,
+  }));
+}
+
 function appFor(role, repository) {
   const app = express();
   app.use(express.json({ limit: GEOGRAPHIC_IMPORT_LIMITS.validateJsonBody }));
@@ -87,6 +95,7 @@ function routeRepository() {
     createdAreas: [],
     geographicWrites: 0,
     transactions: 0,
+    bulkInserts: 0,
   };
   const levels = NIGERIA_GEOGRAPHIC_LEVELS.map((name, index) => ({
     id: index === 2 ? levelId : `level-${index}`,
@@ -109,11 +118,16 @@ function routeRepository() {
       const created = [];
       const transaction = {
         geographicArea: {
-          create: async ({ data }) => {
-            created.push(data);
-            calls.createdAreas.push(data);
-            calls.geographicWrites += 1;
-            return { id: areaId, ...data };
+          createManyAndReturn: async ({ data }) => {
+            calls.bulkInserts += 1;
+            const items = data.map((item, index) => ({
+              id: `${areaId}-${calls.createdAreas.length + index}`,
+              ...item,
+            }));
+            created.push(...items);
+            calls.createdAreas.push(...items);
+            calls.geographicWrites += items.length;
+            return items;
           },
         },
         securityAuditEvent: {
@@ -403,6 +417,7 @@ test("IMPORT requires exact confirmation before opening a transaction", async ()
   assert.equal(calls.importAudits[0].metadata.sourceVersionDate, "2026-09-25");
   assert.equal(calls.importAudits[0].metadata.retrievalDate, "2026-09-26");
   assert.equal(calls.importAudits[0].metadata.importedInactive, true);
+  assert.equal(calls.importAudits[0].metadata.rowsSubmitted, 1);
 });
 test("IMPORT reports rejected rows distinctly without opening a transaction", async () => {
   const { repository, calls } = routeRepository();
@@ -420,6 +435,47 @@ test("IMPORT reports rejected rows distinctly without opening a transaction", as
     response.body.message,
     "Import requires all submitted rows to pass fresh validation.",
   );
+  assert.equal(calls.transactions, 0);
+  assert.equal(calls.geographicWrites, 0);
+  assert.equal(calls.importAudits.length, 0);
+});
+
+test("controlled IMPORT bulk-writes 774, 4,500, and 5,000 rows in one layer", async () => {
+  for (const count of [774, 4500, 5000]) {
+    const { repository, calls } = routeRepository();
+    const response = await request(appFor("SUPER_ADMINISTRATOR", repository))
+      .post(`/operations/${campaignId}/geography/import`)
+      .set("X-Organization-Id", tenantId)
+      .send({
+        mode: "IMPORT",
+        confirmation: "IMPORT AUTHORIZED GEOGRAPHIC DATA",
+        provenance,
+        rows: independentImportRows(count),
+      })
+      .expect(201);
+    assert.equal(response.body.imported, count);
+    assert.equal(calls.bulkInserts, Math.ceil(count / 1000));
+    assert.equal(calls.geographicWrites, count);
+    assert.equal(calls.createdAreas.every((item) => item.isActive === false), true);
+    assert.equal(calls.importAudits.length, 1);
+    assert.equal(calls.importAudits[0].metadata.rowsSubmitted, count);
+    assert.equal(calls.importAudits[0].metadata.rowsImported, count);
+    assert.equal(calls.importAudits[0].metadata.importedInactive, true);
+  }
+});
+
+test("controlled IMPORT rejects 5,001 rows before transaction or writes", async () => {
+  const { repository, calls } = routeRepository();
+  await request(appFor("SUPER_ADMINISTRATOR", repository))
+    .post(`/operations/${campaignId}/geography/import`)
+    .set("X-Organization-Id", tenantId)
+    .send({
+      mode: "IMPORT",
+      confirmation: "IMPORT AUTHORIZED GEOGRAPHIC DATA",
+      provenance,
+      rows: independentImportRows(5001),
+    })
+    .expect(413);
   assert.equal(calls.transactions, 0);
   assert.equal(calls.geographicWrites, 0);
   assert.equal(calls.importAudits.length, 0);
@@ -465,11 +521,13 @@ test("four staged IMPORT batches resolve inactive parents and remain inactive", 
       const draft = structuredClone(state);
       const transaction = {
         geographicArea: {
-          create: async ({ data }) => {
-            const level = levels.find((item) => item.id === data.levelId);
-            const item = { id: `area-${draft.areas.length + 1}`, ...data, level };
-            draft.areas.push(item);
-            return item;
+          createManyAndReturn: async ({ data }) => {
+            const items = data.map((entry, index) => {
+              const level = levels.find((item) => item.id === entry.levelId);
+              return { id: `area-${draft.areas.length + index + 1}`, ...entry, level };
+            });
+            draft.areas.push(...items);
+            return items;
           },
         },
         securityAuditEvent: {
@@ -540,10 +598,10 @@ test("IMPORT audit failure rolls back every geographic insert", async () => {
     const draft = [...persisted];
     const transaction = {
       geographicArea: {
-        create: async ({ data }) => {
-          const item = { id: areaId, ...data };
-          draft.push(item);
-          return item;
+        createManyAndReturn: async ({ data }) => {
+          const items = data.map((item, index) => ({ id: `${areaId}-${index}`, ...item }));
+          draft.push(...items);
+          return items;
         },
       },
       securityAuditEvent: {
@@ -567,6 +625,81 @@ test("IMPORT audit failure rolls back every geographic insert", async () => {
     })
     .expect(500);
   assert.equal(persisted.length, 0);
+});
+
+test("IMPORT insert failure rolls back rows and creates no audit", async () => {
+  const { repository, calls } = routeRepository();
+  const persisted = [];
+  repository.transaction = async (callback) => {
+    const draft = [...persisted];
+    const transaction = {
+      geographicArea: {
+        createManyAndReturn: async ({ data }) => {
+          draft.push(...data);
+          throw Object.assign(new Error("database detail must stay private"), {
+            name: "PrismaClientKnownRequestError",
+            code: "P2002",
+          });
+        },
+      },
+      securityAuditEvent: {
+        create: async ({ data }) => calls.importAudits.push(data),
+      },
+    };
+    const result = await callback(transaction);
+    persisted.splice(0, persisted.length, ...draft);
+    return result;
+  };
+  const entries = [];
+  const originalError = console.error;
+  console.error = (entry) => entries.push(entry);
+  try {
+    await request(appFor("SUPER_ADMINISTRATOR", repository))
+      .post(`/operations/${campaignId}/geography/import`)
+      .set("X-Organization-Id", tenantId)
+      .send({
+        mode: "IMPORT",
+        confirmation: "IMPORT AUTHORIZED GEOGRAPHIC DATA",
+        provenance,
+        rows: [importRow],
+      })
+      .expect(500, { message: "Unexpected server error." });
+  } finally {
+    console.error = originalError;
+  }
+  assert.equal(persisted.length, 0);
+  assert.equal(calls.importAudits.length, 0);
+  const diagnostic = JSON.parse(entries[0]);
+  assert.deepEqual(
+    {
+      event: diagnostic.event,
+      mode: diagnostic.mode,
+      rowsSubmitted: diagnostic.rowsSubmitted,
+      prismaCode: diagnostic.prismaCode,
+      errorType: diagnostic.errorType,
+    },
+    {
+      event: "geographic-controlled-import-failed",
+      mode: "IMPORT",
+      rowsSubmitted: 1,
+      prismaCode: "P2002",
+      errorType: "PrismaClientKnownRequestError",
+    },
+  );
+  assert.equal(Number.isSafeInteger(diagnostic.durationMs), true);
+  assert.doesNotMatch(entries.join("\n"), /database detail|DATABASE_URL|token|password/i);
+});
+
+test("geographic import transaction uses bounded server-controlled timing", async () => {
+  let options;
+  const repository = createOperationsRepository({
+    $transaction: async (callback, suppliedOptions) => {
+      options = suppliedOptions;
+      return callback({});
+    },
+  });
+  await repository.transaction(async () => "ok");
+  assert.deepEqual(options, { maxWait: 10_000, timeout: 30_000 });
 });
 
 function atomicDatabase({ levelActive = true, parentActive = true, auditFails = false } = {}) {

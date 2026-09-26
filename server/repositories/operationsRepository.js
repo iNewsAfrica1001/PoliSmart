@@ -1,5 +1,10 @@
 import { assertNoAreaCycle } from "../services/geographicManagement.js";
 
+const GEOGRAPHIC_IMPORT_TRANSACTION_OPTIONS = Object.freeze({
+  maxWait: 10_000,
+  timeout: 30_000,
+});
+
 const MODELS = Object.freeze({
   initiatives: "initiative",
   activities: "activity",
@@ -332,7 +337,7 @@ export function createOperationsRepository(database) {
       });
     },
     transaction(callback) {
-      return database.$transaction(callback);
+      return database.$transaction(callback, GEOGRAPHIC_IMPORT_TRANSACTION_OPTIONS);
     },
     database,
     appendGeographicAudit(tenantId, actorId, action, entity, entityId, metadata = {}) {

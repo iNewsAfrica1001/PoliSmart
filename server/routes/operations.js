@@ -18,6 +18,8 @@ import {
   validateProvenance,
 } from "../services/geographicManagement.js";
 
+const GEOGRAPHIC_IMPORT_WRITE_BATCH_SIZE = 1_000;
+
 function workData(body) {
   return {
     title: requireString(body, "title", { min: 2, max: 160 }),
@@ -37,6 +39,21 @@ function patchData(body) {
   if (body?.status !== undefined) data.status = workStatus(body.status);
   if (body?.dueAt !== undefined) data.dueAt = optionalDate(body.dueAt, "dueAt") ?? null;
   return data;
+}
+
+function geographicImportDiagnostic(error, rowsSubmitted, startedAt) {
+  const prismaCode =
+    typeof error?.code === "string" && /^P\d{4}$/.test(error.code) ? error.code : null;
+  console.error(
+    JSON.stringify({
+      event: "geographic-controlled-import-failed",
+      mode: "IMPORT",
+      rowsSubmitted,
+      durationMs: Date.now() - startedAt,
+      prismaCode,
+      errorType: String(error?.name || "Error").slice(0, 80),
+    }),
+  );
 }
 
 export function createOperationsRouter(repository) {
@@ -366,58 +383,85 @@ export function createOperationsRouter(repository) {
           new Error("Import requires all submitted rows to pass fresh validation."),
           { status: 400 },
         );
-      const inserted = await repository.transaction(async (transaction) => {
-        const codeIds = new Map(
-          areas
-            .filter((item) => item.code)
-            .map((item) => [`${item.level.name}\0${item.code}`, item.id]),
-        );
-        let count = 0;
-        for (const row of report.plan) {
-          const key = `${row.levelName}\0${row.code}`;
-          const item = await transaction.geographicArea.create({
+      const importStartedAt = Date.now();
+      let inserted;
+      try {
+        inserted = await repository.transaction(async (transaction) => {
+          const codeIds = new Map(
+            areas
+              .filter((item) => item.code)
+              .map((item) => [`${item.level.name}\0${item.code}`, item.id]),
+          );
+          const levelNames = new Map(levels.map((item) => [item.id, item.name]));
+          const pending = [...report.plan];
+          const importedAt = new Date();
+          let count = 0;
+          while (pending.length) {
+            const ready = pending.filter(
+              (row) => !row.parentKey || codeIds.has(row.parentKey),
+            );
+            if (!ready.length) throw new Error("Validated geographic import plan is unresolved.");
+            const readyData = ready.map((row) => ({
+                tenantId: request.tenant.id,
+                campaignId: request.params.campaignId,
+                levelId: row.levelId,
+                parentId: row.parentKey ? codeIds.get(row.parentKey) : null,
+                name: row.name,
+                code: row.code,
+                sourceInstitution: provenance.sourceInstitution,
+                sourceDocument: provenance.sourceDocument,
+                sourceVersionDate: provenance.sourceVersionDate
+                  ? new Date(provenance.sourceVersionDate)
+                  : null,
+                retrievalDate: new Date(provenance.retrievalDate),
+                importedAt,
+                validationStatus: provenance.validationStatus,
+                isActive: false,
+              }));
+            for (
+              let offset = 0;
+              offset < readyData.length;
+              offset += GEOGRAPHIC_IMPORT_WRITE_BATCH_SIZE
+            ) {
+              const created = await transaction.geographicArea.createManyAndReturn({
+                data: readyData.slice(offset, offset + GEOGRAPHIC_IMPORT_WRITE_BATCH_SIZE),
+                select: { id: true, levelId: true, code: true },
+              });
+              for (const item of created)
+                codeIds.set(`${levelNames.get(item.levelId)}\0${item.code}`, item.id);
+              count += created.length;
+            }
+            const readyKeys = new Set(ready.map((row) => `${row.levelName}\0${row.code}`));
+            for (let index = pending.length - 1; index >= 0; index -= 1)
+              if (readyKeys.has(`${pending[index].levelName}\0${pending[index].code}`))
+                pending.splice(index, 1);
+          }
+          await transaction.securityAuditEvent.create({
             data: {
               tenantId: request.tenant.id,
-              campaignId: request.params.campaignId,
-              levelId: row.levelId,
-              parentId: row.parentKey ? codeIds.get(row.parentKey) : null,
-              name: row.name,
-              code: row.code,
-              sourceInstitution: provenance.sourceInstitution,
-              sourceDocument: provenance.sourceDocument,
-              sourceVersionDate: provenance.sourceVersionDate
-                ? new Date(provenance.sourceVersionDate)
-                : null,
-              retrievalDate: new Date(provenance.retrievalDate),
-              importedAt: new Date(),
-              validationStatus: provenance.validationStatus,
-              isActive: false,
+              actorId: request.auth.user.id,
+              action: "GEOGRAPHIC_IMPORT_EXECUTED",
+              entity: "campaign",
+              entityId: request.params.campaignId,
+              metadata: {
+                rowsReceived: report.rowsReceived,
+                rowsSubmitted: report.rowsReceived,
+                rowsImported: count,
+                sourceInstitution: provenance.sourceInstitution,
+                sourceDocument: provenance.sourceDocument,
+                sourceVersionDate: provenance.sourceVersionDate || null,
+                retrievalDate: provenance.retrievalDate,
+                validationStatus: provenance.validationStatus,
+                importedInactive: true,
+              },
             },
           });
-          codeIds.set(key, item.id);
-          count += 1;
-        }
-        await transaction.securityAuditEvent.create({
-          data: {
-            tenantId: request.tenant.id,
-            actorId: request.auth.user.id,
-            action: "GEOGRAPHIC_IMPORT_EXECUTED",
-            entity: "campaign",
-            entityId: request.params.campaignId,
-            metadata: {
-              rowsReceived: report.rowsReceived,
-              rowsImported: count,
-              sourceInstitution: provenance.sourceInstitution,
-              sourceDocument: provenance.sourceDocument,
-              sourceVersionDate: provenance.sourceVersionDate || null,
-              retrievalDate: provenance.retrievalDate,
-              validationStatus: provenance.validationStatus,
-              importedInactive: true,
-            },
-          },
+          return count;
         });
-        return count;
-      });
+      } catch (error) {
+        geographicImportDiagnostic(error, report.rowsReceived, importStartedAt);
+        throw error;
+      }
       response.status(201).json({ mode, imported: inserted, report });
     }),
   );
