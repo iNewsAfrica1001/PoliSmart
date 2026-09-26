@@ -286,11 +286,12 @@ test("ordinary administrators cannot use enlarged VALIDATE or PREVIEW paths", as
 test("IMPORT requires exact confirmation before opening a transaction", async () => {
   for (const confirmation of [undefined, "incorrect"]) {
     const { repository, calls } = routeRepository();
-    await request(appFor("SUPER_ADMINISTRATOR", repository))
+    const response = await request(appFor("SUPER_ADMINISTRATOR", repository))
       .post(`/operations/${campaignId}/geography/import`)
       .set("X-Organization-Id", tenantId)
       .send({ mode: "IMPORT", confirmation, provenance, rows: [importRow] })
       .expect(400);
+    assert.equal(response.body.message, "Import confirmation must exactly match the required phrase.");
     assert.equal(calls.transactions, 0);
     assert.equal(calls.geographicWrites, 0);
   }
@@ -313,6 +314,26 @@ test("IMPORT requires exact confirmation before opening a transaction", async ()
   assert.equal(calls.importAudits[0].metadata.sourceVersionDate, "2026-09-25");
   assert.equal(calls.importAudits[0].metadata.retrievalDate, "2026-09-26");
   assert.equal(calls.importAudits[0].metadata.importedInactive, true);
+});
+test("IMPORT reports rejected rows distinctly without opening a transaction", async () => {
+  const { repository, calls } = routeRepository();
+  const response = await request(appFor("SUPER_ADMINISTRATOR", repository))
+    .post(`/operations/${campaignId}/geography/import`)
+    .set("X-Organization-Id", tenantId)
+    .send({
+      mode: "IMPORT",
+      confirmation: "IMPORT AUTHORIZED GEOGRAPHIC DATA",
+      provenance,
+      rows: [{}],
+    })
+    .expect(400);
+  assert.equal(
+    response.body.message,
+    "Import requires all submitted rows to pass fresh validation.",
+  );
+  assert.equal(calls.transactions, 0);
+  assert.equal(calls.geographicWrites, 0);
+  assert.equal(calls.importAudits.length, 0);
 });
 
 test("IMPORT ignores client activation input and always creates inactive areas", async () => {

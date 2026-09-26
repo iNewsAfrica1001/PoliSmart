@@ -356,9 +356,14 @@ export function createOperationsRouter(repository) {
         );
         return response.json({ mode, report });
       }
-      if (request.body?.confirmation !== "IMPORT AUTHORIZED GEOGRAPHIC DATA" || report.rowsRejected)
+      if (request.body?.confirmation !== "IMPORT AUTHORIZED GEOGRAPHIC DATA")
         throw Object.assign(
-          new Error("Import requires exact confirmation and a fully valid preview."),
+          new Error("Import confirmation must exactly match the required phrase."),
+          { status: 400 },
+        );
+      if (report.rowsRejected)
+        throw Object.assign(
+          new Error("Import requires all submitted rows to pass fresh validation."),
           { status: 400 },
         );
       const inserted = await repository.transaction(async (transaction) => {

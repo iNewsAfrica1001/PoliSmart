@@ -434,3 +434,13 @@ test("Super Administrator UI exposes search, filter, edit, path, and controlled 
   assert.match(page, /Enter only when the source publishes a version date/);
   assert.match(page, /name="retrievalDate" type="date" required/);
 });
+test("controlled import displays only the current submission status", () => {
+  const page = readFileSync(
+    new URL("../src/pages/GeographicManagementPage.tsx", import.meta.url),
+    "utf8",
+  );
+  const handler = page.slice(page.indexOf("async function runImport"), page.indexOf("  return ("));
+  assert.match(handler, /event\.preventDefault\(\);\s*setError\(""\);\s*setMessage\(""\);/);
+  assert.match(handler, /setError\(""\);\s*setMessage\(`\$\{result\.mode\} completed:/);
+  assert.match(handler, /catch \(caught\) \{\s*setMessage\(""\);\s*setError\(/);
+});

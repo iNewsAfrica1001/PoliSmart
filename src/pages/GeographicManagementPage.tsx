@@ -88,6 +88,8 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
   }
   async function runImport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError("");
+    setMessage("");
     const data = Object.fromEntries(new FormData(event.currentTarget));
     try {
       const rows = JSON.parse(String(data.rows));
@@ -104,8 +106,10 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
           validationStatus: data.validationStatus,
         },
       });
+      setError("");
       setMessage(`${result.mode} completed: ${JSON.stringify(result.report)}`);
     } catch (caught) {
+      setMessage("");
       setError(caught instanceof Error ? caught.message : "Import check failed.");
     }
   }
