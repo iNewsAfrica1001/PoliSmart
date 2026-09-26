@@ -179,6 +179,95 @@ test("VALIDATE and PREVIEW write durable audits but no geographic business state
     assert.equal(calls.audits[0][5].retrievalDate, "2026-09-26");
   }
 });
+test("all controlled modes resolve reviewed inactive imported parents consistently", async () => {
+  const inactiveState = {
+    id: "state-a",
+    tenantId,
+    campaignId,
+    level: { name: "State / FCT" },
+    code: "01",
+    isActive: false,
+    importedAt: new Date("2026-09-25T00:00:00Z"),
+    validationStatus: "VALIDATED",
+  };
+  const child = {
+    level: "Local Government Area / FCT Area Council",
+    name: "Reviewed LGA",
+    code: "LGA-01",
+    parentLevel: "State / FCT",
+    parentCode: "01",
+  };
+
+  for (const mode of ["VALIDATE", "PREVIEW", "IMPORT"]) {
+    const { repository, calls } = routeRepository();
+    repository.listAreas = async (actualTenantId, actualCampaignId) => {
+      assert.equal(actualTenantId, tenantId);
+      assert.equal(actualCampaignId, campaignId);
+      return [inactiveState];
+    };
+    const response = await request(appFor("SUPER_ADMINISTRATOR", repository))
+      .post(`/operations/${campaignId}/geography/import`)
+      .set("X-Organization-Id", tenantId)
+      .send({
+        mode,
+        confirmation: "IMPORT AUTHORIZED GEOGRAPHIC DATA",
+        provenance,
+        rows: [child],
+      })
+      .expect(mode === "IMPORT" ? 201 : 200);
+    if (mode === "IMPORT") {
+      assert.equal(calls.transactions, 1);
+      assert.equal(calls.createdAreas.length, 1);
+      assert.equal(calls.createdAreas[0].isActive, false);
+    } else {
+      assert.equal(response.body.report.rowsValid, 1);
+      assert.equal(response.body.report.rowsRejected, 0);
+      assert.equal(calls.transactions, 0);
+      assert.equal(calls.geographicWrites, 0);
+    }
+  }
+});
+test("all controlled modes reject inactive parents without import evidence", async () => {
+  for (const mode of ["VALIDATE", "PREVIEW", "IMPORT"]) {
+    const { repository, calls } = routeRepository();
+    repository.listAreas = async () => [
+      {
+        id: "state-a",
+        tenantId,
+        campaignId,
+        level: { name: "State / FCT" },
+        code: "01",
+        isActive: false,
+        importedAt: null,
+        validationStatus: "VALIDATED",
+      },
+    ];
+    const response = await request(appFor("SUPER_ADMINISTRATOR", repository))
+      .post(`/operations/${campaignId}/geography/import`)
+      .set("X-Organization-Id", tenantId)
+      .send({
+        mode,
+        confirmation: "IMPORT AUTHORIZED GEOGRAPHIC DATA",
+        provenance,
+        rows: [
+          {
+            level: "Local Government Area / FCT Area Council",
+            name: "Reviewed LGA",
+            code: "LGA-01",
+            parentLevel: "State / FCT",
+            parentCode: "01",
+          },
+        ],
+      })
+      .expect(mode === "IMPORT" ? 400 : 200);
+    if (mode !== "IMPORT") {
+      assert.equal(response.body.report.rowsRejected, 1);
+      assert.equal(response.body.report.rejected[0].reason, "INACTIVE_PARENT");
+    }
+    assert.equal(calls.transactions, 0);
+    assert.equal(calls.geographicWrites, 0);
+  }
+});
 test("VALIDATE and PREVIEW receive only their server-controlled row allowances", async () => {
   const largeRows = Array(GEOGRAPHIC_IMPORT_LIMITS.rows + 1).fill(null);
   for (const mode of ["VALIDATE", "PREVIEW"]) {

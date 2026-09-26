@@ -327,7 +327,7 @@ export function createOperationsRouter(repository) {
         rows: request.body?.rows,
         levels,
         existingAreas: areas,
-        allowInactiveImportedParents: mode === "IMPORT",
+        allowInactiveImportedParents: true,
         rowLimit:
           mode === "VALIDATE"
             ? GEOGRAPHIC_IMPORT_LIMITS.validateRows

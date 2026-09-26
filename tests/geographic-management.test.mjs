@@ -238,7 +238,7 @@ test("inactive levels and inactive parents are rejected", () => {
   );
 });
 
-test("IMPORT-only staged validation accepts reviewed inactive imported parents", () => {
+test("controlled staged validation accepts only reviewed inactive imported parents", () => {
   const inactiveImportedCountry = {
     id: "country",
     level: { name: "Country" },
@@ -267,6 +267,15 @@ test("IMPORT-only staged validation accepts reviewed inactive imported parents",
       rows: [child],
       levels,
       existingAreas: [{ ...inactiveImportedCountry, importedAt: null }],
+      allowInactiveImportedParents: true,
+    }).rowsRejected,
+    1,
+  );
+  assert.equal(
+    validateGeographicRows({
+      rows: [child],
+      levels,
+      existingAreas: [{ ...inactiveImportedCountry, validationStatus: null }],
       allowInactiveImportedParents: true,
     }).rowsRejected,
     1,
