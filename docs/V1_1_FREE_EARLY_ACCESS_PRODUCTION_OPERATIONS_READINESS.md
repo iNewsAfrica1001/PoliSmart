@@ -52,12 +52,12 @@ The minimum Production monitoring plan is:
 | AI provider                     | Protected AI records, Vercel logs, OpenAI views           | Provider failures, timeouts, rate limits, citations, usage      | Sustained provider failure, unsafe grounding, or abnormal usage    |
 | Transactional email             | Safe Graph error logs, Microsoft 365 health/message trace | Token, authorization, rate-limit, provider and delivery signals | Widespread verification/reset delivery failure                     |
 
-**External-monitor status:** CURRENT VERIFICATION REQUIRED. Historical owner evidence described
-UptimeRobot monitors named `PoliSmart Africa AI - Production` and
-`PoliSmart Africa AI - Health`, but the `2026-09-26` monitoring review did not have authenticated
-provider evidence of their current enabled state, a readiness monitor, the configured destination,
-or a received test notification. Treat all external paths as unverified until the provider state
-and receipt evidence are recorded; do not expose monitor credentials or create duplicates blindly.
+**External-monitor status:** PARTIALLY VERIFIED. On `2026-09-26`, the Platform Owner confirmed the
+existing UptimeRobot account sent test notifications that were received at the authorized
+monitoring destination, `publisher@inewsafrica.com`. Repository evidence identifies monitors named
+`PoliSmart Africa AI - Production` and `PoliSmart Africa AI - Health`. A separate readiness monitor,
+per-monitor test attribution, and exact receipt timestamps were not supplied and remain unverified.
+Do not expose monitor credentials, invent timestamps, or create duplicate monitors blindly.
 
 ## 3. Alert and escalation ownership
 
@@ -67,7 +67,7 @@ The Platform Owner explicitly authorized the following named assignments on `202
 - Application Operator: Dr. Michael Omoruyi
 - Database Operator: Dr. Michael Omoruyi
 - Verification/Acceptance Owner: Dr. Michael Omoruyi
-- Operational alert destination: `support@polismartafrica.ai`
+- Operational alert destination: `publisher@inewsafrica.com`
 
 The support address and Platform Owner identity were already public in repository documentation.
 Do not publish private telephone numbers, credentials, additional contacts, or delegation details.
@@ -95,9 +95,12 @@ Escalation sequence:
    authority. An authorized technical operator executes the approved action. Database restoration
    additionally requires the applicable data-owner decision.
 
-The authorized operational destination is `support@polismartafrica.ai`. Mailbox operation,
-provider attachment, and delivered-alert receipt remain unverified. Delegation evidence and private
-contact methods remain in the protected operations register rather than this repository.
+The authorized operational destination is `publisher@inewsafrica.com`; it supersedes
+`support@polismartafrica.ai` for active monitoring instructions. The Platform Owner confirmed
+UptimeRobot test delivery to the authorized destination. Vercel, Neon, and AI alert delivery remain
+unverified. Delegation evidence and private contact methods remain in the protected operations
+register rather than this repository. This change does not alter `EMAIL_FROM`, Microsoft Graph, or
+transactional authentication email.
 
 ## 4. Provider usage and budget warnings
 

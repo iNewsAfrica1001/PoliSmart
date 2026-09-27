@@ -19,9 +19,10 @@ authorize database, provider, secret, or infrastructure changes.
   all four roles to **Dr. Michael Omoruyi** on `2026-09-26`. This is an operational assignment,
   not a shared-login authorization: use named, MFA-protected operator accounts and never share
   production accounts.
-- Route initial operational alerts to `support@polismartafrica.ai`. This is a support and alert
-  destination only. `no-reply@polismartafrica.ai` remains the transactional/authentication sender
-  and must not be replaced by the support address. Record the escalation order, acknowledgement
+- Route operational monitoring and incident alerts to `publisher@inewsafrica.com`. The previously
+  documented `support@polismartafrica.ai` destination is superseded and is not an active monitoring
+  destination. `no-reply@polismartafrica.ai` remains the transactional/authentication sender and
+  must not be changed by monitoring work. Record the escalation order, acknowledgement
   target, and additional service owners in the private operations register—not this public
   repository.
 - Correlate incidents with the application `X-Request-Id`, deployment ID, time window, route,
@@ -35,29 +36,29 @@ authorize database, provider, secret, or infrastructure changes.
 
 ### Current verified readiness status
 
-| Capability                            | Status                   | Evidence                                                                                                                 |
-| ------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| Public health endpoint                | IMPLEMENTED AND VERIFIED | `/api/health` is bounded and returns HTTP 200 with `{"status":"ok"}`.                                                    |
-| Public readiness endpoint             | IMPLEMENTED AND VERIFIED | `/api/ready` performs a bounded database probe and Production dependency checks and returns only `ready` or `not-ready`. |
-| Structured request/5xx logging        | IMPLEMENTED              | Timestamp, request ID, method, path, status, and duration are emitted; request bodies are excluded.                      |
-| Authentication/security audit logging | IMPLEMENTED              | Login failures, role actions, and protected governance records are available under authorization.                        |
-| AI provider failure telemetry         | IMPLEMENTED              | Provider failures are categorized, sanitized, and recorded in protected AI governance/error records.                     |
-| Geographic audit logging              | IMPLEMENTED AND VERIFIED | Controlled import and activation audits are durable and protected.                                                       |
-| Transactional-email failure logging   | IMPLEMENTED              | Microsoft Graph/SMTP failures use safe provider categories without secrets or recipient content.                         |
-| Vercel deployment/runtime logs        | CONFIGURED               | Deployment and runtime log surfaces exist; saved 5xx alert rules are not verified.                                       |
-| Neon monitoring                       | CONFIGURED               | Provider monitoring is available; a delivered database alert is not verified.                                            |
-| Independent uptime monitor            | NOT FOUND                | No external monitor configuration or successful check history was verified.                                              |
-| External alert destination            | AUTHORIZED, UNVERIFIED   | `support@polismartafrica.ai` is authorized; mailbox operation, provider attachment, and receipt are not verified.        |
-| Alert delivery test                   | NOT VERIFIED             | A real test notification has not been evidenced.                                                                         |
-| Named escalation roster               | RECORDED                 | Dr. Michael Omoruyi is assigned Incident Lead, Application Operator, Database Operator, and Verification Owner.          |
+| Capability                            | Status                   | Evidence                                                                                                                    |
+| ------------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| Public health endpoint                | IMPLEMENTED AND VERIFIED | `/api/health` is bounded and returns HTTP 200 with `{"status":"ok"}`.                                                       |
+| Public readiness endpoint             | IMPLEMENTED AND VERIFIED | `/api/ready` performs a bounded database probe and Production dependency checks and returns only `ready` or `not-ready`.    |
+| Structured request/5xx logging        | IMPLEMENTED              | Timestamp, request ID, method, path, status, and duration are emitted; request bodies are excluded.                         |
+| Authentication/security audit logging | IMPLEMENTED              | Login failures, role actions, and protected governance records are available under authorization.                           |
+| AI provider failure telemetry         | IMPLEMENTED              | Provider failures are categorized, sanitized, and recorded in protected AI governance/error records.                        |
+| Geographic audit logging              | IMPLEMENTED AND VERIFIED | Controlled import and activation audits are durable and protected.                                                          |
+| Transactional-email failure logging   | IMPLEMENTED              | Microsoft Graph/SMTP failures use safe provider categories without secrets or recipient content.                            |
+| Vercel deployment/runtime logs        | CONFIGURED               | Runtime telemetry exists; the default all-types rule includes Error Anomaly, but authorized-destination routing is absent.  |
+| Neon monitoring                       | CONFIGURED               | Provider monitoring is available; a delivered database alert is not verified.                                               |
+| Independent uptime monitor            | PARTIALLY VERIFIED       | Owner confirms UptimeRobot account and delivered tests; domain and health monitors are documented, readiness is unverified. |
+| External alert destination            | VERIFIED FOR UPTIMEROBOT | `publisher@inewsafrica.com` is authorized and owner-confirmed test notifications were received.                             |
+| Alert delivery test                   | VERIFIED FOR UPTIMEROBOT | Receipt verified by owner; exact timestamps and per-monitor test attribution were not supplied.                             |
+| Named escalation roster               | RECORDED                 | Dr. Michael Omoruyi is assigned Incident Lead, Application Operator, Database Operator, and Verification Owner.             |
 
 ### Authorized ownership and escalation matrix
 
 | Severity | Primary owner       | Authorized alert destination |
 | -------- | ------------------- | ---------------------------- |
-| SEV-1    | Dr. Michael Omoruyi | `support@polismartafrica.ai` |
-| SEV-2    | Dr. Michael Omoruyi | `support@polismartafrica.ai` |
-| SEV-3    | Dr. Michael Omoruyi | `support@polismartafrica.ai` |
+| SEV-1    | Dr. Michael Omoruyi | `publisher@inewsafrica.com`  |
+| SEV-2    | Dr. Michael Omoruyi | `publisher@inewsafrica.com`  |
+| SEV-3    | Dr. Michael Omoruyi | `publisher@inewsafrica.com`  |
 
 Role mapping:
 
@@ -66,10 +67,9 @@ Role mapping:
 - Database Operator: Dr. Michael Omoruyi
 - AI/Application Verification Owner: Dr. Michael Omoruyi
 
-The repository already publishes the support address and identifies the Platform Owner, so this
-authorized operational mapping does not introduce a private escalation address. Private telephone
-numbers, credentials, delegation evidence, and any future secondary contacts remain outside this
-repository.
+The Platform Owner authorized publication of this operational destination and ownership mapping.
+Private telephone numbers, credentials, delegation evidence, and any future secondary contacts
+remain outside this repository.
 
 ## 2. Monitoring sources
 
@@ -87,13 +87,13 @@ uptime service. Provider dashboards remain authoritative for provider usage and 
 
 ## 2A. Minimum alert architecture
 
-| Condition                   | Signal and source                                                                                     | Detection method                                                                                       | Destination                                                   | Escalation owner    | Verification                                                                                                       |
-| --------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Production unavailable      | External HTTPS status/TLS for canonical homepage                                                      | Independent five-minute check from outside Vercel; alert after the documented consecutive-failure rule | `support@polismartafrica.ai` — provider attachment unverified | Dr. Michael Omoruyi | Force a provider test notification without disrupting Production and record receipt.                               |
-| Health/readiness failure    | HTTP status and minimal JSON from `/api/health` and `/api/ready`                                      | Independent endpoint checks; readiness HTTP 503 indicates a required dependency failure                | `support@polismartafrica.ai` — provider attachment unverified | Dr. Michael Omoruyi | Use the monitor's test-notification facility; do not break Production dependencies.                                |
-| Significant HTTP 5xx        | Vercel structured request logs and deployment metadata                                                | Vercel Error Anomaly rule for the Production project; retain safe route/status metadata only           | `support@polismartafrica.ai` — Vercel routing unverified      | Dr. Michael Omoruyi | Use Vercel's Test Alert/Test Notification flow and independently verify mailbox receipt.                           |
-| Database dependency failure | Neon availability/connection signals plus `/api/ready` HTTP 503 and sanitized database error category | Independent readiness alert plus supported Neon provider notification                                  | `support@polismartafrica.ai` — provider routing unverified    | Dr. Michael Omoruyi | Use Neon/provider test notification or an isolated non-Production failure simulation; never disconnect Production. |
-| AI-provider degradation     | Protected AI error records, sanitized provider categories, OpenAI status/usage, and Vercel logs       | Saved alert path for sustained failure/rate-limit categories in section 5                              | `support@polismartafrica.ai` — provider routing unverified    | Dr. Michael Omoruyi | Use provider alert testing or mocked/non-Production detection evidence; do not invalidate the Production key.      |
+| Condition                   | Signal and source                                                                                     | Detection method                                                                                       | Destination                                                 | Escalation owner    | Verification                                                                                                       |
+| --------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Production unavailable      | External HTTPS status/TLS for canonical homepage                                                      | Independent five-minute check from outside Vercel; alert after the documented consecutive-failure rule | `publisher@inewsafrica.com` — UptimeRobot delivery verified | Dr. Michael Omoruyi | Owner confirmed test receipt; exact timestamp was not supplied.                                                    |
+| Health/readiness failure    | HTTP status and minimal JSON from `/api/health` and `/api/ready`                                      | Independent endpoint checks; readiness HTTP 503 indicates a required dependency failure                | `publisher@inewsafrica.com`; readiness monitor unverified   | Dr. Michael Omoruyi | Health monitor and test delivery have owner evidence; verify a distinct readiness monitor and test.                |
+| Significant HTTP 5xx        | Vercel structured request logs and deployment metadata                                                | Vercel Error Anomaly rule for the Production project; retain safe route/status metadata only           | `publisher@inewsafrica.com` — Vercel routing not configured | Dr. Michael Omoruyi | Use Vercel Test Notification only after authorized routing is attached; independently verify receipt.              |
+| Database dependency failure | Neon availability/connection signals plus `/api/ready` HTTP 503 and sanitized database error category | Independent readiness alert plus supported Neon provider notification                                  | `publisher@inewsafrica.com` — provider routing unverified   | Dr. Michael Omoruyi | Use Neon/provider test notification or an isolated non-Production failure simulation; never disconnect Production. |
+| AI-provider degradation     | Protected AI error records, sanitized provider categories, OpenAI status/usage, and Vercel logs       | Saved alert path for sustained failure/rate-limit categories in section 5                              | `publisher@inewsafrica.com` — provider routing unverified   | Dr. Michael Omoruyi | Use provider alert testing or mocked/non-Production detection evidence; do not invalidate the Production key.      |
 
 No alert in this table is considered configured until its provider rule, destination, and enabled
 state are verified. No alert is considered verified until the destination receives a real test
@@ -352,32 +352,36 @@ The application monitoring and incident procedures are ready. The authenticated 
 on `2026-09-26` found:
 
 - Vercel Observability provides Alerts and an **Error Anomaly** trigger for 5xx/4xx route spikes.
-  The built-in default rule currently routes through Vercel Notifications (Web, Email, Push) for
-  subscribed team owners. No evidence ties that notification email to
-  `support@polismartafrica.ai`; therefore it is not the authorized verified destination yet.
+  The built-in default rule covers all alert types and enables high-severity Vercel Notifications
+  (Web, Email, Push) for subscribed team owners. The current Vercel notification email is
+  `no-reply@polismartafrica.ai`, not the authorized monitoring destination. Project alert settings
+  expose Vercel Notifications, Slack, and webhook destinations, but no arbitrary project-alert
+  email field. Do not change the Vercel account email merely to route this alert.
 - Vercel also exposes a benign **Test Alert Anomaly** trigger and **Test Notification** action.
   Do not run either until the authorized destination is visibly attached; provider-reported
   “sent” status is not receipt evidence.
 - Neon Monitoring exposes bounded Production compute, connection, query, and storage metrics.
   No configured notification destination or delivered database alert was evidenced.
-- No current authenticated evidence for an independent external uptime monitor was available.
-  An older readiness note described two UptimeRobot monitors, but that historical statement is
-  not sufficient to establish current configuration or receipt.
+- The Platform Owner confirmed the existing UptimeRobot account delivered monitoring test
+  notifications to `publisher@inewsafrica.com`. Repository evidence identifies separate Production
+  domain and health monitors. A separate `/api/ready` monitor and per-monitor test attribution are
+  not established; no timestamps were supplied.
 
 Complete and record the following external operational setup:
 
-- **External uptime monitor configuration: owner dashboard action required.** Sign in to the
-  authorized independent monitoring account (verify any existing UptimeRobot configuration before
-  creating duplicates), configure separate HTTPS monitors for the canonical homepage,
-  `/api/health`, and `/api/ready` at five-minute intervals, and attach
-  `support@polismartafrica.ai`. Require HTTP 200; additionally validate the minimal expected JSON
-  for health/readiness if the provider supports safe keyword checks. Send its benign test
-  notification and independently confirm receipt.
+- **External uptime monitor completion: owner dashboard action required.** In the existing
+  UptimeRobot account, preserve the verified domain and health monitors, verify their exact target
+  URLs and enabled state, and configure a separate `/api/ready` monitor if it does not exist. Route
+  all three to `publisher@inewsafrica.com`. Require HTTP 200; additionally validate the minimal
+  expected JSON for health/readiness if safe keyword checks are supported. Send and independently
+  confirm a benign test for each monitor, recording provider evidence and timestamp.
 - In Vercel **Project Settings → Alerts**, create an **Error Anomaly** rule scoped to Production
   and the `poli-smart` project. Route only sanitized Vercel alert metadata. Vercel Notifications
-  currently subscribe team owners; the owner must either verify that the notification mailbox is
-  `support@polismartafrica.ai` or attach an approved destination supported by Vercel. Then run the
-  built-in test alert and independently confirm receipt.
+  currently subscribe team owners at `no-reply@polismartafrica.ai`; this does not satisfy the
+  authorized destination. For separate authorization, attach a supported webhook or Slack bridge
+  capable of delivering sanitized alerts to `publisher@inewsafrica.com`, or choose another
+  provider-supported routing design. Then run the built-in test alert and independently confirm
+  receipt.
 - In Neon, enable any plan-supported compute/connection/provider notifications for the Production
   branch and route them to the authorized destination. Independently, treat repeated `/api/ready`
   failures as the always-available database-dependency signal. Do not disconnect Production to
@@ -386,8 +390,9 @@ Complete and record the following external operational setup:
   timeout, authentication/configuration, rate limit, malformed response, and application failure),
   and corroborate with OpenAI status/usage notifications. A mock proves detection only; use the
   provider's benign test-notification mechanism to prove external delivery.
-- The initial alert destination is `support@polismartafrica.ai`. Its mailbox operation and alert
-  receipt remain owner-verification requirements. Do not add unapproved secondary contacts.
+- The active alert destination is `publisher@inewsafrica.com`. UptimeRobot receipt is verified by
+  the owner; Vercel, Neon, and AI alert routing and receipt remain unverified. Do not add unapproved
+  secondary contacts.
 - Configure provider budget/usage warnings for OpenAI and applicable paid production
   infrastructure providers. **Provider budget thresholds: owner action required.** Select the
   dollar limits in each provider's protected management console so warning alerts arrive before
