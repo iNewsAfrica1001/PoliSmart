@@ -27,12 +27,14 @@ export const NIGERIA_ACTIVATION_COUNTS = Object.freeze({
   "Local Government Area/FCT Area Council": 774,
   "Ward/Registration Area": 8809,
 });
-const NIGERIA_PARENT_LEVEL = Object.freeze({
+export const NIGERIA_PARENT_LEVEL = Object.freeze({
   "Geopolitical Zone": "Country",
   "State/FCT": "Geopolitical Zone",
   "Local Government Area/FCT Area Council": "State/FCT",
   "Ward/Registration Area": "Local Government Area/FCT Area Council",
 });
+export const isValidNigeriaGeographicParent = (childLevel, parentLevel) =>
+  NIGERIA_PARENT_LEVEL[childLevel] === parentLevel;
 const fail = (message, code, status = 400) => Object.assign(new Error(message), { status, code });
 const clean = (value) => (typeof value === "string" ? value.trim() : "");
 const areaKey = (level, code) => `${level}\0${code}`;
@@ -307,7 +309,7 @@ export function validateFullGeographicActivation({ tenantId, campaignId, campaig
       !parent ||
       parent.tenantId !== tenantId ||
       parent.campaignId !== campaignId ||
-      parentLevel?.name !== expectedParentLevel
+      !isValidNigeriaGeographicParent(level.name, parentLevel?.name)
     )
       throw fail("Geographic hierarchy parent relationship is invalid.", "ACTIVATION_PARENT_INVALID");
   }

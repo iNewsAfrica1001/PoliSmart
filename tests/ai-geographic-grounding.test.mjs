@@ -14,6 +14,7 @@ import { assessPoliticalSafety } from "../server/services/governance.js";
 const tenantId = "tenant-a";
 const campaignId = "campaign-a";
 const levels = ["Country", "Geopolitical Zone", "State/FCT", "Local Government Area/FCT Area Council", "Ward/Registration Area"];
+const productionOrderIndexes = [0, 1, 2, 5, 6];
 
 function hierarchy({ inactiveAt = -1, wrongLevelAt = -1, cycle = false } = {}) {
   return levels.map((name, index) => ({
@@ -24,7 +25,11 @@ function hierarchy({ inactiveAt = -1, wrongLevelAt = -1, cycle = false } = {}) {
     name: `${name} name`,
     code: `CODE-${index}`,
     isActive: index !== inactiveAt,
-    level: { name, orderIndex: index === wrongLevelAt ? index + 2 : index, isActive: true },
+    level: {
+      name: index === wrongLevelAt ? levels[(index + 2) % levels.length] : name,
+      orderIndex: productionOrderIndexes[index],
+      isActive: true,
+    },
   }));
 }
 
@@ -68,6 +73,62 @@ test("country, zone, state, LGA and Ward selections resolve bounded ancestry", a
     const result = await repository.findActiveGeographicContext({ tenantId, campaignId, geographicAreaId: `area-${index}` });
     assert.equal(result.ancestry.length, index + 1);
     assert.ok(geographicReads() <= 5);
+  }
+});
+
+test("AI ancestry uses the authoritative operational hierarchy across unused configured order positions", async () => {
+  const areas = hierarchy();
+  assert.equal(areas[2].level.orderIndex, 2);
+  assert.equal(areas[3].level.orderIndex, 5);
+  const { repository } = repositoryFor(areas);
+  const lga = await repository.findActiveGeographicContext({
+    tenantId,
+    campaignId,
+    geographicAreaId: "area-3",
+  });
+  const ward = await repository.findActiveGeographicContext({
+    tenantId,
+    campaignId,
+    geographicAreaId: "area-4",
+  });
+  assert.deepEqual(lga.ancestry.map((area) => area.level.name), levels.slice(0, 4));
+  assert.deepEqual(ward.ancestry.map((area) => area.level.name), levels);
+});
+
+test("representative Nigeria LGA and Ward paths resolve in every zone including FCT", async () => {
+  for (const zone of ["North Central", "North East", "North West", "South East", "South South", "South West"]) {
+    const areas = hierarchy();
+    areas[1].name = zone;
+    areas[2].name = zone === "North Central" ? "Federal Capital Territory (FCT)" : `${zone} State`;
+    areas[3].name = `${zone} LGA`;
+    areas[4].name = `${zone} Ward`;
+    const { repository } = repositoryFor(areas);
+    const result = await repository.findActiveGeographicContext({ tenantId, campaignId, geographicAreaId: "area-4" });
+    assert.equal(result.ancestry[1].name, zone);
+    assert.equal(result.ancestry.length, 5);
+  }
+});
+
+test("invalid operational parent types and reversed relationships fail closed", async () => {
+  const invalidHierarchies = [
+    ["Country", "Ward/Registration Area", "State/FCT", "Local Government Area/FCT Area Council", "Ward/Registration Area"],
+    ["Country", "Geopolitical Zone", "State/FCT", "Ward/Registration Area"],
+    ["Country", "Local Government Area/FCT Area Council"],
+    ["State/FCT", "Geopolitical Zone"],
+  ];
+  for (const names of invalidHierarchies) {
+    const areas = names.map((name, index) => ({
+      id: `invalid-${index}`,
+      tenantId,
+      campaignId,
+      parentId: index ? `invalid-${index - 1}` : null,
+      name: `${name} name`,
+      code: `INVALID-${index}`,
+      isActive: true,
+      level: { name, orderIndex: index, isActive: true },
+    }));
+    const { repository } = repositoryFor(areas);
+    assert.equal(await repository.findActiveGeographicContext({ tenantId, campaignId, geographicAreaId: areas.at(-1).id }), null);
   }
 });
 

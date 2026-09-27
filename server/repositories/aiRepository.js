@@ -1,3 +1,5 @@
+import { isValidNigeriaGeographicParent } from "../services/geographicManagement.js";
+
 export function createAiRepository(database) {
   return {
     findCampaign(tenantId, campaignId) {
@@ -33,7 +35,7 @@ export function createAiRepository(database) {
         });
         if (!area || !area.level.isActive) return null;
         const child = ancestry.at(-1);
-        if (child && child.level.orderIndex !== area.level.orderIndex + 1) return null;
+        if (child && !isValidNigeriaGeographicParent(child.level.name, area.level.name)) return null;
         ancestry.push(area);
         areaId = area.parentId;
       }
