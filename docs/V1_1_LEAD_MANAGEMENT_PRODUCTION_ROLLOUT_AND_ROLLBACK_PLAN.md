@@ -78,8 +78,8 @@ Failure or uncertainty in any gate means **NO-GO**.
 
 Before establishing a migration session:
 
-1. Confirm the Production Neon project is the approved project, presently documented as project ID `square-cell-84454018`.
-2. Confirm the branch by both name and immutable branch ID. The current documented target is `main`, branch ID `br-fancy-credit-av2zb3ix`.
+1. Confirm the Production Neon project in the authenticated Neon and Vercel-linked configuration. Last verified 2026-09-26: project `polismart`, project ID `young-base-56422836`.
+2. Confirm the branch by both name and immutable branch ID. Last verified 2026-09-26: `production`, branch ID `br-noisy-forest-axlven4c`. Treat these as last-verified metadata, not a substitute for action-time verification.
 3. Confirm the selected direct endpoint belongs to that branch and is not a pooled or Preview endpoint.
 4. Confirm the database is `neondb`.
 5. Confirm the session role is `polismart_migrator`.

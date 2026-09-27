@@ -2,6 +2,11 @@
 
 Production domain: `https://polismartafrica.ai`
 
+Last verified: `2026-09-26`
+
+Production application commit at verification:
+`4190166c99ed425a00191516fb443d8306341354`
+
 This runbook governs non-destructive recovery of PoliSmart Africa AI V1. It does not authorize a
 production restore, schema change, database reset, migration, import, secret change, or provider
 reconfiguration. Never put connection strings, passwords, tokens, private documents, respondent
@@ -12,21 +17,50 @@ data, or other credentials in this document or an incident ticket.
 The following identifiers are safe operational metadata and must be rechecked in the provider
 consoles before a recovery action:
 
-| Component              | Production identification                                                     |
-| ---------------------- | ----------------------------------------------------------------------------- |
-| Domain                 | `polismartafrica.ai`                                                          |
-| Vercel project         | `poli-smart` (use the linked project and team shown in the Vercel dashboard)  |
-| GitHub repository      | `iNewsAfrica1001/PoliSmart`                                                   |
-| Production Git branch  | `main`                                                                        |
-| Neon project           | project ID `square-cell-84454018`                                             |
-| Neon production branch | `main`, branch ID `br-fancy-credit-av2zb3ix`; recheck both in Neon before use |
-| PostgreSQL database    | `neondb`                                                                      |
-| Runtime identity       | `polismart_runtime`                                                           |
-| Migration identity     | `polismart_migrator`                                                          |
+| Component              | Production identification                                                    |
+| ---------------------- | ---------------------------------------------------------------------------- |
+| Domain                 | `polismartafrica.ai`                                                         |
+| Vercel project         | `poli-smart` (use the linked project and team shown in the Vercel dashboard) |
+| GitHub repository      | `iNewsAfrica1001/PoliSmart`                                                  |
+| Production Git branch  | `main`                                                                       |
+| Neon project           | `polismart`, project ID `young-base-56422836`                                |
+| Neon production branch | `production`, branch ID `br-noisy-forest-axlven4c`                           |
+| PostgreSQL database    | `neondb`                                                                     |
+| Runtime identity       | `polismart_runtime`                                                          |
+| Migration identity     | `polismart_migrator`                                                         |
 
 The branch ID is the authoritative identifier when a provider-managed display name is absent or
 changes. Confirm that the selected branch contains the expected PoliSmart schema and migration
 history before treating it as production. Do not identify a database by hostname alone.
+
+These values are a last-verified inventory, not permanent authority. Before every recovery,
+migration, or database-routing action, rederive the current target from the active Vercel
+Production deployment and environment linkage, the authenticated Neon project/branch metadata,
+and a safe database-identity check. Stop on any discrepancy.
+
+### Mandatory recovery source-of-truth preflight
+
+Before any recovery action:
+
+1. Identify the current Vercel Production deployment and canonical aliases.
+2. Record the exact deployed Git commit and verify its build is READY.
+3. Identify the current Production Neon project by authenticated project name and immutable ID.
+4. Identify the current Production branch by display name and immutable branch ID.
+5. Verify database name, TLS, migration history, and safe role name without exposing credentials.
+6. Identify the authorized recovery checkpoint or point in retained history and its compatibility
+   with the deployed application.
+7. Record the recovery authorization, scope, incident reference, and required approvers.
+8. Create or select an isolated recovery target; never investigate by redirecting live Production.
+9. Validate the recovered copy completely before proposing any cutover.
+10. Obtain separate explicit authorization before any Production routing or cutover change.
+
+### Recovery ownership
+
+Every exercise or incident must assign four independent role categories: **Recovery Incident
+Lead**, **Application Release Operator**, **Database Recovery Operator**, and
+**Verification/Acceptance Owner**. Named individuals and escalation contacts are not recorded in
+this repository and must be completed in the private operations register before execution. No
+operator may both execute and independently approve a high-risk database recovery.
 
 ## 2. Neon database protection
 
@@ -46,6 +80,30 @@ history before treating it as production. Do not identify a database by hostname
   schedule.
 - Runtime and migration credentials remain separate. A recovery exercise must not grant additional
   privileges to `polismart_runtime`.
+
+### Current capability status
+
+| Capability                         | Status              | Evidence and limitation                                                                                                                                                            |
+| ---------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Neon branch/checkpoint recovery    | CONFIGURED          | The authenticated current project contains the `production` branch and preserved `v1-1-pre-migration-recovery`, `v1-1a-pre-0016-recovery`, and `v1-1a-pre-0017-recovery` branches. |
+| Neon point-in-time recovery        | TESTED              | A non-destructive isolated historical recovery exercise passed on 2026-08-29. Current retention/window settings must be reverified in Neon before use.                             |
+| Restore window                     | DOCUMENTED          | The operations readiness record documents a six-hour window; the provider console remains authoritative and must be checked at action time.                                        |
+| Pre-migration checkpoint procedure | DOCUMENTED AND USED | Named checkpoints were created before reviewed migrations; a fresh checkpoint is still required for each new authorized migration/data operation.                                  |
+| Database recovery procedure        | DOCUMENTED          | This runbook requires isolated validation and separate cutover authorization; no destructive Production restore has been tested or authorized.                                     |
+| Application rollback               | DOCUMENTED          | Vercel immutable-deployment rollback and exact-commit redeployment are documented below.                                                                                           |
+| Application/database coordination  | DOCUMENTED          | Compatibility, environment epoch, migration state, and independent authorization are required before either action.                                                                |
+
+### Absolute recovery safety rules
+
+- Never restore directly over Production without explicit recovery authorization.
+- Never assume project or branch identifiers copied from an old runbook; perform the preflight.
+- Never point Production `DATABASE_URL` at a recovery branch during investigation.
+- Never run migrations against an unidentified or mismatched database.
+- Never delete the current Production branch during recovery.
+- Never retry completed controlled geography imports or rerun geographic activation as a recovery shortcut.
+- Never treat application rollback as database rollback.
+- Never treat database recovery as authorization to deploy an older application without compatibility verification.
+- Never expose credentials, connection strings, tokens, private records, or secret values in incident evidence.
 
 Neon's official restore documentation is the controlling provider procedure. At the time of this
 review, Neon supports restoring a branch to a point in its retained history and using a separate
@@ -265,6 +323,22 @@ plans can support. Do not invent contractual RPO/RTO values. For every exercise 
 - checks performed and sanitized results;
 - approvers, operator, residual risk, cleanup decision, and follow-up owner.
 
+### Accepted geography and release baseline
+
+At the last verification, the accepted Production release was
+`4190166c99ed425a00191516fb443d8306341354`. The accepted geographic state was 9,627 total and
+active records, 0 inactive records: Country 1, Geopolitical Zone 6, State/FCT 37, Local Government
+Area/FCT Area Council 774, and Ward/Registration Area 8,809. The database contained four successful
+controlled-import audits and one activation audit.
+
+Controlled geographic imports and activation must **not** be automatically rerun during recovery.
+Restore the accepted database state. Reconstruction through import or activation requires a
+separate reviewed and explicitly authorized recovery plan.
+
+Application rollback and database recovery are independent decisions. Application rollback does
+not imply database rollback. Database recovery does not authorize an older application deployment
+without explicit schema, environment, and API compatibility verification.
+
 ## 9. Post-recovery production acceptance
 
 Do not close recovery until all applicable checks pass:
@@ -283,6 +357,15 @@ Do not close recovery until all applicable checks pass:
 - no unexpected HTTP 500 responses occur in the critical journey;
 - Vercel, Neon, Microsoft Graph, OpenAI, and application error signals remain stable for at least
   30 minutes.
+- migration status and checksums match the authorized release baseline;
+- Command Center, AI Assistant, AI geographic grounding, and Geographic Management operate in the
+  intended tenant and campaign;
+- geography remains exactly 9,627 total, with expected active/inactive and per-level counts;
+- hierarchy integrity, duplicate checks, and tenant/campaign parent isolation pass;
+- controlled-import audit count remains 4 and activation audit count remains 1 unless the recovery
+  authorization explicitly identifies a later accepted baseline;
+- transactional email and private document-storage access pass controlled verification; and
+- no unexpected business-data, geography, audit, configuration, or privilege mutation occurred.
 
 Record results without passwords, tokens, prompts, private documents, connection strings, or raw
 respondent data.
