@@ -2,6 +2,11 @@
 
 Production: `https://polismartafrica.ai`
 
+Last repository verification: `2026-09-26`
+
+Accepted Production application commit:
+`4190166c99ed425a00191516fb443d8306341354`
+
 This is the operational monitoring standard for PoliSmart Africa AI V1. It uses the
 application's existing structured logs and governance records together with Vercel, Neon,
 Microsoft 365/Microsoft Graph, OpenAI, and the configured private storage service. It does not
@@ -9,10 +14,10 @@ authorize database, provider, secret, or infrastructure changes.
 
 ## 1. Ownership and operating principles
 
-- The primary on-call responsibility belongs to an authorized SentinelAI LLC / PoliSmart Africa
-  AI administrator. Additional authorized administrators may be added later as secondary on-call,
-  incident commander, or security escalation contacts. Use named, MFA-protected operator accounts;
-  never share production accounts.
+- The required ownership roles are **Incident Lead**, **Application Operator**, **Database
+  Operator**, and **AI/Application Verification Owner**. Named assignments are not present in this
+  repository and remain **OWNER ACTION REQUIRED** in the private operations register. Use named,
+  MFA-protected operator accounts; never share production accounts.
 - Route initial operational alerts to `support@polismartafrica.ai`. This is a support and alert
   destination only. `no-reply@polismartafrica.ai` remains the transactional/authentication sender
   and must not be replaced by the support address. Record the escalation order, acknowledgement
@@ -27,6 +32,24 @@ authorize database, provider, secret, or infrastructure changes.
 - Keep alert thresholds under monthly review. The starting thresholds below are operational
   defaults, not contractual service levels.
 
+### Current verified readiness status
+
+| Capability                            | Status                   | Evidence                                                                                                                 |
+| ------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Public health endpoint                | IMPLEMENTED AND VERIFIED | `/api/health` is bounded and returns HTTP 200 with `{"status":"ok"}`.                                                    |
+| Public readiness endpoint             | IMPLEMENTED AND VERIFIED | `/api/ready` performs a bounded database probe and Production dependency checks and returns only `ready` or `not-ready`. |
+| Structured request/5xx logging        | IMPLEMENTED              | Timestamp, request ID, method, path, status, and duration are emitted; request bodies are excluded.                      |
+| Authentication/security audit logging | IMPLEMENTED              | Login failures, role actions, and protected governance records are available under authorization.                        |
+| AI provider failure telemetry         | IMPLEMENTED              | Provider failures are categorized, sanitized, and recorded in protected AI governance/error records.                     |
+| Geographic audit logging              | IMPLEMENTED AND VERIFIED | Controlled import and activation audits are durable and protected.                                                       |
+| Transactional-email failure logging   | IMPLEMENTED              | Microsoft Graph/SMTP failures use safe provider categories without secrets or recipient content.                         |
+| Vercel deployment/runtime logs        | CONFIGURED               | Deployment and runtime log surfaces exist; saved 5xx alert rules are not verified.                                       |
+| Neon monitoring                       | CONFIGURED               | Provider monitoring is available; a delivered database alert is not verified.                                            |
+| Independent uptime monitor            | NOT FOUND                | No external monitor configuration or successful check history was verified.                                              |
+| External alert destination            | DOCUMENTED ONLY          | `support@polismartafrica.ai` is the intended initial destination; provider attachment and receipt are not verified.      |
+| Alert delivery test                   | NOT VERIFIED             | A real test notification has not been evidenced.                                                                         |
+| Named escalation roster               | NOT FOUND                | Role placeholders exist; named private assignments remain owner action.                                                  |
+
 ## 2. Monitoring sources
 
 | Concern                               | Primary source                                           | Corroborating source                                       |
@@ -40,6 +63,20 @@ authorize database, provider, secret, or infrastructure changes.
 
 Do not send authenticated cookies, database credentials, API keys, or production content to an
 uptime service. Provider dashboards remain authoritative for provider usage and delivery status.
+
+## 2A. Minimum alert architecture
+
+| Condition                   | Signal and source                                                                                     | Detection method                                                                                       | Destination                                                                      | Escalation owner                                                     | Verification                                                                                                       |
+| --------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Production unavailable      | External HTTPS status/TLS for canonical homepage                                                      | Independent five-minute check from outside Vercel; alert after the documented consecutive-failure rule | OWNER ACTION REQUIRED; intended initial destination `support@polismartafrica.ai` | Named Incident Lead — OWNER ACTION REQUIRED                          | Force a provider test notification without disrupting Production and record receipt.                               |
+| Health/readiness failure    | HTTP status and minimal JSON from `/api/health` and `/api/ready`                                      | Independent endpoint checks; readiness HTTP 503 indicates a required dependency failure                | OWNER ACTION REQUIRED                                                            | Named Incident Lead and Application Operator — OWNER ACTION REQUIRED | Use the monitor's test-notification facility; do not break Production dependencies.                                |
+| Significant HTTP 5xx        | Vercel structured request logs and deployment metadata                                                | Saved log/observability rule using the threshold in section 3                                          | OWNER ACTION REQUIRED                                                            | Named Application Operator — OWNER ACTION REQUIRED                   | Trigger the rule only with an approved provider test or non-Production synthetic fixture and record receipt.       |
+| Database dependency failure | Neon availability/connection signals plus `/api/ready` HTTP 503 and sanitized database error category | Neon alert plus independent readiness alert                                                            | OWNER ACTION REQUIRED                                                            | Named Database Operator — OWNER ACTION REQUIRED                      | Use Neon/provider test notification or an isolated non-Production failure simulation; never disconnect Production. |
+| AI-provider degradation     | Protected AI error records, sanitized provider categories, OpenAI status/usage, and Vercel logs       | Saved rule for sustained failure/rate-limit thresholds in section 5                                    | OWNER ACTION REQUIRED                                                            | Named AI/Application Verification Owner — OWNER ACTION REQUIRED      | Use provider alert testing or mocked/non-Production failure evidence; do not invalidate the Production key.        |
+
+No alert in this table is considered configured until its provider rule, destination, and enabled
+state are verified. No alert is considered verified until the destination receives a real test
+notification and the private register records timestamp, source, recipient/roster, and result.
 
 ## 3. Availability and critical API checks
 
@@ -173,13 +210,13 @@ retain only sanitized diagnostics in protected server logs. If secret exposure i
 treat it as P1: contain access, preserve evidence, rotate through change control, and review logs
 for secondary exposure.
 
-## 9. Alert severity and response targets
+## 9. Alert severity model
 
-| Severity | Definition                                                                                                                            | Examples                                                                                                               | Response                                                                  |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| P1       | Production unavailable, authentication broadly broken, database unavailable, data/security incident, or critical authorization bypass | domain/TLS outage, broad login failure, cross-tenant access, Super Administrator escalation, confirmed secret exposure | page immediately; appoint incident commander; contain before routine work |
-| P2       | Major feature degraded without total platform loss                                                                                    | AI provider unavailable, widespread email failure, uploads or a core workflow broadly failing                          | alert on-call; assess promptly; publish operator status updates           |
-| P3       | Minor UI or isolated operational issue                                                                                                | isolated recipient failure, non-blocking presentation defect, low-volume endpoint error                                | triage in normal operations; track owner and due date                     |
+| Severity | Definition                                                                                                          | Examples                                                                                        | Response                                                                                                                      |
+| -------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| SEV-1    | Production unavailable, authentication broadly unavailable, database unavailable, or serious data/security incident | domain/TLS outage, broad login failure, cross-tenant access, confirmed secret exposure          | Alert the named Incident Lead immediately; freeze unsafe changes and contain before routine work.                             |
+| SEV-2    | Major feature unavailable or sustained elevated server errors without total Production loss                         | sustained 5xx spike, widespread email failure, uploads or another core workflow broadly failing | Alert the named Application Operator; assess scope and escalate if availability, integrity, or security becomes uncertain.    |
+| SEV-3    | Degraded non-core capability while core application remains available                                               | repeated AI-provider failures, isolated recipient failure, non-blocking presentation defect     | Notify the named AI/Application Verification Owner or relevant operator; track evidence and escalate if sustained or broader. |
 
 Escalate severity whenever scope, data integrity, security, or user harm is uncertain. Downgrade
 only with evidence.
@@ -188,11 +225,15 @@ only with evidence.
 
 ### Detect
 
-1. Acknowledge the alert and record start time, monitor, first request ID, affected deployment,
-   and observed scope.
+1. Record the monitor, timestamp, first request ID, affected deployment, and observed scope.
 2. Confirm the symptom from a second safe signal. Do not repeatedly exercise a failing write
    operation.
-3. Assign severity, incident commander, communications owner, and technical lead.
+
+### Acknowledge
+
+1. Record who acknowledged the alert and when in the private incident register.
+2. Assign SEV-1, SEV-2, or SEV-3, plus the Incident Lead, communications owner, and technical
+   operators. Do not proceed with unnamed ownership for a SEV-1 event.
 
 ### Assess
 
@@ -225,7 +266,7 @@ only with evidence.
 4. Rotate a credential only when exposure or provider policy requires it; update the secret store,
    redeploy, validate, and revoke the old credential without printing either value.
 
-### Validate
+### Verify
 
 1. Verify production HTTPS, `/api/health`, `/api/ready`, and the affected feature.
 2. For authentication incidents, test registration/verification as relevant, login, logout,
@@ -235,12 +276,19 @@ only with evidence.
 4. For email incidents, verify Graph acceptance and then inbox/message-trace outcome.
 5. Observe error, latency, database, and provider signals for at least 30 minutes before closure.
 
-### Document
+### Close
+
+1. Close only after the affected service is verified, no unexplained data or authorization change
+   remains, and the observation period is complete.
+2. Record closure authority, residual risk, and follow-up owners. Do not delete audit evidence or
+   change Production data merely to clear an alert.
+
+### Review
 
 Record the timeline, scope, impact, safe request/deployment IDs, cause, containment, recovery,
-validation evidence, operator communications, and follow-up owners. Complete a blameless review
-for P1/P2 incidents and track corrective actions. Never copy secrets or raw sensitive payloads
-into the incident record.
+verification evidence, operator communications, and follow-up owners. Complete a blameless review
+for SEV-1/SEV-2 incidents and track corrective actions. Never copy secrets, personal/political
+profiles, raw prompts, campaign content, or other sensitive payloads into the incident record.
 
 ## 11. Decision guides
 
@@ -299,3 +347,18 @@ setup decisions must be recorded privately:
 
 No payment-processing or Reports monitoring is required in V1 because those capabilities remain
 Coming Soon and are not operational dependencies.
+
+### Exact owner completion checklist
+
+- [ ] Select and configure an independent HTTPS monitoring provider.
+- [ ] Monitor the canonical homepage, `/api/health`, and `/api/ready` at the documented interval.
+- [ ] Attach an authorized external alert destination without storing its credential in Git.
+- [ ] Create and enable the Vercel 5xx/error-rate alert using safe route/status metadata only.
+- [ ] Create and enable Neon availability/connection-capacity alerts and correlate readiness 503s.
+- [ ] Create and enable sustained AI-provider failure/rate-limit alerts using governance and provider signals.
+- [ ] Assign named Incident Lead, Application Operator, Database Operator, and AI/Application Verification Owner in the private register.
+- [ ] Record private escalation contacts and escalation order in the approved private system.
+- [ ] Send a real test alert from every configured alert source to the destination.
+- [ ] Verify human receipt, timestamp, source, and escalation routing in the private register.
+- [ ] Recheck that notifications contain no secrets, personal data, political profiles, prompts, campaign content, or credentials.
+- [ ] Mark monitoring/alerting readiness complete only after every item above has evidence.

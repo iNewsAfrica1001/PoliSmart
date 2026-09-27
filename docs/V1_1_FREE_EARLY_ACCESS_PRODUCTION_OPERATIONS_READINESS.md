@@ -232,11 +232,13 @@ behavior, or widespread transactional-email failure. Do not repeatedly exercise 
 
 ## 9. Remaining readiness decisions
 
-Technical operations readiness is documented with verified external uptime monitoring and alert
-delivery, Vercel spend controls, OpenAI spend controls, Neon monitoring and six-hour recovery
-capability, role-based escalation, a verified rollback candidate, and prepared identity and smoke
-procedures. Neon budget-alert configuration and Microsoft service/usage-warning configuration
-remain UNVERIFIED but are not standalone technical blockers under the verified controls above.
+Technical monitoring procedures and repository-controlled telemetry are documented, including
+health/readiness, structured request and provider errors, Neon/Vercel operational surfaces,
+role-based escalation, a verified rollback candidate, and prepared identity and smoke procedures.
+Independent uptime monitoring, external alert-provider rules, delivered alert testing, named
+private escalation assignments, Neon budget alerts, and Microsoft service/usage warnings remain
+UNVERIFIED and require owner configuration. Logging or a documented destination alone does not
+prove alert delivery.
 
 Production remains NO-GO until the pre-deployment checklist is executed for the actual release
 window and the independent governance gates are complete. Those gates include qualified
