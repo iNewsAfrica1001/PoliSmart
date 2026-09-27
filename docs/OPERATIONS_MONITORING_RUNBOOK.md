@@ -42,10 +42,10 @@ authorize database, provider, secret, or infrastructure changes.
 | Public readiness endpoint             | IMPLEMENTED AND VERIFIED | `/api/ready` performs a bounded database probe and Production dependency checks and returns only `ready` or `not-ready`.    |
 | Structured request/5xx logging        | IMPLEMENTED              | Timestamp, request ID, method, path, status, and duration are emitted; request bodies are excluded.                         |
 | Authentication/security audit logging | IMPLEMENTED              | Login failures, role actions, and protected governance records are available under authorization.                           |
-| AI provider failure telemetry         | IMPLEMENTED              | Provider failures are categorized, sanitized, and recorded in protected AI governance/error records.                        |
+| AI provider failure telemetry         | IMPLEMENTED AND VERIFIED | Provider failures become HTTP 503 and protected records retain sanitized provider code/status for diagnosis.                |
 | Geographic audit logging              | IMPLEMENTED AND VERIFIED | Controlled import and activation audits are durable and protected.                                                          |
 | Transactional-email failure logging   | IMPLEMENTED              | Microsoft Graph/SMTP failures use safe provider categories without secrets or recipient content.                            |
-| Vercel deployment/runtime logs        | CONFIGURED               | Runtime telemetry exists; the default all-types rule includes Error Anomaly, but authorized-destination routing is absent.  |
+| Vercel deployment/runtime logs        | CONFIGURED AND VERIFIED  | The default all-types rule includes Error Anomaly; its benign test reached the verified Vercel owner notification email.    |
 | Neon monitoring                       | CONFIGURED               | Provider monitoring is available; a delivered database alert is not verified.                                               |
 | Independent uptime monitor            | PARTIALLY VERIFIED       | Owner confirms UptimeRobot account and delivered tests; domain and health monitors are documented, readiness is unverified. |
 | External alert destination            | VERIFIED FOR UPTIMEROBOT | `publisher@inewsafrica.com` is authorized and owner-confirmed test notifications were received.                             |
@@ -91,9 +91,9 @@ uptime service. Provider dashboards remain authoritative for provider usage and 
 | --------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | Production unavailable      | External HTTPS status/TLS for canonical homepage                                                      | Independent five-minute check from outside Vercel; alert after the documented consecutive-failure rule | `publisher@inewsafrica.com` — UptimeRobot delivery verified | Dr. Michael Omoruyi | Owner confirmed test receipt; exact timestamp was not supplied.                                                    |
 | Health/readiness failure    | HTTP status and minimal JSON from `/api/health` and `/api/ready`                                      | Independent endpoint checks; readiness HTTP 503 indicates a required dependency failure                | `publisher@inewsafrica.com`; readiness monitor unverified   | Dr. Michael Omoruyi | Health monitor and test delivery have owner evidence; verify a distinct readiness monitor and test.                |
-| Significant HTTP 5xx        | Vercel structured request logs and deployment metadata                                                | Vercel Error Anomaly rule for the Production project; retain safe route/status metadata only           | `publisher@inewsafrica.com` — Vercel routing not configured | Dr. Michael Omoruyi | Use Vercel Test Notification only after authorized routing is attached; independently verify receipt.              |
+| Significant HTTP 5xx        | Vercel structured request logs and deployment metadata                                                | Existing Vercel Error Anomaly rule; retain safe route/status metadata only                             | Verified Vercel owner notification email                    | Dr. Michael Omoruyi | Owner confirmed receipt of the benign Vercel test notification; exact timestamp was not supplied.                  |
 | Database dependency failure | Neon availability/connection signals plus `/api/ready` HTTP 503 and sanitized database error category | Independent readiness alert plus supported Neon provider notification                                  | `publisher@inewsafrica.com` — provider routing unverified   | Dr. Michael Omoruyi | Use Neon/provider test notification or an isolated non-Production failure simulation; never disconnect Production. |
-| AI-provider degradation     | Protected AI error records, sanitized provider categories, OpenAI status/usage, and Vercel logs       | Saved alert path for sustained failure/rate-limit categories in section 5                              | `publisher@inewsafrica.com` — provider routing unverified   | Dr. Michael Omoruyi | Use provider alert testing or mocked/non-Production detection evidence; do not invalidate the Production key.      |
+| AI-provider degradation     | Protected AI error records, sanitized provider categories, OpenAI status/usage, and Vercel logs       | Existing Error Anomaly detects material AI-route 503 spikes; protected records support diagnosis       | Verified Vercel owner notification email                    | Dr. Michael Omoruyi | Existing benign Vercel notification test is verified; never invalidate the Production key to test AI specifically. |
 
 No alert in this table is considered configured until its provider rule, destination, and enabled
 state are verified. No alert is considered verified until the destination receives a real test
@@ -148,6 +148,24 @@ verification, rate-limit, origin, session, or role checks during diagnosis.
 
 Use protected AI usage/error records plus OpenAI's project status, rate-limit, token, and budget
 views. Monitor:
+
+- `AiProviderError` converts provider-call failures to HTTP 503, including missing provider
+  configuration and upstream failures surfaced by the OpenAI SDK. The protected AI Assistant error
+  record uses `AI_PROVIDER_FAILURE`, a safe provider identifier, the provider code/type (or
+  `PROVIDER_FAILURE`/`OPENAI_REQUEST_FAILED` fallback), and numeric provider status when available.
+- Observable categories therefore include provider unavailable/unconfigured, upstream HTTP or
+  network failure, timeout when supplied by the SDK, authentication/configuration failure, rate
+  limiting, malformed or empty provider output, and internal AI request failure. The exact
+  provider code varies with the SDK; do not infer a more specific category when it is absent.
+- Production API logs expose only the 503, route, request ID, duration, and safe error class. They
+  do not expose provider messages, authorization headers, keys, prompts, conversations, campaign
+  content, or database credentials. Provider code/status diagnosis is limited to authorized
+  protected governance access.
+- The existing verified Vercel Error Anomaly rule supplies meaningful alerting for material AI
+  provider failures because provider-call failures return 503. It does not label the root cause as
+  AI-specific and may not alert on an isolated failure below anomaly sensitivity. Operators must
+  correlate the affected AI route and protected `AI_PROVIDER_FAILURE` record. A second alert is not
+  required for the current P1; reassess if AI failures are later handled without a 5xx response.
 
 - provider failure, timeout, 429/rate-limit, and unavailable-model errors;
 - grounded-query failure rate above 2% for 10 minutes (P2 investigation) or above 10%/total
@@ -352,14 +370,13 @@ The application monitoring and incident procedures are ready. The authenticated 
 on `2026-09-26` found:
 
 - Vercel Observability provides Alerts and an **Error Anomaly** trigger for 5xx/4xx route spikes.
-  The built-in default rule covers all alert types and enables high-severity Vercel Notifications
-  (Web, Email, Push) for subscribed team owners. The current Vercel notification email is
-  `no-reply@polismartafrica.ai`, not the authorized monitoring destination. Project alert settings
-  expose Vercel Notifications, Slack, and webhook destinations, but no arbitrary project-alert
-  email field. Do not change the Vercel account email merely to route this alert.
-- Vercel also exposes a benign **Test Alert Anomaly** trigger and **Test Notification** action.
-  Do not run either until the authorized destination is visibly attached; provider-reported
-  “sent” status is not receipt evidence.
+  The built-in default rule covers all projects and built-in alert types at high/critical severity
+  and enables Vercel Notifications (Web, Email, Push) for subscribed team owners. The Platform
+  Owner confirmed its benign test notification was received through the existing Vercel owner
+  notification email. The private recipient address and exact timestamp are not recorded here.
+- Vercel exposes a benign **Test Alert Anomaly** trigger and **Test Notification** action. The
+  owner-confirmed receipt establishes external delivery for the current rule; do not repeatedly
+  send tests or deliberately generate Production failures.
 - Neon Monitoring exposes bounded Production compute, connection, query, and storage metrics.
   No configured notification destination or delivered database alert was evidenced.
 - The Platform Owner confirmed the existing UptimeRobot account delivered monitoring test
@@ -375,24 +392,20 @@ Complete and record the following external operational setup:
   all three to `publisher@inewsafrica.com`. Require HTTP 200; additionally validate the minimal
   expected JSON for health/readiness if safe keyword checks are supported. Send and independently
   confirm a benign test for each monitor, recording provider evidence and timestamp.
-- In Vercel **Project Settings → Alerts**, create an **Error Anomaly** rule scoped to Production
-  and the `poli-smart` project. Route only sanitized Vercel alert metadata. Vercel Notifications
-  currently subscribe team owners at `no-reply@polismartafrica.ai`; this does not satisfy the
-  authorized destination. For separate authorization, attach a supported webhook or Slack bridge
-  capable of delivering sanitized alerts to `publisher@inewsafrica.com`, or choose another
-  provider-supported routing design. Then run the built-in test alert and independently confirm
-  receipt.
+- Preserve the existing Vercel default Error Anomaly rule and verified owner notification channel.
+  It covers the `poli-smart` Production project through its all-projects scope. Do not create a
+  duplicate AI-specific rule or add a team seat, webhook, or Slack bridge without separate
+  authorization.
 - In Neon, enable any plan-supported compute/connection/provider notifications for the Production
   branch and route them to the authorized destination. Independently, treat repeated `/api/ready`
   failures as the always-available database-dependency signal. Do not disconnect Production to
   test this path.
-- Configure an alert consumer for the application's sanitized AI provider categories (unavailable,
-  timeout, authentication/configuration, rate limit, malformed response, and application failure),
-  and corroborate with OpenAI status/usage notifications. A mock proves detection only; use the
-  provider's benign test-notification mechanism to prove external delivery.
-- The active alert destination is `publisher@inewsafrica.com`. UptimeRobot receipt is verified by
-  the owner; Vercel, Neon, and AI alert routing and receipt remain unverified. Do not add unapproved
-  secondary contacts.
+- Correlate Vercel AI-route Error Anomaly events with protected sanitized provider categories and
+  OpenAI status/usage views. This is the current P1 alert path; no separate consumer is required.
+- The UptimeRobot destination is `publisher@inewsafrica.com`; the Vercel route uses the verified
+  Vercel owner notification email. UptimeRobot and Vercel receipt are verified by the owner. Neon
+  native alert routing and a distinct `/api/ready` monitor remain unverified. Do not add
+  unapproved secondary contacts.
 - Configure provider budget/usage warnings for OpenAI and applicable paid production
   infrastructure providers. **Provider budget thresholds: owner action required.** Select the
   dollar limits in each provider's protected management console so warning alerts arrive before
@@ -410,9 +423,9 @@ Coming Soon and are not operational dependencies.
 - [ ] Select and configure an independent HTTPS monitoring provider.
 - [ ] Monitor the canonical homepage, `/api/health`, and `/api/ready` at the documented interval.
 - [ ] Attach an authorized external alert destination without storing its credential in Git.
-- [ ] Create and enable the Vercel 5xx/error-rate alert using safe route/status metadata only.
+- [x] Preserve the Vercel Error Anomaly rule and owner-verified benign test receipt.
 - [ ] Create and enable Neon availability/connection-capacity alerts and correlate readiness 503s.
-- [ ] Create and enable sustained AI-provider failure/rate-limit alerts using governance and provider signals.
+- [x] Use verified Vercel Error Anomaly coverage for material AI 503s and protected governance records for diagnosis.
 - [x] Record Dr. Michael Omoruyi as Incident Lead, Application Operator, Database Operator, and AI/Application Verification Owner.
 - [ ] Record private escalation contacts and escalation order in the approved private system.
 - [ ] Send a real test alert from every configured alert source to the destination.

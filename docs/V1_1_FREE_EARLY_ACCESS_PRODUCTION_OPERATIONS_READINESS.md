@@ -95,12 +95,13 @@ Escalation sequence:
    authority. An authorized technical operator executes the approved action. Database restoration
    additionally requires the applicable data-owner decision.
 
-The authorized operational destination is `publisher@inewsafrica.com`; it supersedes
+The authorized UptimeRobot destination is `publisher@inewsafrica.com`; it supersedes
 `support@polismartafrica.ai` for active monitoring instructions. The Platform Owner confirmed
-UptimeRobot test delivery to the authorized destination. Vercel, Neon, and AI alert delivery remain
-unverified. Delegation evidence and private contact methods remain in the protected operations
-register rather than this repository. This change does not alter `EMAIL_FROM`, Microsoft Graph, or
-transactional authentication email.
+UptimeRobot test delivery to that destination and confirmed Vercel Error Anomaly test delivery
+through the existing Vercel owner notification email. Neon native alert delivery and a distinct
+readiness-monitor test remain unverified. Delegation evidence and private contact methods remain in
+the protected operations register rather than this repository. This change does not alter
+`EMAIL_FROM`, Microsoft Graph, or transactional authentication email.
 
 ## 4. Provider usage and budget warnings
 
