@@ -61,4 +61,10 @@ export const geographyApi = {
       `/api/operations/${campaignId}/geography/import`,
       { method: "POST", body: JSON.stringify(data) },
     ),
+  activateHierarchy: (tenantId: string, campaignId: string, confirmation: string) =>
+    request<{ activated: number }>(
+      tenantId,
+      `/api/operations/${campaignId}/geography/activate`,
+      { method: "POST", body: JSON.stringify({ confirmation }) },
+    ),
 };

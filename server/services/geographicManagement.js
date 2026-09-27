@@ -19,6 +19,20 @@ export const GEOGRAPHIC_IMPORT_LIMITS = Object.freeze({
   source: 240,
   validationStatus: 40,
 });
+export const GEOGRAPHIC_ACTIVATION_CONFIRMATION = "ACTIVATE AUTHORIZED GEOGRAPHIC HIERARCHY";
+export const NIGERIA_ACTIVATION_COUNTS = Object.freeze({
+  Country: 1,
+  "Geopolitical Zone": 6,
+  "State/FCT": 37,
+  "Local Government Area/FCT Area Council": 774,
+  "Ward/Registration Area": 8809,
+});
+const NIGERIA_PARENT_LEVEL = Object.freeze({
+  "Geopolitical Zone": "Country",
+  "State/FCT": "Geopolitical Zone",
+  "Local Government Area/FCT Area Council": "State/FCT",
+  "Ward/Registration Area": "Local Government Area/FCT Area Council",
+});
 const fail = (message, code, status = 400) => Object.assign(new Error(message), { status, code });
 const clean = (value) => (typeof value === "string" ? value.trim() : "");
 const areaKey = (level, code) => `${level}\0${code}`;
@@ -251,4 +265,72 @@ export function assertNoAreaCycle({ areaId, parentId, areas }) {
       throw fail("The parent relationship would create a cycle.", "HIERARCHY_CYCLE");
     seen.add(current);
   }
+}
+
+export function validateFullGeographicActivation({ tenantId, campaignId, campaign, levels, areas }) {
+  if (!campaign || campaign.id !== campaignId || campaign.tenantId !== tenantId)
+    throw fail("Campaign is unavailable in this organization.", "ACTIVATION_SCOPE_INVALID", 404);
+
+  const levelById = new Map(levels.map((level) => [level.id, level]));
+  const areaById = new Map(areas.map((area) => [area.id, area]));
+  const counts = new Map();
+  const identities = new Set();
+  const codes = new Set();
+  let active = 0;
+
+  for (const area of areas) {
+    if (area.tenantId !== tenantId || area.campaignId !== campaignId)
+      throw fail("Geographic hierarchy scope is invalid.", "ACTIVATION_SCOPE_INVALID");
+    if (area.isActive) active += 1;
+    const level = levelById.get(area.levelId);
+    if (!level || level.tenantId !== tenantId || level.isActive === false)
+      throw fail("Geographic hierarchy level is unavailable.", "ACTIVATION_LEVEL_INVALID");
+    if (!(level.name in NIGERIA_ACTIVATION_COUNTS))
+      throw fail("Geographic hierarchy contains an unsupported level.", "ACTIVATION_LEVEL_INVALID");
+    counts.set(level.name, (counts.get(level.name) || 0) + 1);
+    const identity = `${area.levelId}\0${area.parentId || ""}\0${String(area.name).toLowerCase()}`;
+    const code = `${area.levelId}\0${area.code || ""}`;
+    if (!area.code || identities.has(identity) || codes.has(code))
+      throw fail("Geographic hierarchy contains duplicate identifiers.", "ACTIVATION_DUPLICATE");
+    identities.add(identity);
+    codes.add(code);
+
+    const expectedParentLevel = NIGERIA_PARENT_LEVEL[level.name];
+    if (!expectedParentLevel) {
+      if (area.parentId)
+        throw fail("Geographic hierarchy parent relationship is invalid.", "ACTIVATION_PARENT_INVALID");
+      continue;
+    }
+    const parent = areaById.get(area.parentId);
+    const parentLevel = parent ? levelById.get(parent.levelId) : null;
+    if (
+      !parent ||
+      parent.tenantId !== tenantId ||
+      parent.campaignId !== campaignId ||
+      parentLevel?.name !== expectedParentLevel
+    )
+      throw fail("Geographic hierarchy parent relationship is invalid.", "ACTIVATION_PARENT_INVALID");
+  }
+
+  for (const [name, expected] of Object.entries(NIGERIA_ACTIVATION_COUNTS))
+    if (counts.get(name) !== expected)
+      throw fail("Geographic hierarchy is incomplete.", "ACTIVATION_INCOMPLETE");
+
+  const visited = new Set();
+  const visiting = new Set();
+  const visit = (area) => {
+    if (visiting.has(area.id)) throw fail("Geographic hierarchy contains a cycle.", "HIERARCHY_CYCLE");
+    if (visited.has(area.id)) return;
+    visiting.add(area.id);
+    if (area.parentId) visit(areaById.get(area.parentId));
+    visiting.delete(area.id);
+    visited.add(area.id);
+  };
+  for (const area of areas) visit(area);
+
+  if (active === areas.length)
+    throw fail("Geographic hierarchy is already active.", "ACTIVATION_ALREADY_COMPLETE", 409);
+  if (active !== 0)
+    throw fail("Geographic hierarchy has a mixed activation state.", "ACTIVATION_MIXED_STATE", 409);
+  return { rowsTargeted: areas.length };
 }

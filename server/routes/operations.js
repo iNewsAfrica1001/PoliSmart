@@ -13,6 +13,7 @@ import {
 } from "../services/operationsValidation.js";
 import { requireString } from "../services/validation.js";
 import {
+  GEOGRAPHIC_ACTIVATION_CONFIRMATION,
   GEOGRAPHIC_IMPORT_LIMITS,
   validateGeographicRows,
   validateProvenance,
@@ -49,6 +50,21 @@ function geographicImportDiagnostic(error, rowsSubmitted, startedAt) {
       event: "geographic-controlled-import-failed",
       mode: "IMPORT",
       rowsSubmitted,
+      durationMs: Date.now() - startedAt,
+      prismaCode,
+      errorType: String(error?.name || "Error").slice(0, 80),
+    }),
+  );
+}
+
+function geographicActivationDiagnostic(error, campaignId, startedAt) {
+  const prismaCode =
+    typeof error?.code === "string" && /^P\d{4}$/.test(error.code) ? error.code : null;
+  console.error(
+    JSON.stringify({
+      event: "geographic-hierarchy-activation-failed",
+      operation: "FULL_HIERARCHY_ACTIVATION",
+      campaignId,
       durationMs: Date.now() - startedAt,
       prismaCode,
       errorType: String(error?.name || "Error").slice(0, 80),
@@ -239,6 +255,29 @@ export function createOperationsRouter(repository) {
       const result = await repository.updateVolunteer(request.tenant.id, request.params.id, data);
       if (!result.count) throw Object.assign(new Error("Volunteer not found."), { status: 404 });
       response.json({ updated: true });
+    }),
+  );
+  router.post(
+    "/:campaignId/geography/activate",
+    requireTenantPermission(PERMISSIONS.GEOGRAPHY_MANAGE),
+    asyncRoute(async (request, response) => {
+      if (request.body?.confirmation !== GEOGRAPHIC_ACTIVATION_CONFIRMATION)
+        throw Object.assign(
+          new Error("Activation confirmation must exactly match the required phrase."),
+          { status: 400 },
+        );
+      const startedAt = Date.now();
+      try {
+        const result = await repository.activateGeographicHierarchy(
+          request.tenant.id,
+          request.params.campaignId,
+          request.auth.user.id,
+        );
+        response.status(201).json({ activated: result.rowsActivated });
+      } catch (error) {
+        geographicActivationDiagnostic(error, request.params.campaignId, startedAt);
+        throw error;
+      }
     }),
   );
   router.get(

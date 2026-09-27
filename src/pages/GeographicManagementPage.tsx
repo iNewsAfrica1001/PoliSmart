@@ -113,6 +113,24 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
       setError(caught instanceof Error ? caught.message : "Import check failed.");
     }
   }
+  async function activateHierarchy(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setMessage("");
+    const data = Object.fromEntries(new FormData(event.currentTarget));
+    try {
+      const result = await geographyApi.activateHierarchy(
+        tenantId,
+        campaignId,
+        String(data.confirmation || ""),
+      );
+      setMessage(`Full hierarchy activation completed: ${result.activated} records activated.`);
+      await load();
+    } catch (caught) {
+      setMessage("");
+      setError(caught instanceof Error ? caught.message : "Hierarchy activation failed.");
+    }
+  }
   return (
     <div className="ops-page">
       <header className="ops-heading">
@@ -365,6 +383,26 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
               <input name="confirmation" placeholder="IMPORT AUTHORIZED GEOGRAPHIC DATA" />
             </label>
             <button className="primary-action">Run selected controlled mode</button>
+          </form>
+        )}
+      </section>
+      <section className="ops-list">
+        <h2>Controlled full-hierarchy activation</h2>
+        <p>
+          Activates the complete verified campaign hierarchy atomically. Partial and repeated
+          activation are rejected.
+        </p>
+        {campaignId && (
+          <form className="ops-form" onSubmit={activateHierarchy}>
+            <label>
+              Activation confirmation
+              <input
+                name="confirmation"
+                placeholder="ACTIVATE AUTHORIZED GEOGRAPHIC HIERARCHY"
+                required
+              />
+            </label>
+            <button className="primary-action">Activate complete hierarchy</button>
           </form>
         )}
       </section>

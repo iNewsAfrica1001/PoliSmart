@@ -442,6 +442,8 @@ test("Super Administrator UI exposes search, filter, edit, path, and controlled 
   assert.match(page, /IMPORT AUTHORIZED GEOGRAPHIC DATA/);
   assert.match(page, /Enter only when the source publishes a version date/);
   assert.match(page, /name="retrievalDate" type="date" required/);
+  assert.match(page, /ACTIVATE AUTHORIZED GEOGRAPHIC HIERARCHY/);
+  assert.match(page, /Activates the complete verified campaign hierarchy atomically/);
 });
 test("controlled import displays only the current submission status", () => {
   const page = readFileSync(

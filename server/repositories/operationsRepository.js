@@ -1,4 +1,7 @@
-import { assertNoAreaCycle } from "../services/geographicManagement.js";
+import {
+  assertNoAreaCycle,
+  validateFullGeographicActivation,
+} from "../services/geographicManagement.js";
 
 const GEOGRAPHIC_IMPORT_TRANSACTION_OPTIONS = Object.freeze({
   maxWait: 10_000,
@@ -328,6 +331,64 @@ export function createOperationsRepository(database) {
         });
         return result;
       });
+    },
+    activateGeographicHierarchy(tenantId, campaignId, actorId) {
+      return database.$transaction(async (transaction) => {
+        const [campaign, levels, areas] = await Promise.all([
+          transaction.campaign.findFirst({
+            where: { id: campaignId, tenantId },
+            select: { id: true, tenantId: true },
+          }),
+          transaction.geographicLevel.findMany({
+            where: { tenantId },
+            select: { id: true, tenantId: true, name: true, isActive: true },
+          }),
+          transaction.geographicArea.findMany({
+            where: { tenantId, campaignId },
+            select: {
+              id: true,
+              tenantId: true,
+              campaignId: true,
+              levelId: true,
+              parentId: true,
+              name: true,
+              code: true,
+              isActive: true,
+            },
+          }),
+        ]);
+        const { rowsTargeted } = validateFullGeographicActivation({
+          tenantId,
+          campaignId,
+          campaign,
+          levels,
+          areas,
+        });
+        const activatedAt = new Date();
+        const result = await transaction.geographicArea.updateMany({
+          where: { tenantId, campaignId, isActive: false },
+          data: { isActive: true },
+        });
+        if (result.count !== rowsTargeted)
+          throw new Error("Geographic hierarchy activation did not update the verified set.");
+        await transaction.securityAuditEvent.create({
+          data: auditData(
+            tenantId,
+            actorId,
+            "GEOGRAPHIC_HIERARCHY_ACTIVATED",
+            "campaign",
+            campaignId,
+            {
+              operation: "FULL_HIERARCHY_ACTIVATION",
+              rowsTargeted,
+              rowsActivated: result.count,
+              activatedAt: activatedAt.toISOString(),
+              fullHierarchyActivation: true,
+            },
+          ),
+        });
+        return { rowsTargeted, rowsActivated: result.count, activatedAt };
+      }, GEOGRAPHIC_IMPORT_TRANSACTION_OPTIONS);
     },
     listAreas(tenantId, campaignId) {
       return database.geographicArea.findMany({
