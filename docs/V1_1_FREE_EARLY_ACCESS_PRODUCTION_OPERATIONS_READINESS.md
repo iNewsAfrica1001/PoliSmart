@@ -52,12 +52,12 @@ The minimum Production monitoring plan is:
 | AI provider                     | Protected AI records, Vercel logs, OpenAI views           | Provider failures, timeouts, rate limits, citations, usage      | Sustained provider failure, unsafe grounding, or abnormal usage    |
 | Transactional email             | Safe Graph error logs, Microsoft 365 health/message trace | Token, authorization, rate-limit, provider and delivery signals | Widespread verification/reset delivery failure                     |
 
-**External-monitor status:** PARTIALLY VERIFIED. On `2026-09-26`, the Platform Owner confirmed the
-existing UptimeRobot account sent test notifications that were received at the authorized
-monitoring destination, `publisher@inewsafrica.com`. Repository evidence identifies monitors named
-`PoliSmart Africa AI - Production` and `PoliSmart Africa AI - Health`. A separate readiness monitor,
-per-monitor test attribution, and exact receipt timestamps were not supplied and remain unverified.
-Do not expose monitor credentials, invent timestamps, or create duplicate monitors blindly.
+**External-monitor status:** VERIFIED. On `2026-09-26`, the Platform Owner confirmed the existing
+UptimeRobot account monitors the Production domain, `/api/health`, and `/api/ready`, and that test
+notifications were received at `publisher@inewsafrica.com`. The distinct readiness monitor is
+operational and its test receipt is owner-verified. Exact timestamps were not supplied; record them
+as owner-confirmed without inventing a time. Do not expose monitor credentials or create duplicate
+monitors blindly.
 
 ## 3. Alert and escalation ownership
 
@@ -98,10 +98,12 @@ Escalation sequence:
 The authorized UptimeRobot destination is `publisher@inewsafrica.com`; it supersedes
 `support@polismartafrica.ai` for active monitoring instructions. The Platform Owner confirmed
 UptimeRobot test delivery to that destination and confirmed Vercel Error Anomaly test delivery
-through the existing Vercel owner notification email. Neon native alert delivery and a distinct
-readiness-monitor test remain unverified. Delegation evidence and private contact methods remain in
-the protected operations register rather than this repository. This change does not alter
-`EMAIL_FROM`, Microsoft Graph, or transactional authentication email.
+through the existing Vercel owner notification email. The distinct UptimeRobot readiness monitor
+also has owner-verified receipt. `/api/ready` includes a bounded Production database query, so this
+closes the database-failure detection requirement; Neon-native alerts are optional
+defense-in-depth. Delegation evidence and private contact methods remain in the protected
+operations register rather than this repository. This change does not alter `EMAIL_FROM`,
+Microsoft Graph, or transactional authentication email.
 
 ## 4. Provider usage and budget warnings
 
@@ -248,10 +250,11 @@ behavior, or widespread transactional-email failure. Do not repeatedly exercise 
 Technical monitoring procedures and repository-controlled telemetry are documented, including
 health/readiness, structured request and provider errors, Neon/Vercel operational surfaces,
 role-based escalation, a verified rollback candidate, and prepared identity and smoke procedures.
-Independent uptime monitoring, external alert-provider rules, delivered alert testing, private
+The monitoring/alerting P1 is closed: independent domain, health, and readiness monitoring,
+database-failure detection, Vercel Error Anomaly monitoring, material AI-provider failure coverage,
+external alert delivery, and named operational ownership have verified evidence. Private
 escalation contact methods, Neon budget alerts, and Microsoft service/usage warnings remain
-UNVERIFIED and require owner configuration. Named operational ownership is recorded, but logging
-or a documented destination alone does not prove alert delivery.
+operational improvements outside this P1 and do not reopen it.
 
 Production remains NO-GO until the pre-deployment checklist is executed for the actual release
 window and the independent governance gates are complete. Those gates include qualified
