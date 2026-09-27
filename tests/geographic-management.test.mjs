@@ -445,12 +445,28 @@ test("Super Administrator UI exposes search, filter, edit, path, and controlled 
   assert.match(page, /ACTIVATE AUTHORIZED GEOGRAPHIC HIERARCHY/);
   assert.match(page, /Activates the complete verified campaign hierarchy atomically/);
 });
+test("Super Administrator UI progressively loads bounded geographic pages", () => {
+  const page = readFileSync(
+    new URL("../src/pages/GeographicManagementPage.tsx", import.meta.url),
+    "utf8",
+  );
+  const api = readFileSync(new URL("../src/lib/geography.ts", import.meta.url), "utf8");
+  assert.match(page, /ADMIN_PAGE_SIZE = 25/);
+  assert.match(page, /administrativeAreas/);
+  assert.match(page, /parentId: parentId \|\| undefined/);
+  assert.match(page, /View children/);
+  assert.match(page, /Showing \{areas\.length\} of \{totalAreas\}/);
+  assert.doesNotMatch(page, /geographyApi\.areas\(/);
+  assert.match(api, /geography\/admin-areas/);
+  assert.match(api, /URLSearchParams/);
+});
 test("controlled import displays only the current submission status", () => {
   const page = readFileSync(
     new URL("../src/pages/GeographicManagementPage.tsx", import.meta.url),
     "utf8",
   );
-  const handler = page.slice(page.indexOf("async function runImport"), page.indexOf("  return ("));
+  const handlerStart = page.indexOf("async function runImport");
+  const handler = page.slice(handlerStart, page.indexOf("  async function activateHierarchy", handlerStart));
   assert.match(handler, /event\.preventDefault\(\);\s*setError\(""\);\s*setMessage\(""\);/);
   assert.match(handler, /setError\(""\);\s*setMessage\(`\$\{result\.mode\} completed:/);
   assert.match(handler, /catch \(caught\) \{\s*setMessage\(""\);\s*setError\(/);

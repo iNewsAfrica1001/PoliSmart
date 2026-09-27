@@ -329,6 +329,38 @@ export function createOperationsRouter(repository) {
       }),
     ),
   );
+  router.get(
+    "/:campaignId/geography/admin-areas",
+    requireTenantPermission(PERMISSIONS.GEOGRAPHY_MANAGE),
+    asyncRoute(async (request, response) => {
+      const integer = (value, fallback, minimum, maximum) => {
+        if (value === undefined || value === "") return fallback;
+        const parsed = Number(value);
+        if (!Number.isInteger(parsed) || parsed < minimum || parsed > maximum)
+          throw Object.assign(new Error("Invalid geographic pagination parameter."), {
+            status: 400,
+          });
+        return parsed;
+      };
+      const active = request.query.active;
+      if (active !== undefined && active !== "true" && active !== "false")
+        throw Object.assign(new Error("Active filter must be true or false."), { status: 400 });
+      const search = String(request.query.search || "").trim();
+      if (search.length > 120)
+        throw Object.assign(new Error("Geographic search is too long."), { status: 400 });
+      response.json(
+        await repository.listAdministrativeAreas(request.tenant.id, request.params.campaignId, {
+          page: integer(request.query.page, 1, 1, 1_000_000),
+          pageSize: integer(request.query.pageSize, 25, 1, 100),
+          levelId: request.query.levelId ? String(request.query.levelId) : undefined,
+          parentId: request.query.parentId ? String(request.query.parentId) : undefined,
+          rootOnly: request.query.root === "true",
+          isActive: active === undefined ? undefined : active === "true",
+          search: search || undefined,
+        }),
+      );
+    }),
+  );
   router.post(
     "/:campaignId/geography/areas",
     requireTenantPermission(PERMISSIONS.GEOGRAPHY_MANAGE),

@@ -96,6 +96,7 @@ function routeRepository() {
     geographicWrites: 0,
     transactions: 0,
     bulkInserts: 0,
+    administrativeReads: [],
   };
   const levels = NIGERIA_GEOGRAPHIC_LEVELS.map((name, index) => ({
     id: index === 2 ? levelId : `level-${index}`,
@@ -105,6 +106,10 @@ function routeRepository() {
   const repository = {
     listLevels: async () => levels,
     listAreas: async () => [],
+    listAdministrativeAreas: async (...args) => {
+      calls.administrativeReads.push(args);
+      return { items: [], page: args[2].page, pageSize: args[2].pageSize, total: 9627, totalPages: 386 };
+    },
     createGeographicLevel: async (_tenant, _actor, data) => {
       calls.geographicWrites += 1;
       return { id: levelId, ...data, isActive: true };
@@ -142,6 +147,112 @@ function routeRepository() {
   };
   return { repository, calls };
 }
+
+test("administrative geography reads are authorized, scoped, filtered, and bounded", async () => {
+  const { repository, calls } = routeRepository();
+  await request(appFor("SUPER_ADMINISTRATOR", repository))
+    .get(`/operations/${campaignId}/geography/admin-areas`)
+    .query({ page: 2, pageSize: 25, parentId: "parent-a", levelId: "level-a", active: "true", search: "Abaji" })
+    .set("X-Organization-Id", tenantId)
+    .expect(200)
+    .expect(({ body }) => {
+      assert.equal(body.items.length, 0);
+      assert.equal(body.total, 9627);
+    });
+  assert.deepEqual(calls.administrativeReads[0], [tenantId, campaignId, {
+    page: 2,
+    pageSize: 25,
+    levelId: "level-a",
+    parentId: "parent-a",
+    rootOnly: false,
+    isActive: true,
+    search: "Abaji",
+  }]);
+});
+
+test("administrative geography reads reject unauthorized users and unbounded page sizes", async () => {
+  for (const role of [null, "CAMPAIGN_ADMINISTRATOR"]) {
+    const { repository, calls } = routeRepository();
+    await request(appFor(role, repository))
+      .get(`/operations/${campaignId}/geography/admin-areas`)
+      .set("X-Organization-Id", tenantId)
+      .expect(role ? 403 : 401);
+    assert.equal(calls.administrativeReads.length, 0);
+  }
+  const { repository, calls } = routeRepository();
+  await request(appFor("SUPER_ADMINISTRATOR", repository))
+    .get(`/operations/${campaignId}/geography/admin-areas?pageSize=9627`)
+    .set("X-Organization-Id", tenantId)
+    .expect(400);
+  assert.equal(calls.administrativeReads.length, 0);
+});
+
+test("administrative repository pages a 9,627-record hierarchy without fetching it all", async () => {
+  const observed = {};
+  const database = {
+    geographicArea: {
+      count: async (args) => {
+        if (args.where.id) return 1;
+        observed.countWhere = args.where;
+        return 9627;
+      },
+      findMany: async (args) => {
+        observed.findMany = args;
+        return Array.from({ length: args.take }, (_, index) => ({ id: `area-${index}` }));
+      },
+    },
+    geographicLevel: { count: async () => 1 },
+    $transaction: (queries) => Promise.all(queries),
+  };
+  const result = await createOperationsRepository(database).listAdministrativeAreas(
+    tenantId,
+    campaignId,
+    { page: 2, pageSize: 25, parentId: "parent-a", isActive: true, search: "Ward" },
+  );
+  assert.equal(result.items.length, 25);
+  assert.equal(result.total, 9627);
+  assert.equal(result.totalPages, 386);
+  assert.equal(observed.findMany.take, 25);
+  assert.equal(observed.findMany.skip, 25);
+  assert.equal(observed.findMany.where.tenantId, tenantId);
+  assert.equal(observed.findMany.where.campaignId, campaignId);
+  assert.equal(observed.findMany.where.parentId, "parent-a");
+  assert.equal(observed.findMany.where.isActive, true);
+  assert.deepEqual(observed.findMany.orderBy, [
+    { level: { orderIndex: "asc" } },
+    { name: "asc" },
+    { id: "asc" },
+  ]);
+});
+
+test("administrative repository rejects parent and level filters outside the scoped campaign", async () => {
+  let reads = 0;
+  const database = {
+    geographicArea: {
+      count: async ({ where }) => (where.id ? 0 : 9627),
+      findMany: async () => {
+        reads += 1;
+        return [];
+      },
+    },
+    geographicLevel: { count: async () => 0 },
+    $transaction: (queries) => Promise.all(queries),
+  };
+  const repository = createOperationsRepository(database);
+  await assert.rejects(
+    repository.listAdministrativeAreas(tenantId, campaignId, {
+      page: 1, pageSize: 25, parentId: "outside-parent",
+    }),
+    /parent is not available/,
+  );
+  await assert.rejects(
+    repository.listAdministrativeAreas(tenantId, campaignId, {
+      page: 1, pageSize: 25, levelId: "outside-level",
+    }),
+    /level is not available/,
+  );
+  assert.equal(reads, 0);
+});
 
 test("geographic write routes reject unauthenticated and ordinary administrators", async () => {
   for (const [role, status] of [

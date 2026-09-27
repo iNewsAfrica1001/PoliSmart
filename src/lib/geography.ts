@@ -16,6 +16,21 @@ async function request<T>(tenantId: string, path: string, init?: RequestInit): P
   return payload as T;
 }
 export const geographyTenant = (user: SessionUser) => activeTenant(user);
+export type GeographicArea = {
+  id: string;
+  name: string;
+  code?: string;
+  isActive: boolean;
+  level: { id: string; name: string; orderIndex?: number };
+  parent?: { id: string; name: string };
+};
+export type GeographicAreaPage = {
+  items: GeographicArea[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
 export const geographyApi = {
   levels: (tenantId: string) =>
     request<{ levels: Array<{ id: string; name: string; orderIndex: number; isActive: boolean }> }>(
@@ -35,6 +50,27 @@ export const geographyApi = {
         parent?: { id: string; name: string };
       }>;
     }>(tenantId, `/api/operations/${campaignId}/geography/areas`),
+  administrativeAreas: (
+    tenantId: string,
+    campaignId: string,
+    filters: {
+      page?: number;
+      pageSize?: number;
+      levelId?: string;
+      parentId?: string;
+      root?: boolean;
+      active?: boolean;
+      search?: string;
+    } = {},
+  ) => {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(filters))
+      if (value !== undefined && value !== "") query.set(key, String(value));
+    return request<GeographicAreaPage>(
+      tenantId,
+      `/api/operations/${campaignId}/geography/admin-areas?${query}`,
+    );
+  },
   createLevel: (tenantId: string, data: object) =>
     request(tenantId, "/api/operations/geography/levels", {
       method: "POST",

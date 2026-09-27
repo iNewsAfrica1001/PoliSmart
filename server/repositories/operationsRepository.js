@@ -155,6 +155,66 @@ export function createOperationsRepository(database) {
         orderBy: { orderIndex: "asc" },
       });
     },
+    async listAdministrativeAreas(tenantId, campaignId, filters) {
+      const where = {
+        tenantId,
+        campaignId,
+        ...(filters.levelId ? { levelId: filters.levelId } : {}),
+        ...(filters.rootOnly ? { parentId: null } : {}),
+        ...(filters.parentId ? { parentId: filters.parentId } : {}),
+        ...(filters.isActive === undefined ? {} : { isActive: filters.isActive }),
+        ...(filters.search
+          ? {
+              OR: [
+                { name: { contains: filters.search, mode: "insensitive" } },
+                { code: { contains: filters.search, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+      };
+      if (
+        filters.parentId &&
+        (await database.geographicArea.count({
+          where: { id: filters.parentId, tenantId, campaignId },
+        })) !== 1
+      )
+        throw Object.assign(new Error("Geographic parent is not available in this campaign."), {
+          status: 404,
+        });
+      if (
+        filters.levelId &&
+        (await database.geographicLevel.count({
+          where: { id: filters.levelId, tenantId },
+        })) !== 1
+      )
+        throw Object.assign(new Error("Geographic level is not available in this organization."), {
+          status: 404,
+        });
+      const [total, items] = await database.$transaction([
+        database.geographicArea.count({ where }),
+        database.geographicArea.findMany({
+          where,
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            isActive: true,
+            level: { select: { id: true, name: true, orderIndex: true } },
+            parent: { select: { id: true, name: true } },
+          },
+          orderBy: [{ level: { orderIndex: "asc" } }, { name: "asc" }, { id: "asc" }],
+          skip: (filters.page - 1) * filters.pageSize,
+          take: filters.pageSize,
+        }),
+      ]);
+      return {
+        items,
+        page: filters.page,
+        pageSize: filters.pageSize,
+        total,
+        totalPages: Math.ceil(total / filters.pageSize),
+      };
+    },
     createLevel(tenantId, data) {
       return database.geographicLevel.create({ data: { ...data, tenantId } });
     },

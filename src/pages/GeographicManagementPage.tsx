@@ -1,6 +1,107 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import type { SessionUser } from "../lib/auth";
-import { geographyApi, geographyTenant } from "../lib/geography";
+import { geographyApi, geographyTenant, type GeographicArea } from "../lib/geography";
+
+const ADMIN_PAGE_SIZE = 25;
+
+type Level = { id: string; name: string; orderIndex: number; isActive: boolean };
+
+function ParentPicker({
+  tenantId,
+  campaignId,
+  levels,
+  levelId,
+  initialParent,
+}: {
+  tenantId: string;
+  campaignId: string;
+  levels: Level[];
+  levelId: string;
+  initialParent?: { id: string; name: string };
+}) {
+  const [search, setSearch] = useState("");
+  const [parents, setParents] = useState<GeographicArea[]>([]);
+  const level = levels.find((candidate) => candidate.id === levelId);
+  const parentLevel = levels.find(
+    (candidate) => candidate.isActive && candidate.orderIndex === (level?.orderIndex ?? 0) - 1,
+  );
+  useEffect(() => {
+    if (!campaignId || !parentLevel) {
+      setParents([]);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      void geographyApi
+        .administrativeAreas(tenantId, campaignId, {
+          levelId: parentLevel.id,
+          active: true,
+          search: search || undefined,
+          page: 1,
+          pageSize: 50,
+        })
+        .then((result) => setParents(result.items));
+    }, 200);
+    return () => window.clearTimeout(timer);
+  }, [campaignId, parentLevel, search, tenantId]);
+  if (!parentLevel) return <input name="parentId" type="hidden" value="" />;
+  const options = initialParent && !parents.some((item) => item.id === initialParent.id)
+    ? [{ id: initialParent.id, name: initialParent.name } as GeographicArea, ...parents]
+    : parents;
+  return (
+    <>
+      <label>
+        Search {parentLevel.name} parents
+        <input value={search} onChange={(event) => setSearch(event.target.value)} />
+      </label>
+      <label>
+        Parent
+        <select name="parentId" defaultValue={initialParent?.id || ""} required>
+          <option value="">Select parent</option>
+          {options.map((parent) => <option key={parent.id} value={parent.id}>{parent.name}</option>)}
+        </select>
+        <small>At most 50 matching immediate parents are returned.</small>
+      </label>
+    </>
+  );
+}
+
+function AreaEditForm({
+  area,
+  tenantId,
+  campaignId,
+  levels,
+  onSubmit,
+}: {
+  area: GeographicArea;
+  tenantId: string;
+  campaignId: string;
+  levels: Level[];
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  const [levelId, setLevelId] = useState(area.level.id);
+  return (
+    <form className="ops-form" onSubmit={onSubmit}>
+      <label>Name<input name="name" defaultValue={area.name} required maxLength={120} /></label>
+      <label>Code<input name="code" defaultValue={area.code} required maxLength={40} /></label>
+      <label>
+        Level
+        <select name="levelId" value={levelId} onChange={(event) => setLevelId(event.target.value)} required>
+          {levels.filter((level) => level.isActive).map((level) => (
+            <option key={level.id} value={level.id}>{level.name}</option>
+          ))}
+        </select>
+      </label>
+      <ParentPicker
+        tenantId={tenantId}
+        campaignId={campaignId}
+        levels={levels}
+        levelId={levelId}
+        initialParent={levelId === area.level.id ? area.parent : undefined}
+      />
+      <button>Save area</button>
+    </form>
+  );
+}
 
 export function GeographicManagementPage({ user }: { user: SessionUser }) {
   const tenantId = geographyTenant(user);
@@ -9,26 +110,19 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
   >([]);
   const [campaigns, setCampaigns] = useState<Array<{ id: string; name: string }>>([]);
   const [campaignId, setCampaignId] = useState("");
-  const [areas, setAreas] = useState<
-    Array<{
-      id: string;
-      name: string;
-      code?: string;
-      isActive: boolean;
-      level: { id: string; name: string };
-      parent?: { id: string; name: string };
-    }>
-  >([]);
+  const [areas, setAreas] = useState<GeographicArea[]>([]);
+  const [totalAreas, setTotalAreas] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
+  const [parentId, setParentId] = useState("");
+  const [parentName, setParentName] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
-  const visibleAreas = areas.filter(
-    (area) =>
-      `${area.name} ${area.code || ""}`.toLowerCase().includes(search.toLowerCase()) &&
-      (!levelFilter || area.level.name === levelFilter),
-  );
-  const load = useCallback(async () => {
+  const [editingAreaId, setEditingAreaId] = useState("");
+  const [newAreaLevelId, setNewAreaLevelId] = useState("");
+  const loadReferenceData = useCallback(async () => {
     const [l, c] = await Promise.all([
       geographyApi.levels(tenantId),
       geographyApi.campaigns(tenantId),
@@ -37,11 +131,31 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
     setCampaigns(c.campaigns);
     const selected = campaignId || c.campaigns[0]?.id || "";
     setCampaignId(selected);
-    if (selected) setAreas((await geographyApi.areas(tenantId, selected)).items);
   }, [campaignId, tenantId]);
   useEffect(() => {
-    void load().catch((e) => setError(e.message));
-  }, [load]);
+    void loadReferenceData().catch((e) => setError(e.message));
+  }, [loadReferenceData]);
+  const loadAreas = useCallback(async () => {
+    if (!campaignId) {
+      setAreas([]);
+      return;
+    }
+    const result = await geographyApi.administrativeAreas(tenantId, campaignId, {
+      page,
+      pageSize: ADMIN_PAGE_SIZE,
+      levelId: levelFilter || undefined,
+      parentId: parentId || undefined,
+      root: !parentId && !levelFilter && !search,
+      search: search || undefined,
+    });
+    setAreas(result.items);
+    setTotalAreas(result.total);
+    setTotalPages(result.totalPages);
+  }, [campaignId, levelFilter, page, parentId, search, tenantId]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadAreas().catch((e) => setError(e.message)), 200);
+    return () => window.clearTimeout(timer);
+  }, [loadAreas]);
   async function addLevel(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = Object.fromEntries(new FormData(event.currentTarget));
@@ -50,7 +164,7 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
       orderIndex: Number(data.orderIndex),
     });
     setMessage("Geographic level created.");
-    await load();
+    await loadReferenceData();
   }
   async function addArea(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,7 +176,7 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
       parentId: data.parentId || undefined,
     });
     setMessage("Geographic area created.");
-    await load();
+    await loadAreas();
   }
   async function editLevel(event: FormEvent<HTMLFormElement>, id: string) {
     event.preventDefault();
@@ -72,7 +186,7 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
       orderIndex: Number(data.orderIndex),
     });
     setMessage("Geographic level updated.");
-    await load();
+    await loadReferenceData();
   }
   async function editArea(event: FormEvent<HTMLFormElement>, id: string) {
     event.preventDefault();
@@ -84,7 +198,7 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
       parentId: data.parentId || null,
     });
     setMessage("Geographic area updated.");
-    await load();
+    await loadAreas();
   }
   async function runImport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -125,7 +239,7 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
         String(data.confirmation || ""),
       );
       setMessage(`Full hierarchy activation completed: ${result.activated} records activated.`);
-      await load();
+      await loadAreas();
     } catch (caught) {
       setMessage("");
       setError(caught instanceof Error ? caught.message : "Hierarchy activation failed.");
@@ -166,7 +280,7 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
             <button
               onClick={async () => {
                 await geographyApi.updateLevel(tenantId, l.id, { isActive: !l.isActive });
-                await load();
+                await loadReferenceData();
               }}
             >
               {l.isActive ? "Deactivate" : "Activate"}
@@ -211,9 +325,11 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
           Campaign
           <select
             value={campaignId}
-            onChange={async (e) => {
+            onChange={(e) => {
               setCampaignId(e.target.value);
-              setAreas((await geographyApi.areas(tenantId, e.target.value)).items);
+              setParentId("");
+              setParentName("");
+              setPage(1);
             }}
           >
             <option value="">Select campaign</option>
@@ -226,18 +342,51 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
         </label>
         <label>
           Search areas
-          <input value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setParentId("");
+              setParentName("");
+              setPage(1);
+            }}
+          />
         </label>
         <label>
           Filter by level
-          <select value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}>
+          <select
+            value={levelFilter}
+            onChange={(e) => {
+              setLevelFilter(e.target.value);
+              setParentId("");
+              setParentName("");
+              setPage(1);
+            }}
+          >
             <option value="">All levels</option>
             {levels.map((l) => (
-              <option key={l.id}>{l.name}</option>
+              <option key={l.id} value={l.id}>{l.name}</option>
             ))}
           </select>
         </label>
-        {visibleAreas.map((a) => (
+        <p role="status">
+          Showing {areas.length} of {totalAreas} records
+          {parentName ? ` beneath ${parentName}` : ""}.
+        </p>
+        {parentId && (
+          <button
+            type="button"
+            onClick={() => {
+              setParentId("");
+              setParentName("");
+              setLevelFilter("");
+              setPage(1);
+            }}
+          >
+            Return to hierarchy roots
+          </button>
+        )}
+        {areas.map((a) => (
           <article key={a.id}>
             <div>
               <strong>{a.name}</strong>
@@ -252,49 +401,34 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
                 await geographyApi.updateArea(tenantId, campaignId, a.id, {
                   isActive: !a.isActive,
                 });
-                await load();
+                await loadAreas();
               }}
             >
               {a.isActive ? "Deactivate" : "Activate"}
             </button>
-            <details>
+            <button
+              type="button"
+              onClick={() => {
+                setParentId(a.id);
+                setParentName(a.name);
+                setLevelFilter("");
+                setSearch("");
+                setPage(1);
+              }}
+            >
+              View children
+            </button>
+            <details onToggle={(event) => setEditingAreaId(event.currentTarget.open ? a.id : "")}>
               <summary>Edit approved fields</summary>
-              <form className="ops-form" onSubmit={(event) => editArea(event, a.id)}>
-                <label>
-                  Name
-                  <input name="name" defaultValue={a.name} required maxLength={120} />
-                </label>
-                <label>
-                  Code
-                  <input name="code" defaultValue={a.code} required maxLength={40} />
-                </label>
-                <label>
-                  Level
-                  <select name="levelId" defaultValue={a.level.id} required>
-                    {levels
-                      .filter((level) => level.isActive)
-                      .map((level) => (
-                        <option key={level.id} value={level.id}>
-                          {level.name}
-                        </option>
-                      ))}
-                  </select>
-                </label>
-                <label>
-                  Parent
-                  <select name="parentId" defaultValue={a.parent?.id || ""}>
-                    <option value="">No parent</option>
-                    {areas
-                      .filter((candidate) => candidate.isActive && candidate.id !== a.id)
-                      .map((candidate) => (
-                        <option key={candidate.id} value={candidate.id}>
-                          {candidate.name}
-                        </option>
-                      ))}
-                  </select>
-                </label>
-                <button>Save area</button>
-              </form>
+              {editingAreaId === a.id && (
+                <AreaEditForm
+                  area={a}
+                  tenantId={tenantId}
+                  campaignId={campaignId}
+                  levels={levels}
+                  onSubmit={(event) => editArea(event, a.id)}
+                />
+              )}
             </details>
           </article>
         ))}
@@ -310,7 +444,13 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
             </label>
             <label>
               Level
-              <select name="levelId" required>
+              <select
+                name="levelId"
+                required
+                value={newAreaLevelId}
+                onChange={(event) => setNewAreaLevelId(event.target.value)}
+              >
+                <option value="">Select level</option>
                 {levels
                   .filter((l) => l.isActive)
                   .map((l) => (
@@ -320,22 +460,30 @@ export function GeographicManagementPage({ user }: { user: SessionUser }) {
                   ))}
               </select>
             </label>
-            <label>
-              Parent
-              <select name="parentId">
-                <option value="">No parent</option>
-                {areas
-                  .filter((a) => a.isActive)
-                  .map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name}
-                    </option>
-                  ))}
-              </select>
-            </label>
+            {newAreaLevelId && (
+              <ParentPicker
+                tenantId={tenantId}
+                campaignId={campaignId}
+                levels={levels}
+                levelId={newAreaLevelId}
+              />
+            )}
             <button className="primary-action">Add reviewed area</button>
           </form>
         )}
+        <nav aria-label="Geographic area pages">
+          <button type="button" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>
+            Previous
+          </button>
+          <span>Page {page} of {Math.max(totalPages, 1)}</span>
+          <button
+            type="button"
+            disabled={page >= totalPages}
+            onClick={() => setPage((value) => value + 1)}
+          >
+            Next
+          </button>
+        </nav>
       </section>
       <section className="ops-list">
         <h2>Controlled import</h2>
