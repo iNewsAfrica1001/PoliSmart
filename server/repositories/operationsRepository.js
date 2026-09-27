@@ -215,6 +215,34 @@ export function createOperationsRepository(database) {
         totalPages: Math.ceil(total / filters.pageSize),
       };
     },
+    async listActiveGeographicOptions(tenantId, campaignId, { parentId, rootOnly }) {
+      if (
+        parentId &&
+        (await database.geographicArea.count({
+          where: { id: parentId, tenantId, campaignId, isActive: true },
+        })) !== 1
+      )
+        throw Object.assign(new Error("Geographic parent is not available in this campaign."), {
+          status: 404,
+        });
+      return database.geographicArea.findMany({
+        where: {
+          tenantId,
+          campaignId,
+          isActive: true,
+          ...(rootOnly ? { parentId: null } : { parentId }),
+        },
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          isActive: true,
+          level: { select: { id: true, name: true, orderIndex: true } },
+        },
+        orderBy: [{ level: { orderIndex: "asc" } }, { name: "asc" }, { id: "asc" }],
+        take: 100,
+      });
+    },
     createLevel(tenantId, data) {
       return database.geographicLevel.create({ data: { ...data, tenantId } });
     },

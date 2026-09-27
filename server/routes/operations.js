@@ -330,6 +330,20 @@ export function createOperationsRouter(repository) {
     ),
   );
   router.get(
+    "/:campaignId/geography/context-options",
+    requireTenantPermission(PERMISSIONS.CAMPAIGN_READ),
+    asyncRoute(async (request, response) => {
+      const parentId = request.query.parentId ? String(request.query.parentId) : undefined;
+      response.json({
+        items: await repository.listActiveGeographicOptions(
+          request.tenant.id,
+          request.params.campaignId,
+          { parentId, rootOnly: !parentId },
+        ),
+      });
+    }),
+  );
+  router.get(
     "/:campaignId/geography/admin-areas",
     requireTenantPermission(PERMISSIONS.GEOGRAPHY_MANAGE),
     asyncRoute(async (request, response) => {

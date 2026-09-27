@@ -25,12 +25,18 @@ export type AssistantAnswer = {
   citations: Citation[];
 };
 export const assistantApi = {
-  chat: (tenantId: string, campaignId: string, question: string, conversationId?: string) =>
+  chat: (
+    tenantId: string,
+    campaignId: string,
+    question: string,
+    conversationId?: string,
+    geographicAreaId?: string,
+  ) =>
     fetch(`${API_BASE}/api/ai/chat`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json", "X-Organization-Id": tenantId },
-      body: JSON.stringify({ campaignId, question, conversationId }),
+      body: JSON.stringify({ campaignId, question, conversationId, geographicAreaId }),
     }).then((response) => parse<AssistantAnswer>(response)),
   feedback: (tenantId: string, messageId: string, type: "HELPFUL" | "INCORRECT" | "REPORT") =>
     fetch(`${API_BASE}/api/ai/feedback`, {

@@ -6,6 +6,7 @@ export const PROHIBITED_AI_CAPABILITIES = Object.freeze([
   "FABRICATED_ENDORSEMENT",
   "DECEPTIVE_POLITICAL_IMPERSONATION",
   "UNAUTHORIZED_AUTOMATED_PUBLISHING",
+  "GEOGRAPHIC_POLITICAL_MICROTARGETING",
 ]);
 const RULES = [
   [
@@ -25,6 +26,10 @@ const RULES = [
   [
     "UNAUTHORIZED_AUTOMATED_PUBLISHING",
     /(?:auto|automatically).{0,30}(?:publish|post|send).{0,30}(?:without|no).{0,20}(?:review|approval)/i,
+  ],
+  [
+    "GEOGRAPHIC_POLITICAL_MICROTARGETING",
+    /^(?=[\s\S]*(?:target|persuad|convinc|manipulat|optimi[sz]))(?=[\s\S]*(?:ward|lga|area council|state|zone|neighbou?rhood|geograph))(?=[\s\S]*(?:voter|electorate|vote))[\s\S]*$/i,
   ],
 ];
 export function assessPoliticalSafety(input) {

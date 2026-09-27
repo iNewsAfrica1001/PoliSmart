@@ -50,6 +50,13 @@ export const geographyApi = {
         parent?: { id: string; name: string };
       }>;
     }>(tenantId, `/api/operations/${campaignId}/geography/areas`),
+  contextOptions: (tenantId: string, campaignId: string, parentId?: string) => {
+    const query = parentId ? `?parentId=${encodeURIComponent(parentId)}` : "";
+    return request<{ items: GeographicArea[] }>(
+      tenantId,
+      `/api/operations/${campaignId}/geography/context-options${query}`,
+    );
+  },
   administrativeAreas: (
     tenantId: string,
     campaignId: string,

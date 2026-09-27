@@ -3,6 +3,7 @@ import { Bot, Send, ThumbsUp, TriangleAlert } from "lucide-react";
 import { assistantApi, type AssistantAnswer } from "../lib/assistant";
 import type { SessionUser } from "../lib/auth";
 import { operationsApi, type Campaign } from "../lib/operations";
+import { geographyApi, type GeographicArea } from "../lib/geography";
 
 export function AssistantPage({
   user,
@@ -14,6 +15,8 @@ export function AssistantPage({
   const tenantId = user.memberships[0]?.tenantId ?? "";
   const [campaignId, setCampaignId] = useState("");
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [geographyPath, setGeographyPath] = useState<GeographicArea[]>([]);
+  const [geographyOptions, setGeographyOptions] = useState<GeographicArea[][]>([]);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<AssistantAnswer | null>(null);
   const [conversationId, setConversationId] = useState<string>();
@@ -37,13 +40,46 @@ export function AssistantPage({
       .catch(() => setError("Unable to load campaigns."))
       .finally(() => setCampaignsLoaded(true));
   }, [tenantId]);
+  useEffect(() => {
+    setGeographyPath([]);
+    setGeographyOptions([]);
+    if (!campaignId) return;
+    geographyApi
+      .contextOptions(tenantId, campaignId)
+      .then(({ items }) => setGeographyOptions([items]))
+      .catch(() => setError("Unable to load active campaign geography."));
+  }, [tenantId, campaignId]);
+  async function selectGeography(depth: number, id: string) {
+    const prior = geographyPath.slice(0, depth);
+    if (!id) {
+      setGeographyPath(prior);
+      setGeographyOptions((current) => current.slice(0, depth + 1));
+      return;
+    }
+    const selected = geographyOptions[depth]?.find((item) => item.id === id);
+    if (!selected) return;
+    const path = [...prior, selected];
+    setGeographyPath(path);
+    try {
+      const { items } = await geographyApi.contextOptions(tenantId, campaignId, selected.id);
+      setGeographyOptions((current) => [...current.slice(0, depth + 1), items]);
+    } catch {
+      setError("Unable to load the next geographic level.");
+    }
+  }
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!question.trim() || !campaignId) return;
     setBusy(true);
     setError("");
     try {
-      const result = await assistantApi.chat(tenantId, campaignId, question.trim(), conversationId);
+      const result = await assistantApi.chat(
+        tenantId,
+        campaignId,
+        question.trim(),
+        conversationId,
+        geographyPath.at(-1)?.id,
+      );
       setAnswer(result);
       setFeedbackType(null);
       setFeedbackStatus("");
@@ -108,6 +144,28 @@ export function AssistantPage({
             ))}
           </select>
         </label>
+      )}
+      {campaignId && geographyOptions[0]?.length > 0 && (
+        <fieldset className="campaign-context" aria-label="Optional verified geographic context">
+          <legend>Optional geographic context</legend>
+          <p>Select an active campaign area. Names and hierarchy are verified by the server.</p>
+          {geographyOptions.map((options, depth) =>
+            options.length ? (
+              <label key={depth}>
+                {options[0]?.level.name || "Geographic area"}
+                <select
+                  value={geographyPath[depth]?.id || ""}
+                  onChange={(event) => void selectGeography(depth, event.target.value)}
+                >
+                  <option value="">No selection</option>
+                  {options.map((area) => (
+                    <option key={area.id} value={area.id}>{area.name}</option>
+                  ))}
+                </select>
+              </label>
+            ) : null,
+          )}
+        </fieldset>
       )}
       <section className="assistant-guide" aria-label="How grounded answers work">
         <div>

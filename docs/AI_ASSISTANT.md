@@ -11,6 +11,21 @@ unaudited intelligence path.
 
 The assistant is a server-side retrieval-augmented service. The server detects intent, retrieves authorized records, caps context, calls a provider abstraction, validates structured output, and constructs citations from retrieved records.
 
+## Optional geographic grounding
+
+An Assistant request may include only an optional geographic-area ID. The browser does not supply
+authoritative names, codes, levels, parents, or ancestry. The server resolves the ID against active
+geography in the authenticated organization and selected campaign, validates adjacent parent levels,
+rejects cycles and unavailable ancestors, and supplies at most the selected area plus four ancestors.
+The complete geography catalog is never loaded into an AI prompt.
+
+Verified geography is labelled internal campaign context and is kept separate from retrieved source
+material and user messages. It is not fabricated as an external citation. External factual claims
+continue to require the normal approved-document or public-intelligence citations. Geographic
+grounding supports neutral factual hierarchy and campaign administration only; it must not be used
+for voter profiling, persuasion optimization, turnout suppression, election prediction, or political
+microtargeting.
+
 ## Data boundaries
 
 - Campaign retrieval requires organization, campaign, user, `AI_ASSISTANT_USE`, approved/ready status, and compatible visibility.

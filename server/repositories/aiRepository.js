@@ -3,8 +3,49 @@ export function createAiRepository(database) {
     findCampaign(tenantId, campaignId) {
       return database.campaign.findFirst({
         where: { id: campaignId, tenantId },
-        select: { id: true },
+        select: { id: true, name: true, country: true },
       });
+    },
+    async findActiveGeographicContext({ tenantId, campaignId, geographicAreaId }) {
+      const campaign = await database.campaign.findFirst({
+        where: { id: campaignId, tenantId },
+        select: { id: true, name: true, country: true },
+      });
+      if (!campaign) return null;
+
+      const ancestry = [];
+      const visited = new Set();
+      let areaId = geographicAreaId;
+      while (areaId) {
+        if (ancestry.length >= 5 || visited.has(areaId)) return null;
+        visited.add(areaId);
+        const area = await database.geographicArea.findFirst({
+          where: { id: areaId, tenantId, campaignId, isActive: true },
+          select: {
+            id: true,
+            parentId: true,
+            name: true,
+            code: true,
+            tenantId: true,
+            campaignId: true,
+            level: { select: { name: true, orderIndex: true, isActive: true } },
+          },
+        });
+        if (!area || !area.level.isActive) return null;
+        const child = ancestry.at(-1);
+        if (child && child.level.orderIndex !== area.level.orderIndex + 1) return null;
+        ancestry.push(area);
+        areaId = area.parentId;
+      }
+
+      const ordered = ancestry.reverse();
+      if (!ordered.length || ordered[0].level.name !== "Country" || ordered[0].parentId)
+        return null;
+      return {
+        campaign,
+        selected: ordered.at(-1),
+        ancestry: ordered,
+      };
     },
     retrieveKnowledge({ tenantId, campaignId, userId, terms, limit = 6 }) {
       const query = terms.slice(0, 6);

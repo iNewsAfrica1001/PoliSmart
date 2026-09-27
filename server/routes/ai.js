@@ -7,7 +7,11 @@ import { noRateLimit } from "../services/rateLimiting.js";
 
 export function createAiRouter({ service, rateLimiters = {} }) {
   const router = Router();
-  router.use(requireSession, requireTenantPermission(PERMISSIONS.AI_ASSISTANT_USE));
+  router.use(
+    requireSession,
+    requireTenantPermission(PERMISSIONS.AI_ASSISTANT_USE),
+    requireTenantPermission(PERMISSIONS.CAMPAIGN_READ),
+  );
   router.post(
     "/chat",
     rateLimiters.user || noRateLimit,
@@ -18,6 +22,16 @@ export function createAiRouter({ service, rateLimiters = {} }) {
       const conversationId = request.body?.conversationId
         ? requireString(request.body, "conversationId", { min: 36, max: 36 })
         : undefined;
+      const geographicAreaId = request.body?.geographicAreaId
+        ? requireString(request.body, "geographicAreaId", { min: 36, max: 36 })
+        : undefined;
+      if (
+        geographicAreaId &&
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          geographicAreaId,
+        )
+      )
+        throw Object.assign(new Error("Geographic area identifier is invalid."), { status: 400 });
       response.json(
         await service.answer({
           tenantId: request.tenant.id,
@@ -25,6 +39,7 @@ export function createAiRouter({ service, rateLimiters = {} }) {
           userId: request.auth.user.id,
           question,
           conversationId,
+          geographicAreaId,
         }),
       );
     }),
