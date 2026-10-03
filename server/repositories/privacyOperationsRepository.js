@@ -39,20 +39,32 @@ export function createPrivacyOperationsRepository(database) {
           select: caseSelect,
         });
         await transaction.privacyCaseEvent.create({
-          data: { caseId: privacyCase.id, actorId, action: "PRIVACY_CASE_CREATED" },
+          data: {
+            tenantId: data.tenantId,
+            campaignId: data.campaignId,
+            caseId: privacyCase.id,
+            actorId,
+            action: "PRIVACY_CASE_CREATED",
+          },
         });
         return privacyCase;
       });
     },
-    updateCase(tenantId, campaignId, id, data, actorId) {
+    updateCase(tenantId, campaignId, id, expected, data, actorId) {
       return database.$transaction(async (transaction) => {
         const result = await transaction.privacyRightsCase.updateMany({
-          where: inScope(tenantId, campaignId, { id }),
+          where: inScope(tenantId, campaignId, {
+            id,
+            status: expected.status,
+            identityVerificationStatus: expected.identityVerificationStatus,
+          }),
           data,
         });
         if (result.count !== 1) return null;
         await transaction.privacyCaseEvent.create({
           data: {
+            tenantId,
+            campaignId,
             caseId: id,
             actorId,
             action: "PRIVACY_CASE_UPDATED",
@@ -85,6 +97,8 @@ export function createPrivacyOperationsRepository(database) {
         const suppression = await transaction.privacySuppression.create({ data });
         await transaction.privacyCaseEvent.create({
           data: {
+            tenantId: data.tenantId,
+            campaignId: data.campaignId,
             caseId: data.caseId,
             actorId,
             action: "PRIVACY_SUPPRESSION_CREATED",
@@ -93,6 +107,19 @@ export function createPrivacyOperationsRepository(database) {
         });
         return suppression;
       });
+    },
+    async isSuppressed(tenantId, campaignId, subjectKeyHash, channel) {
+      return (
+        (await database.privacySuppression.count({
+          where: {
+            tenantId,
+            campaignId,
+            subjectKeyHash,
+            status: "ACTIVE",
+            channel: { in: [channel, "ALL"] },
+          },
+        })) > 0
+      );
     },
     updateSuppression(tenantId, campaignId, id, status, reviewReference, actorId) {
       return database.$transaction(async (transaction) => {
@@ -107,6 +134,8 @@ export function createPrivacyOperationsRepository(database) {
         });
         await transaction.privacyCaseEvent.create({
           data: {
+            tenantId,
+            campaignId,
             caseId: existing.caseId,
             actorId,
             action: "PRIVACY_SUPPRESSION_CHANGED",
@@ -130,7 +159,13 @@ export function createPrivacyOperationsRepository(database) {
       return database.$transaction(async (transaction) => {
         const hold = await transaction.privacyLegalHold.create({ data });
         await transaction.privacyCaseEvent.create({
-          data: { caseId: data.caseId, actorId, action: "PRIVACY_LEGAL_HOLD_CREATED" },
+          data: {
+            tenantId: data.tenantId,
+            campaignId: data.campaignId,
+            caseId: data.caseId,
+            actorId,
+            action: "PRIVACY_LEGAL_HOLD_CREATED",
+          },
         });
         return hold;
       });
@@ -148,6 +183,8 @@ export function createPrivacyOperationsRepository(database) {
         });
         await transaction.privacyCaseEvent.create({
           data: {
+            tenantId,
+            campaignId,
             caseId: existing.caseId,
             actorId,
             action: "PRIVACY_LEGAL_HOLD_RELEASED",
@@ -180,6 +217,8 @@ export function createPrivacyOperationsRepository(database) {
         };
         await transaction.privacyCaseEvent.create({
           data: {
+            tenantId,
+            campaignId,
             caseId,
             actorId,
             action: "PRIVACY_ACTION_PREVIEWED",

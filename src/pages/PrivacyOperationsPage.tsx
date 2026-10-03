@@ -141,8 +141,10 @@ export function PrivacyOperationsPage({ user }: { user: SessionUser }) {
       <section className="panel">
         <h2>Suppression and Legal Holds</h2>
         <p>
-          Restricted registers are available through the authenticated, tenant/campaign-scoped API.
-          Suppression identifiers are one-way keyed hashes and are never returned as targeting data.
+          Restricted registers are readable through the authenticated, tenant/campaign-scoped API.
+          Issuance, release, and suppression changes remain unavailable until the applicable
+          authority policies are approved. Suppression identifiers are one-way keyed hashes and are
+          never returned as targeting data.
         </p>
       </section>
     </section>

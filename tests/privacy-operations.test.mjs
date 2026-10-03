@@ -6,6 +6,8 @@ import {
   PRIVACY_ACTION_CONFIRMATIONS,
   policyBlockedAction,
   privacySubjectKey,
+  validatePrivacyCaseTransition,
+  validateVerificationTransition,
 } from "../server/services/privacyOperations.js";
 
 test("privacy permission is narrowly assigned to the super administrator", () => {
@@ -114,4 +116,63 @@ test("failed case transaction cannot leave case without audit", async () => {
   const repo = createPrivacyOperationsRepository(db);
   await assert.rejects(() => repo.createCase({}, "actor"), /audit failed/);
   assert.equal(rolledBack, true);
+});
+
+test("privacy case lifecycle permits only reviewed forward transitions", () => {
+  assert.equal(
+    validatePrivacyCaseTransition("RECEIVED", "IDENTITY_VERIFICATION_PENDING", "NOT_STARTED"),
+    true,
+  );
+  assert.equal(
+    validatePrivacyCaseTransition("IDENTITY_VERIFICATION_PENDING", "UNDER_REVIEW", "VERIFIED"),
+    true,
+  );
+  assert.equal(validatePrivacyCaseTransition("UNDER_REVIEW", "ACTION_PENDING", "VERIFIED"), true);
+  assert.equal(validatePrivacyCaseTransition("ACTION_PENDING", "COMPLETED", "VERIFIED"), true);
+  assert.throws(
+    () => validatePrivacyCaseTransition("RECEIVED", "COMPLETED", "VERIFIED"),
+    /not permitted/,
+  );
+  assert.throws(
+    () => validatePrivacyCaseTransition("COMPLETED", "UNDER_REVIEW", "VERIFIED"),
+    /not permitted/,
+  );
+  assert.throws(
+    () => validatePrivacyCaseTransition("UNDER_REVIEW", "UNDER_REVIEW", "VERIFIED"),
+    /already/,
+  );
+  assert.throws(
+    () => validatePrivacyCaseTransition("IDENTITY_VERIFICATION_PENDING", "UNDER_REVIEW", "PENDING"),
+    /Verified identity/,
+  );
+});
+
+test("identity verification transitions fail closed", () => {
+  assert.equal(validateVerificationTransition("NOT_STARTED", "PENDING"), true);
+  assert.equal(validateVerificationTransition("PENDING", "VERIFIED"), true);
+  assert.throws(() => validateVerificationTransition("NOT_STARTED", "VERIFIED"), /not permitted/);
+  assert.throws(() => validateVerificationTransition("VERIFIED", "PENDING"), /not permitted/);
+});
+
+test("authoritative suppression check is tenant, campaign, channel, and active scoped", async () => {
+  let where;
+  const repository = createPrivacyOperationsRepository({
+    privacySuppression: {
+      count: async (query) => {
+        where = query.where;
+        return 1;
+      },
+    },
+  });
+  assert.equal(
+    await repository.isSuppressed("tenant-a", "campaign-a", "safe-hash", "WHATSAPP"),
+    true,
+  );
+  assert.deepEqual(where, {
+    tenantId: "tenant-a",
+    campaignId: "campaign-a",
+    subjectKeyHash: "safe-hash",
+    status: "ACTIVE",
+    channel: { in: ["WHATSAPP", "ALL"] },
+  });
 });

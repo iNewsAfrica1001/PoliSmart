@@ -6,6 +6,9 @@ import {
   PRIVACY_REQUEST_TYPES,
   policyBlockedAction,
   privacySubjectKey,
+  unresolvedAuthority,
+  validatePrivacyCaseTransition,
+  validateVerificationTransition,
 } from "../services/privacyOperations.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -46,6 +49,12 @@ function id(value) {
     throw Object.assign(new Error("Record not found."), { status: 404 });
   return String(value);
 }
+function exactFields(body, allowed) {
+  if (!body || typeof body !== "object" || Array.isArray(body))
+    throw Object.assign(new Error("Request body is invalid."), { status: 400 });
+  if (Object.keys(body).some((field) => !allowed.includes(field)))
+    throw Object.assign(new Error("Request contains unsupported fields."), { status: 400 });
+}
 async function scope(repository, tenantId, campaignId) {
   if (!UUID.test(campaignId) || (await repository.campaignInTenant(tenantId, campaignId)) !== 1)
     throw Object.assign(new Error("Campaign not found."), { status: 404 });
@@ -72,6 +81,7 @@ export function createPrivacyOperationsRouter(repository, { subjectHashSecret })
   router.post(
     "/:campaignId/cases",
     asyncRoute(async (request, response) => {
+      exactFields(request.body, ["caseReference", "requestType", "receivedAt", "internalNotes"]);
       response.status(201).json({
         case: await repository.createCase(
           {
@@ -91,6 +101,7 @@ export function createPrivacyOperationsRouter(repository, { subjectHashSecret })
   router.patch(
     "/:campaignId/suppressions/:suppressionId",
     asyncRoute(async (request, response) => {
+      unresolvedAuthority("Suppression change");
       const status = choice(request.body, "status", ["ACTIVE", "UNDER_REVIEW", "REVOKED"]);
       const suppression = await repository.updateSuppression(
         request.tenant.id,
@@ -120,6 +131,12 @@ export function createPrivacyOperationsRouter(repository, { subjectHashSecret })
   router.patch(
     "/:campaignId/cases/:caseId",
     asyncRoute(async (request, response) => {
+      exactFields(request.body, [
+        "status",
+        "identityVerificationStatus",
+        "resolutionStatus",
+        "internalNotes",
+      ]);
       const data = {};
       if (request.body?.status !== undefined)
         data.status = choice(request.body, "status", CASE_STATUSES);
@@ -134,14 +151,38 @@ export function createPrivacyOperationsRouter(repository, { subjectHashSecret })
       if (request.body?.internalNotes !== undefined)
         data.internalNotes = text(request.body, "internalNotes", 4000, false);
       if (data.status === "COMPLETED") data.completedAt = new Date();
+      const current = await repository.findCase(
+        request.tenant.id,
+        request.params.campaignId,
+        id(request.params.caseId),
+      );
+      if (!current) throw Object.assign(new Error("Privacy case not found."), { status: 404 });
+      if (data.identityVerificationStatus)
+        validateVerificationTransition(
+          current.identityVerificationStatus,
+          data.identityVerificationStatus,
+        );
+      if (data.status)
+        validatePrivacyCaseTransition(
+          current.status,
+          data.status,
+          data.identityVerificationStatus ?? current.identityVerificationStatus,
+        );
       const record = await repository.updateCase(
         request.tenant.id,
         request.params.campaignId,
         id(request.params.caseId),
+        {
+          status: current.status,
+          identityVerificationStatus: current.identityVerificationStatus,
+        },
         data,
         request.auth.user.id,
       );
-      if (!record) throw Object.assign(new Error("Privacy case not found."), { status: 404 });
+      if (!record)
+        throw Object.assign(new Error("Privacy case changed. Refresh and try again."), {
+          status: 409,
+        });
       response.json({ case: record });
     }),
   );
@@ -163,6 +204,7 @@ export function createPrivacyOperationsRouter(repository, { subjectHashSecret })
   router.post(
     "/:campaignId/legal-holds/:holdId/release",
     asyncRoute(async (request, response) => {
+      unresolvedAuthority("Legal-hold release");
       const hold = await repository.releaseLegalHold(
         request.tenant.id,
         request.params.campaignId,
@@ -204,6 +246,7 @@ export function createPrivacyOperationsRouter(repository, { subjectHashSecret })
   router.post(
     "/:campaignId/suppressions",
     asyncRoute(async (request, response) => {
+      unresolvedAuthority("Suppression creation");
       const caseId = id(request.body?.caseId);
       if (!(await repository.findCase(request.tenant.id, request.params.campaignId, caseId)))
         throw Object.assign(new Error("Privacy case not found."), { status: 404 });
@@ -240,6 +283,7 @@ export function createPrivacyOperationsRouter(repository, { subjectHashSecret })
   router.post(
     "/:campaignId/legal-holds",
     asyncRoute(async (request, response) => {
+      unresolvedAuthority("Legal-hold issuance");
       const caseId = id(request.body?.caseId);
       if (!(await repository.findCase(request.tenant.id, request.params.campaignId, caseId)))
         throw Object.assign(new Error("Privacy case not found."), { status: 404 });

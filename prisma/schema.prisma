@@ -308,8 +308,6 @@ model Organization {
   fundraisingFollowUps     FundraisingFollowUp[]
   fundraisingHistory       FundraisingHistory[]
   privacyRightsCases       PrivacyRightsCase[]
-  privacySuppressions      PrivacySuppression[]
-  privacyLegalHolds        PrivacyLegalHold[]
 
   @@index([country])
   @@map("organizations")
@@ -348,10 +346,9 @@ model Campaign {
   communications           Communication[]
   mediaItems               MediaItem[]
   privacyRightsCases       PrivacyRightsCase[]
-  privacySuppressions      PrivacySuppression[]
-  privacyLegalHolds        PrivacyLegalHold[]
 
   @@unique([tenantId, slug])
+  @@unique([tenantId, id])
   @@index([tenantId, status])
   @@map("campaigns")
 }
@@ -1389,25 +1386,28 @@ model PrivacyRightsCase {
   createdAt                  DateTime                  @default(now()) @map("created_at")
   updatedAt                  DateTime                  @updatedAt @map("updated_at")
   organization               Organization              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  campaign                   Campaign                  @relation(fields: [campaignId], references: [id], onDelete: Restrict)
+  campaign                   Campaign                  @relation(fields: [tenantId, campaignId], references: [tenantId, id], onDelete: Restrict)
   assignedOperator           AuthUser?                 @relation("PrivacyCaseAssignee", fields: [assignedOperatorId], references: [id], onDelete: Restrict)
   events                     PrivacyCaseEvent[]
   suppressions               PrivacySuppression[]
   legalHolds                 PrivacyLegalHold[]
 
   @@unique([tenantId, caseReference])
+  @@unique([tenantId, campaignId, id])
   @@index([tenantId, campaignId, status, createdAt])
   @@map("privacy_rights_cases")
 }
 
 model PrivacyCaseEvent {
   id          String            @id @default(uuid()) @db.Uuid
+  tenantId    String            @map("tenant_id") @db.Uuid
+  campaignId  String            @map("campaign_id") @db.Uuid
   caseId      String            @map("case_id") @db.Uuid
   actorId     String            @map("actor_id") @db.Uuid
   action      String            @db.VarChar(80)
   metadata    Json?
   createdAt   DateTime          @default(now()) @map("created_at")
-  privacyCase PrivacyRightsCase @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  privacyCase PrivacyRightsCase @relation(fields: [tenantId, campaignId, caseId], references: [tenantId, campaignId, id], onDelete: Restrict)
   actor       AuthUser          @relation(fields: [actorId], references: [id], onDelete: Restrict)
 
   @@index([caseId, createdAt])
@@ -1429,9 +1429,7 @@ model PrivacySuppression {
   createdById     String               @map("created_by_id") @db.Uuid
   createdAt       DateTime             @default(now()) @map("created_at")
   updatedAt       DateTime             @updatedAt @map("updated_at")
-  organization    Organization         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  campaign        Campaign             @relation(fields: [campaignId], references: [id], onDelete: Restrict)
-  privacyCase     PrivacyRightsCase    @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  privacyCase     PrivacyRightsCase    @relation(fields: [tenantId, campaignId, caseId], references: [tenantId, campaignId, id], onDelete: Restrict)
   createdBy       AuthUser             @relation("PrivacySuppressionCreator", fields: [createdById], references: [id], onDelete: Restrict)
 
   @@unique([tenantId, campaignId, subjectKeyHash, channel])
@@ -1457,9 +1455,7 @@ model PrivacyLegalHold {
   releasedById         String?              @map("released_by_id") @db.Uuid
   createdAt            DateTime             @default(now()) @map("created_at")
   updatedAt            DateTime             @updatedAt @map("updated_at")
-  organization         Organization         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  campaign             Campaign             @relation(fields: [campaignId], references: [id], onDelete: Restrict)
-  privacyCase          PrivacyRightsCase    @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  privacyCase          PrivacyRightsCase    @relation(fields: [tenantId, campaignId, caseId], references: [tenantId, campaignId, id], onDelete: Restrict)
   createdBy            AuthUser             @relation("PrivacyLegalHoldCreator", fields: [createdById], references: [id], onDelete: Restrict)
   releasedBy           AuthUser?            @relation("PrivacyLegalHoldReleaser", fields: [releasedById], references: [id], onDelete: Restrict)
 
