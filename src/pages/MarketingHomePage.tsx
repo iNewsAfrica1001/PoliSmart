@@ -229,10 +229,13 @@ export function MarketingHomePage() {
       <footer className="marketing-footer">
         <div className="marketing-brand">
           <span className="brand-symbol">P</span>
-          <span><strong>PoliSmart Africa AI</strong><small>Operated by SentinelAI LLC</small></span>
+          <span><strong>PoliSmart Africa AI</strong><small>A platform of SentinelAI LLC</small></span>
         </div>
-        <address>3204 Pearsall Ave<br />Bronx, NY 10469<br />United States</address>
-        <nav aria-label="Footer navigation"><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a><a href="/login">Login</a></nav>
+        <address>
+          New York, United States<br />
+          <a href="mailto:support@polismartafrica.ai">support@polismartafrica.ai</a>
+        </address>
+        <nav aria-label="Footer navigation"><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Use</a><a href="mailto:support@polismartafrica.ai">Contact</a></nav>
       </footer>
 
       {whatsappUrl ? (

@@ -432,8 +432,10 @@ test("public homepage presents accurate V1 marketing while login remains separat
   assert.doesNotMatch(homepage, /Fundraising Management/);
   assert.match(homepage, /Prepare for smarter campaign decisions\./);
   assert.match(homepage, /mailto:support@polismartafrica\.ai/);
-  assert.match(homepage, /Operated by SentinelAI LLC/);
-  assert.match(homepage, /3204 Pearsall Ave/);
+  assert.match(homepage, /A platform of SentinelAI LLC/);
+  assert.match(homepage, /New York, United States/);
+  assert.doesNotMatch(homepage, /3204 Pearsall Ave|Bronx, NY 10469/);
+  assert.match(homepage, /href="mailto:support@polismartafrica\.ai">Contact/);
   assert.match(homepage, /href="\/privacy"/);
   assert.match(homepage, /href="\/terms"/);
   assert.doesNotMatch(homepage, /Stripe|PayPal|Paystack|Flutterwave/);
