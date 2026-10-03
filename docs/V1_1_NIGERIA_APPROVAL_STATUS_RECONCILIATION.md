@@ -150,3 +150,19 @@ DISABLED
 
 This record does not itself deploy or promote a release. Any Production action remains subject to
 the separately controlled release procedure and the confirmed scope above.
+
+## 9. V1.1A signed Nigerian legal/privacy approval
+
+The subsequently received signed document
+`PoliSmart_Africa_AI_Legal_Privacy_Approval.pdf` records a qualified Nigerian counsel decision of
+**APPROVED** for Nigeria with no conditions, effective September 28, 2026. Counsel certification
+and the Platform Owner acknowledgement are signed. The original signed PDF remains in the
+controlled external legal evidence archive and is not stored in Git. Its SHA-256 is
+`3CE6582D1604B09589DAB79BB125F7852B04292DD41C57C0F8CC53F2D67D1282`.
+
+This closes the external Nigerian legal/privacy review. It does not assert completion of internal
+implementation, training, acknowledgement, processor/transfer evidence, or case-execution
+procedures. Current implementation status and the pending scope-specific authorization are
+recorded in `V1_1A_FINAL_GOVERNANCE_CLOSURE_AND_LAUNCH_AUTHORIZATION.md`.
+
+Payments and Fundraising remain disabled and are expressly not authorized by the signed approval.

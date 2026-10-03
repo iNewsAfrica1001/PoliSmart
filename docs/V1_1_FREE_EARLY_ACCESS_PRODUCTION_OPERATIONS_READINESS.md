@@ -6,7 +6,7 @@
 
 **Authorized branch:** `release/v1.1`
 
-**Legal/jurisdiction status:** PENDING
+**Legal/jurisdiction status:** APPROVED FOR NIGERIA — signed September 28, 2026
 
 **Production decision:** NO-GO
 
@@ -256,10 +256,13 @@ external alert delivery, and named operational ownership have verified evidence.
 escalation contact methods, Neon budget alerts, and Microsoft service/usage warnings remain
 operational improvements outside this P1 and do not reopen it.
 
-Production remains NO-GO until the pre-deployment checklist is executed for the actual release
-window and the independent governance gates are complete. Those gates include qualified
-Legal/Privacy/HR review, jurisdiction decisions, retention approval, required training, exact
-Production commit/deployment approval, and explicit written Production authorization.
+The external Nigerian legal/privacy review is closed by the signed approval effective September
+28, 2026. The signed evidence has no conditions and expressly excludes Payments and Fundraising.
+Internal governance remains NO-GO until the implementation gates recorded in
+`V1_1A_FINAL_GOVERNANCE_CLOSURE_AND_LAUNCH_AUTHORIZATION.md` are complete, including effective
+retention and rights procedures, executable deletion/anonymization and suppression controls,
+processor/transfer evidence, and completed administrator/operator training and acknowledgement.
+Exact scope-specific launch authorization remains pending those internal controls.
 
-Nothing in this document changes the legal package, resolves a legal issue, or authorizes
-Production.
+Nothing in this document changes application behavior, completes the remaining internal
+implementation controls, or authorizes a Production launch scope.
