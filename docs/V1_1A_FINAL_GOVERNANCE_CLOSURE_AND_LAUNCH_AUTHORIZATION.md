@@ -96,6 +96,12 @@ These are internal implementation controls, not new conditions imposed by counse
 required because the existing governance documents explicitly make them prerequisites and the
 signed approval does not claim they were completed.
 
+The prepared procedures, evidence inventory, role-training matrix, independent-verification
+requirements, and current P1 closure status are maintained in
+`V1_1A_INTERNAL_GOVERNANCE_OPERATIONS_REGISTER.md`. Preparation does not close a control whose
+approval, execution evidence, training, acknowledgement, provider evidence, or verification field
+remains blank.
+
 ## 5. Scope decision
 
 | Scope                           | Technical | Operations | Security  | Legal/privacy     | Internal governance | Decision       |

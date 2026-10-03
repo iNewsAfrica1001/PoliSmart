@@ -2,18 +2,22 @@
 
 ## V1.1 Lead Management Administrator Training and Acknowledgement Guide
 
-### Draft — Training Not Yet Completed
+### Mandatory package prepared — Training Not Yet Completed
 
-| Document control | Value |
-|---|---|
-| Document owner | Platform Owner |
-| Technical custodian | Technical Administrator |
-| Version | V1.1 Draft |
-| Status | Draft — Training Not Yet Completed |
-| Effective date | Not effective |
-| Legal status | Retention and jurisdictional provisions pending qualified legal review |
+| Document control    | Value                                                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Document owner      | Platform Owner                                                                                                     |
+| Technical custodian | Technical Administrator                                                                                            |
+| Version             | V1.1A Governance Training Package                                                                                  |
+| Status              | Prepared — Training Not Yet Completed                                                                              |
+| Effective date      | Effective for training delivery after Platform Owner approval; completion evidence remains required                |
+| Legal status        | Nigerian legal/privacy review APPROVED effective September 28, 2026; internal procedures remain pending activation |
 
-This guide is a draft training resource. It does not confirm that anyone has completed training, provide legal advice, approve retention periods, or authorize Production use. Production remains **NO-GO**.
+This is the mandatory operator training package for the Nigeria V1.1A scope. It does not confirm
+that anyone has completed training or authorize Production use. The controlling operational status
+and unresolved P1 controls are recorded in
+`V1_1A_INTERNAL_GOVERNANCE_OPERATIONS_REGISTER.md`. Production launch authorization remains
+**PENDING FINAL INTERNAL CLOSURE**.
 
 ## 1. Training purpose
 
@@ -43,16 +47,16 @@ Requests for access must be denied and referred to the Platform Owner when clari
 
 Lead status and follow-up completion are separate. Completing a follow-up does not change lead status.
 
-| Current status | Permitted next status | Operational requirement |
-|---|---|---|
-| `NEW` | `CONTACTED` | Genuine outreach occurred. |
-| `NEW` | `QUALIFIED` | Human review confirmed qualification without requiring prior outreach. |
-| `NEW` | `CLOSED` | The request is invalid, duplicate, withdrawn, unsuitable, or concluded. |
-| `CONTACTED` | `QUALIFIED` | Human review confirmed qualification. |
-| `CONTACTED` | `CLOSED` | No further action is appropriate. |
-| `QUALIFIED` | `CLOSED` | Active consideration or follow-up ended. |
-| `CLOSED` | None | Reopening is prohibited in V1.1. |
-| Same status | No transition | Harmless no-op; `updated_at` remains unchanged. |
+| Current status | Permitted next status | Operational requirement                                                 |
+| -------------- | --------------------- | ----------------------------------------------------------------------- |
+| `NEW`          | `CONTACTED`           | Genuine outreach occurred.                                              |
+| `NEW`          | `QUALIFIED`           | Human review confirmed qualification without requiring prior outreach.  |
+| `NEW`          | `CLOSED`              | The request is invalid, duplicate, withdrawn, unsuitable, or concluded. |
+| `CONTACTED`    | `QUALIFIED`           | Human review confirmed qualification.                                   |
+| `CONTACTED`    | `CLOSED`              | No further action is appropriate.                                       |
+| `QUALIFIED`    | `CLOSED`              | Active consideration or follow-up ended.                                |
+| `CLOSED`       | None                  | Reopening is prohibited in V1.1.                                        |
+| Same status    | No transition         | Harmless no-op; `updated_at` remains unchanged.                         |
 
 `NEW` identifies a request awaiting substantive review or outreach. `CONTACTED` records genuine outreach but does not imply a response. `QUALIFIED` records human confirmation that further consideration is appropriate; it does not promise access or service. `CLOSED` records the end of active consideration or follow-up, not deletion.
 
@@ -243,7 +247,13 @@ Do not grant yourself privileges, share credentials or sessions, use direct SQL,
 - [ ] I understand append-only correction procedures.
 - [ ] I understand AI, Workspace Search, profiling, scoring, and targeting exclusions.
 - [ ] I understand credential, email, logging, and environment boundaries.
-- [ ] I understand retention periods remain pending legal approval.
+- [ ] I understand the counsel-reviewed retention schedule and that it is not operationally effective until the Platform Owner activation record is signed.
+- [ ] I understand access, correction, deletion, anonymization, objection, portability, suppression, and legal-hold requests must use the approved case procedure.
+- [ ] I understand processor/subprocessor and cross-border records may contain `NOT VERIFIED` facts that operators must not guess.
+- [ ] I understand the personal-data breach procedure and the boundary between technical containment and Legal/Privacy notification decisions.
+- [ ] I understand WhatsApp is user initiated, opt-out stops further outreach, and unsolicited or automated contact is prohibited.
+- [ ] I understand tenant/campaign isolation, geographic-data safeguards, trusted AI context, and prohibited political AI uses.
+- [ ] I understand the monitoring, incident, and recovery responsibilities for my assigned roles.
 - [ ] I know how to escalate deletion requests and incidents.
 - [ ] I understand payments are inactive and Nigeria Fundraising is unavailable.
 - [ ] I completed all practical scenarios with the trainer.
@@ -251,11 +261,26 @@ Do not grant yourself privileges, share credentials or sessions, use direct SQL,
 
 ## 19. Administrator acknowledgement
 
-I acknowledge that access is limited to authorized operational purposes; accounts and credentials must not be shared; notes must be factual, minimal, and free of sensitive information; follow-up history cannot be edited or casually deleted; lead data cannot be used for AI grounding, model training, Workspace Search, scoring, profiling, donor scoring, or personalized political targeting; automated outreach is unauthorized; payments are inactive; Nigeria Fundraising is unavailable; Production requires separate authorization; and suspected incidents must be reported immediately.
+I acknowledge that access is limited to authorized operational purposes; accounts and credentials
+must not be shared; tenant and campaign boundaries and confidentiality must be preserved; notes
+must be factual, minimal, and free of sensitive information; follow-up history cannot be edited or
+casually deleted; rights, retention, deletion/anonymization, suppression, legal holds, incidents,
+cross-border/provider questions, and restored-data decisions must follow approved procedures; a
+WhatsApp opt-out stops further outreach; lead data cannot be used for AI grounding, model training,
+Workspace Search, scoring, profiling, donor scoring, voter targeting, or personalized political
+persuasion; geographic data must remain authoritative and scoped; automated outreach is
+unauthorized; payments and Fundraising are unavailable; Production requires separate
+authorization; and suspected incidents must be reported immediately.
 
 Administrator name: ______________________________
 
 Authorized role: _________________________________
+
+Additional assigned operational roles: ___________
+
+Training date: ___________________________________
+
+Training materials/version: `V1.1A Governance Training Package`
 
 Environment covered: ____________________________
 
@@ -265,7 +290,9 @@ Date and time, including time zone: ______________
 
 Completed acknowledgement forms must be access-controlled, must not contain passwords, authentication codes, session details, or database credentials, and must not be stored with lead follow-up notes. They must not be used for AI training or Workspace Search. They must be retained only under an approved personnel or training-record schedule.
 
-**[LEGAL/HR REVIEW REQUIRED]** The acknowledgement-record retention period requires qualified legal and HR confirmation and is not yet effective.
+The acknowledgement-record storage location, access control, and retention period must be recorded
+in the protected training register before completion is accepted. Do not store a signed
+acknowledgement with lead records or in a public repository.
 
 No acknowledgement is valid until completed by the administrator and verified by the designated trainer.
 
@@ -281,6 +308,8 @@ Signature: ______________________________________
 
 Completion date and time, including time zone: _____
 
+Verification date: ________________________________
+
 Outstanding conditions: ___________________________
 
 Training result: `COMPLETE / INCOMPLETE / REQUIRES REMEDIATION`
@@ -289,4 +318,5 @@ Training result: `COMPLETE / INCOMPLETE / REQUIRES REMEDIATION`
 
 The Platform Owner must review this guide after qualified legal review, approval or change of retention periods, material authorization or workflow changes, a relevant incident, a change to supported jurisdictions, or any future consideration of automated email, payments, Fundraising, AI, or Search integration.
 
-Until formal approval and completed sign-off, this guide remains **Draft — Training Not Yet Completed** and Production remains **NO-GO**.
+Until completed acknowledgements and verifier sign-off exist for every required role, training is
+**NOT COMPLETED** and launch authorization remains **PENDING FINAL INTERNAL CLOSURE**.
