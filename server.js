@@ -27,6 +27,7 @@ import {
   createReservedBillingRouter,
 } from "./server/routes/features.js";
 import { createPrelaunchReviewRouter, createPrelaunchRouter } from "./server/routes/prelaunch.js";
+import { createPrivacyOperationsRouter } from "./server/routes/privacyOperations.js";
 import {
   authenticateRequests,
   requireSession,
@@ -44,6 +45,7 @@ import { createAiRepository } from "./server/repositories/aiRepository.js";
 import { createWorkspaceSearchRepository } from "./server/repositories/workspaceSearchRepository.js";
 import { createFundraisingRepository } from "./server/repositories/fundraisingRepository.js";
 import { createPrelaunchLeadRepository } from "./server/repositories/prelaunchLeadRepository.js";
+import { createPrivacyOperationsRepository } from "./server/repositories/privacyOperationsRepository.js";
 import { createAuthenticationService } from "./server/services/authentication.js";
 import { createAccountNotificationService } from "./server/services/accountNotifications.js";
 import { createKnowledgeBaseService } from "./server/services/knowledgeBase.js";
@@ -251,6 +253,12 @@ app.use(
 app.use(
   "/api/admin/prelaunch-leads",
   createPrelaunchReviewRouter(createPrelaunchLeadRepository(prisma)),
+);
+app.use(
+  "/api/privacy-operations",
+  createPrivacyOperationsRouter(createPrivacyOperationsRepository(prisma), {
+    subjectHashSecret: config.sessionSecret,
+  }),
 );
 app.use("/api/campaigns", createCampaignRouter(createCampaignRepository(prisma)));
 app.use(

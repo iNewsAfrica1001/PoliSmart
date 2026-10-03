@@ -270,3 +270,20 @@ Signature: ____________________
 
 This register may be re-reviewed only after the remaining actions in the P1 matrix have documentary
 evidence. Blank approval or signature fields are not approval.
+
+# Privacy operations Phase 1 implementation record
+
+Implementation commit: pending final verification and commit in this workstream.
+
+The application now contains an additive, tenant/campaign-scoped privacy-operations foundation:
+
+- a restricted rights-request case register for ACCESS, CORRECTION, DELETION, OBJECTION, RESTRICTION, and PORTABILITY requests;
+- append-only case events for material case, preview, suppression, and legal-hold actions;
+- a suppression register that stores a keyed one-way subject match value rather than reusable contact information;
+- a legal-hold register whose active holds block incompatible guarded actions;
+- server-side campaign scope checks and a dedicated `privacy-operations:manage` permission assigned only to Super Administrators;
+- guarded DELETE, ANONYMIZE, and RESTRICT previews and exact confirmation phrases.
+
+Deletion, anonymization, and restriction execution remain deliberately fail-closed. The existing approved procedure is still marked not authorized for execution and does not resolve the record-category treatment, follow-up treatment, administrator-attribution treatment, suppression retention, backup treatment, or case-specific approval evidence. The system therefore reports `POLICY_DECISION_REQUIRED`, makes no personal-data mutation, and cannot be converted into an execution path by a browser request.
+
+This implementation does not close any P1 governance control. Closure continues to require policy activation, non-Production rehearsal, training, acknowledgement, independent verification, migration authorization, and separate Production execution authorization. WhatsApp opt-out matching can use the suppression register, but the current WhatsApp link and operator workflow do not yet enforce it automatically.

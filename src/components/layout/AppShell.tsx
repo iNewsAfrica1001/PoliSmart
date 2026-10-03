@@ -72,12 +72,15 @@ export function AppShell({
         </div>
         <nav aria-label="Workspace navigation">
           {navigation
-            .filter((item) =>
-              (item.page !== "compliance" || canReadCompliance) &&
-              (item.page !== "fundraising" || canReadFundraising) &&
-              (item.page !== "prelaunch-leads" || canReviewPrelaunchLeads) &&
-              (item.page !== "geography" || role === "SUPER_ADMINISTRATOR") &&
-              (!item.feature || features[item.feature] === true))
+            .filter(
+              (item) =>
+                (item.page !== "compliance" || canReadCompliance) &&
+                (item.page !== "fundraising" || canReadFundraising) &&
+                (item.page !== "prelaunch-leads" || canReviewPrelaunchLeads) &&
+                (item.page !== "geography" || role === "SUPER_ADMINISTRATOR") &&
+                (item.page !== "privacy-operations" || role === "SUPER_ADMINISTRATOR") &&
+                (!item.feature || features[item.feature] === true),
+            )
             .map(({ label, icon: Icon, page, enabled }) => (
               <button
                 className={activePage === page ? "nav-item nav-item--active" : "nav-item"}

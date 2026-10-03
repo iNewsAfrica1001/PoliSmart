@@ -12,6 +12,7 @@ import {
   Radio,
   Settings,
   ShieldCheck,
+  ShieldAlert,
   WalletCards,
   HandCoins,
   UsersRound,
@@ -37,12 +38,19 @@ export const navigation: NavigationItem[] = [
   { label: "Field Operations", icon: BriefcaseBusiness, page: "field", enabled: true },
   { label: "Volunteers", icon: UsersRound, page: "volunteers", enabled: true },
   { label: "Events", icon: CalendarDays, page: "events", enabled: true },
-  { label: "Fundraising", icon: HandCoins, page: "fundraising", enabled: true, feature: "fundraising" },
+  {
+    label: "Fundraising",
+    icon: HandCoins,
+    page: "fundraising",
+    enabled: true,
+    feature: "fundraising",
+  },
   { label: "Reports", icon: FileBarChart, page: "reports", enabled: false },
   { label: "Billing", icon: WalletCards, page: "billing", enabled: true, feature: "billing" },
   { label: "Compliance", icon: ShieldCheck, page: "compliance", enabled: true },
   { label: "Pre-launch Requests", icon: ClipboardCheck, page: "prelaunch-leads", enabled: true },
   { label: "Geographic Administration", icon: Settings, page: "geography", enabled: true },
+  { label: "Privacy Operations", icon: ShieldAlert, page: "privacy-operations", enabled: true },
 ];
 
 export const readinessItems = [

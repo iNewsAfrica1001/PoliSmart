@@ -70,15 +70,19 @@ test("runtime geographic updates allow required fields and prohibit provenance m
     );
 });
 
-test("migrations 0015-0018 exactly implement the reviewed table and column policy", () => {
+test("migrations 0015-0019 exactly implement the reviewed table and column policy", () => {
   const sql = readFileSync(
     "prisma/migrations/0015_runtime_privilege_catalog/migration.sql",
     "utf8",
   );
-  const grantsSql = `${sql}\n${readFileSync("prisma/migrations/0016_geographic_management/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0017_geographic_provenance_retrieval_date/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0018_command_center_reference_table_read_privileges/migration.sql", "utf8")}`;
-  const revoke = sql.match(/REVOKE ALL PRIVILEGES ON TABLE([\s\S]*?)FROM "polismart_runtime";/);
-  assert.ok(revoke);
-  assert.deepEqual(identifiers(revoke[1]).sort(), Object.keys(RUNTIME_DATABASE_PRIVILEGES).sort());
+  const grantsSql = `${sql}\n${readFileSync("prisma/migrations/0016_geographic_management/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0017_geographic_provenance_retrieval_date/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0018_command_center_reference_table_read_privileges/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0019_privacy_operations_controls/migration.sql", "utf8")}`;
+  const revokedTables = [
+    ...grantsSql.matchAll(/REVOKE ALL PRIVILEGES ON TABLE([\s\S]*?)FROM "polismart_runtime";/g),
+  ].flatMap((match) => identifiers(match[1]));
+  assert.deepEqual(
+    [...new Set(revokedTables)].sort(),
+    Object.keys(RUNTIME_DATABASE_PRIVILEGES).sort(),
+  );
 
   const actual = Object.fromEntries(
     Object.keys(RUNTIME_DATABASE_PRIVILEGES).map((table) => [
@@ -112,11 +116,7 @@ test("migrations 0015-0018 exactly implement the reviewed table and column polic
 });
 
 test("Command Center shared reference catalogs are read-only for runtime", () => {
-  for (const table of [
-    "data_sources",
-    "survey_countries",
-    "survey_indicator_definitions",
-  ]) {
+  for (const table of ["data_sources", "survey_countries", "survey_indicator_definitions"]) {
     assert.deepEqual(RUNTIME_DATABASE_PRIVILEGES[table], {
       tablePrivileges: ["SELECT"],
       updateColumns: [],

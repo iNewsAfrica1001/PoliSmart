@@ -218,6 +218,39 @@ enum FollowUpStatus {
   ARCHIVED
 }
 
+enum PrivacyRequestType {
+  ACCESS
+  CORRECTION
+  DELETION
+  OBJECTION
+  RESTRICTION
+  PORTABILITY
+}
+
+enum PrivacyCaseStatus {
+  RECEIVED
+  IDENTITY_VERIFICATION_PENDING
+  UNDER_REVIEW
+  ACTION_PENDING
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+enum PrivacyVerificationStatus {
+  NOT_STARTED
+  PENDING
+  VERIFIED
+  FAILED
+}
+
+enum PrivacyControlStatus {
+  ACTIVE
+  UNDER_REVIEW
+  RELEASED
+  REVOKED
+}
+
 model AuthUser {
   id                     String                   @id @default(uuid()) @db.Uuid
   email                  String                   @unique
@@ -246,6 +279,11 @@ model AuthUser {
   fundraisingHistory     FundraisingHistory[]     @relation("FundraisingHistoryActor")
   createdLeadFollowUps   PrelaunchLeadFollowUp[]  @relation("PrelaunchLeadFollowUpCreator")
   completedLeadFollowUps PrelaunchLeadFollowUp[]  @relation("PrelaunchLeadFollowUpCompleter")
+  assignedPrivacyCases   PrivacyRightsCase[]      @relation("PrivacyCaseAssignee")
+  privacyCaseEvents      PrivacyCaseEvent[]
+  createdSuppressions    PrivacySuppression[]     @relation("PrivacySuppressionCreator")
+  createdLegalHolds      PrivacyLegalHold[]       @relation("PrivacyLegalHoldCreator")
+  releasedLegalHolds     PrivacyLegalHold[]       @relation("PrivacyLegalHoldReleaser")
 
   @@map("auth_users")
 }
@@ -269,6 +307,9 @@ model Organization {
   fundraisingActivities    FundraisingActivity[]
   fundraisingFollowUps     FundraisingFollowUp[]
   fundraisingHistory       FundraisingHistory[]
+  privacyRightsCases       PrivacyRightsCase[]
+  privacySuppressions      PrivacySuppression[]
+  privacyLegalHolds        PrivacyLegalHold[]
 
   @@index([country])
   @@map("organizations")
@@ -306,6 +347,9 @@ model Campaign {
   policyCases              PolicyCase[]
   communications           Communication[]
   mediaItems               MediaItem[]
+  privacyRightsCases       PrivacyRightsCase[]
+  privacySuppressions      PrivacySuppression[]
+  privacyLegalHolds        PrivacyLegalHold[]
 
   @@unique([tenantId, slug])
   @@index([tenantId, status])
@@ -1327,4 +1371,99 @@ model PrelaunchLeadFollowUp {
   @@index([createdById])
   @@index([completedById])
   @@map("prelaunch_lead_follow_ups")
+}
+
+model PrivacyRightsCase {
+  id                         String                    @id @default(uuid()) @db.Uuid
+  tenantId                   String                    @map("tenant_id") @db.Uuid
+  campaignId                 String                    @map("campaign_id") @db.Uuid
+  caseReference              String                    @map("case_reference") @db.VarChar(64)
+  requestType                PrivacyRequestType        @map("request_type")
+  status                     PrivacyCaseStatus         @default(RECEIVED)
+  receivedAt                 DateTime                  @map("received_at")
+  identityVerificationStatus PrivacyVerificationStatus @default(NOT_STARTED) @map("identity_verification_status")
+  assignedOperatorId         String?                   @map("assigned_operator_id") @db.Uuid
+  resolutionStatus           String?                   @map("resolution_status") @db.VarChar(80)
+  completedAt                DateTime?                 @map("completed_at")
+  internalNotes              String?                   @map("internal_notes") @db.VarChar(4000)
+  createdAt                  DateTime                  @default(now()) @map("created_at")
+  updatedAt                  DateTime                  @updatedAt @map("updated_at")
+  organization               Organization              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  campaign                   Campaign                  @relation(fields: [campaignId], references: [id], onDelete: Restrict)
+  assignedOperator           AuthUser?                 @relation("PrivacyCaseAssignee", fields: [assignedOperatorId], references: [id], onDelete: Restrict)
+  events                     PrivacyCaseEvent[]
+  suppressions               PrivacySuppression[]
+  legalHolds                 PrivacyLegalHold[]
+
+  @@unique([tenantId, caseReference])
+  @@index([tenantId, campaignId, status, createdAt])
+  @@map("privacy_rights_cases")
+}
+
+model PrivacyCaseEvent {
+  id          String            @id @default(uuid()) @db.Uuid
+  caseId      String            @map("case_id") @db.Uuid
+  actorId     String            @map("actor_id") @db.Uuid
+  action      String            @db.VarChar(80)
+  metadata    Json?
+  createdAt   DateTime          @default(now()) @map("created_at")
+  privacyCase PrivacyRightsCase @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  actor       AuthUser          @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([caseId, createdAt])
+  @@map("privacy_case_events")
+}
+
+model PrivacySuppression {
+  id              String               @id @default(uuid()) @db.Uuid
+  tenantId        String               @map("tenant_id") @db.Uuid
+  campaignId      String               @map("campaign_id") @db.Uuid
+  caseId          String               @map("case_id") @db.Uuid
+  subjectKeyHash  String               @map("subject_key_hash") @db.VarChar(64)
+  channel         String               @db.VarChar(40)
+  reasonCategory  String               @map("reason_category") @db.VarChar(80)
+  effectiveAt     DateTime             @map("effective_at")
+  status          PrivacyControlStatus @default(ACTIVE)
+  reviewAt        DateTime?            @map("review_at")
+  reviewReference String?              @map("review_reference") @db.VarChar(160)
+  createdById     String               @map("created_by_id") @db.Uuid
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+  organization    Organization         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  campaign        Campaign             @relation(fields: [campaignId], references: [id], onDelete: Restrict)
+  privacyCase     PrivacyRightsCase    @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  createdBy       AuthUser             @relation("PrivacySuppressionCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, campaignId, subjectKeyHash, channel])
+  @@index([tenantId, campaignId, status])
+  @@map("privacy_suppressions")
+}
+
+model PrivacyLegalHold {
+  id                   String               @id @default(uuid()) @db.Uuid
+  tenantId             String               @map("tenant_id") @db.Uuid
+  campaignId           String               @map("campaign_id") @db.Uuid
+  caseId               String               @map("case_id") @db.Uuid
+  holdReference        String               @map("hold_reference") @db.VarChar(80)
+  authorizedIssuer     String               @map("authorized_issuer") @db.VarChar(160)
+  scope                String               @db.VarChar(500)
+  reasonReference      String               @map("reason_reference") @db.VarChar(160)
+  effectiveAt          DateTime             @map("effective_at")
+  status               PrivacyControlStatus @default(ACTIVE)
+  reviewAt             DateTime?            @map("review_at")
+  releasedAt           DateTime?            @map("released_at")
+  releaseAuthorization String?              @map("release_authorization") @db.VarChar(160)
+  createdById          String               @map("created_by_id") @db.Uuid
+  releasedById         String?              @map("released_by_id") @db.Uuid
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @updatedAt @map("updated_at")
+  organization         Organization         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  campaign             Campaign             @relation(fields: [campaignId], references: [id], onDelete: Restrict)
+  privacyCase          PrivacyRightsCase    @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  createdBy            AuthUser             @relation("PrivacyLegalHoldCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  releasedBy           AuthUser?            @relation("PrivacyLegalHoldReleaser", fields: [releasedById], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, holdReference])
+  @@index([tenantId, campaignId, status])
+  @@map("privacy_legal_holds")
 }

@@ -117,6 +117,27 @@ export const RUNTIME_DATABASE_PRIVILEGES = Object.freeze({
   fundraising_history: policy(),
   prelaunch_leads: policy(["SELECT", "INSERT"], ["status", "updated_at"]),
   prelaunch_lead_follow_ups: policy(["SELECT", "INSERT"], ["completed_at", "completed_by_id"]),
+  privacy_rights_cases: policy(
+    ["SELECT", "INSERT"],
+    [
+      "status",
+      "identity_verification_status",
+      "assigned_operator_id",
+      "resolution_status",
+      "completed_at",
+      "internal_notes",
+      "updated_at",
+    ],
+  ),
+  privacy_case_events: policy(["SELECT", "INSERT"]),
+  privacy_suppressions: policy(
+    ["SELECT", "INSERT"],
+    ["status", "review_at", "review_reference", "updated_at"],
+  ),
+  privacy_legal_holds: policy(
+    ["SELECT", "INSERT"],
+    ["status", "review_at", "released_at", "release_authorization", "released_by_id", "updated_at"],
+  ),
 });
 
 export const RUNTIME_SEQUENCE_PRIVILEGES = Object.freeze({});

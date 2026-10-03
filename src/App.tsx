@@ -16,6 +16,7 @@ import { FundraisingPage } from "./pages/FundraisingPage";
 import { PrelaunchRequestPage } from "./pages/PrelaunchRequestPage";
 import { PrelaunchLeadReviewPage } from "./pages/PrelaunchLeadReviewPage";
 import { GeographicManagementPage } from "./pages/GeographicManagementPage";
+import { PrivacyOperationsPage } from "./pages/PrivacyOperationsPage";
 import {
   disabledFeatures,
   loadFeatureAvailability,
@@ -38,6 +39,7 @@ const pageTitles: Record<string, string> = {
   billing: "Billing",
   "prelaunch-leads": "Pre-launch Requests",
   geography: "Geographic Administration",
+  "privacy-operations": "Privacy Operations",
 };
 
 export default function App() {
@@ -86,16 +88,16 @@ function WorkspaceApp() {
           ? "fundraising"
           : window.location.pathname === "/billing"
             ? "billing"
-        : "dashboard",
+            : "dashboard",
   );
   useEffect(() => {
-    Promise.allSettled([authApi.me(), loadFeatureAvailability()]).then(([session, availability]) => {
-      setUser(session.status === "fulfilled" ? session.value.user : null);
-      setFeatures(
-        availability.status === "fulfilled" ? availability.value : disabledFeatures,
-      );
-      setLoading(false);
-    });
+    Promise.allSettled([authApi.me(), loadFeatureAvailability()]).then(
+      ([session, availability]) => {
+        setUser(session.status === "fulfilled" ? session.value.user : null);
+        setFeatures(availability.status === "fulfilled" ? availability.value : disabledFeatures);
+        setLoading(false);
+      },
+    );
   }, []);
   useEffect(() => {
     document.title = user
@@ -149,14 +151,38 @@ function WorkspaceApp() {
       ) : page === "fundraising" || page === "billing" ? (
         <section className="restricted-state" aria-labelledby="feature-unavailable-title">
           <h1 id="feature-unavailable-title">Feature unavailable</h1>
-          <p>{page === "billing" ? "Billing" : "Fundraising"} is Coming Soon and is disabled during Free Early Access.</p>
+          <p>
+            {page === "billing" ? "Billing" : "Fundraising"} is Coming Soon and is disabled during
+            Free Early Access.
+          </p>
         </section>
       ) : page === "prelaunch-leads" ? (
-        membership?.canReviewPrelaunchLeads
-          ? <PrelaunchLeadReviewPage />
-          : <section className="restricted-state"><h1>Restricted access</h1><p>Pre-launch requests are available only to authorized internal administrators.</p></section>
+        membership?.canReviewPrelaunchLeads ? (
+          <PrelaunchLeadReviewPage />
+        ) : (
+          <section className="restricted-state">
+            <h1>Restricted access</h1>
+            <p>Pre-launch requests are available only to authorized internal administrators.</p>
+          </section>
+        )
       ) : page === "geography" ? (
-        membership?.role === "SUPER_ADMINISTRATOR" ? <GeographicManagementPage user={user} /> : <section className="restricted-state"><h1>Restricted access</h1><p>Geographic administration requires Super Administrator authorization.</p></section>
+        membership?.role === "SUPER_ADMINISTRATOR" ? (
+          <GeographicManagementPage user={user} />
+        ) : (
+          <section className="restricted-state">
+            <h1>Restricted access</h1>
+            <p>Geographic administration requires Super Administrator authorization.</p>
+          </section>
+        )
+      ) : page === "privacy-operations" ? (
+        membership?.role === "SUPER_ADMINISTRATOR" ? (
+          <PrivacyOperationsPage user={user} />
+        ) : (
+          <section className="restricted-state">
+            <h1>Restricted access</h1>
+            <p>Privacy operations require authorized internal administration.</p>
+          </section>
+        )
       ) : (
         <OperationsPage
           user={user}
