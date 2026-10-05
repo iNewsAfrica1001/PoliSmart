@@ -1,6 +1,6 @@
 # Privacy Provider Owner Evidence Checklist
 
-**For:** Dr. Michael Omoruyi  
+**For:** Platform Owner  
 **System:** PoliSmart Africa AI V1.1A  
 **Source of truth:** `docs/PRIVACY_PROVIDER_DPA_CROSS_BORDER_EVIDENCE_REGISTER.md`  
 **Purpose:** Collect account-specific evidence for qualified privacy-counsel review. This checklist is not legal advice or approval.
