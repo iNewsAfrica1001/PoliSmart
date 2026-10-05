@@ -1,0 +1,90 @@
+{
+  "dataset": "Nigeria campaign geography preparation",
+  "release": "V1.1A",
+  "retrievalDate": "2026-09-25",
+  "productionUseAuthorized": false,
+  "importContract": {
+    "requiredRowFields": [
+      "level",
+      "name",
+      "code"
+    ],
+    "optionalPairedParentFields": [
+      "parentLevel",
+      "parentCode"
+    ],
+    "maximumRowsPerRequest": 5000,
+    "levels": [
+      "Country",
+      "Geopolitical Zone",
+      "State/FCT",
+      "Senatorial District",
+      "Federal Constituency",
+      "Local Government Area/FCT Area Council",
+      "Ward/Registration Area"
+    ]
+  },
+  "resolvedTotals": {
+    "Country": 1,
+    "Geopolitical Zone": 6,
+    "State/FCT": 37,
+    "Senatorial District": 0,
+    "Federal Constituency": 0,
+    "Local Government Area/FCT Area Council": 774,
+    "Ward/Registration Area": 8809
+  },
+  "sources": [
+    {
+      "sourceInstitution": "Independent National Electoral Commission (INEC)",
+      "sourceDocument": "INEC CVR Polling Unit Locator",
+      "sourceURL": "https://cvr.inecnigeria.org/pu",
+      "sourceVersionDate": null,
+      "retrievalDate": "2026-09-25",
+      "supports": [
+        "State/FCT, LGA/Area Council, and Ward/Registration Area names and codes"
+      ],
+      "limitations": "Live official hierarchy; no explicit dataset version date is published."
+    },
+    {
+      "sourceInstitution": "Independent National Electoral Commission (INEC)",
+      "sourceDocument": "State Offices & Resident Electoral Commissioners",
+      "sourceURL": "https://inecnigeria.org/about/state-offices/",
+      "sourceVersionDate": null,
+      "retrievalDate": "2026-09-25",
+      "supports": [
+        "37 State/FCT names",
+        "Geopolitical-zone classifications",
+        "774 LGA total"
+      ],
+      "limitations": "The linked LGA Directory PDFs returned HTTP 404 on retrieval date."
+    },
+    {
+      "sourceInstitution": "Independent National Electoral Commission (INEC)",
+      "sourceDocument": "Report of the 2023 General Election",
+      "sourceURL": "https://www.inecnigeria.org/wp-content/uploads/2024/02/2023-GENERAL-ELECTION-REPORT-1.pdf",
+      "sourceVersionDate": "2024-02-01",
+      "retrievalDate": "2026-09-25",
+      "supports": [
+        "109 Senatorial District total",
+        "360 Federal Constituency total",
+        "State/FCT mapping in INEC election systems"
+      ],
+      "limitations": "Count and mapping evidence only; it is not a normalized current national constituency-code register."
+    }
+  ],
+  "codeAuthorities": {
+    "POLISMART_INTERNAL": [
+      "Country",
+      "Geopolitical Zone"
+    ],
+    "INEC": [
+      "State/FCT",
+      "Local Government Area/FCT Area Council",
+      "Ward/Registration Area"
+    ]
+  },
+  "unresolved": [
+    "Current authoritative Senatorial District register, codes, and State/FCT parent reconciliation",
+    "Current authoritative Federal Constituency register, codes, and State/FCT parent reconciliation"
+  ]
+}

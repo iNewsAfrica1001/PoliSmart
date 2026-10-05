@@ -1,0 +1,5420 @@
+[
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Aba North",
+    "code": "01-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Aba South",
+    "code": "01-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Arochukwu",
+    "code": "01-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bende",
+    "code": "01-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ikwuano",
+    "code": "01-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Isiala Ngwa North",
+    "code": "01-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Isiala Ngwa South",
+    "code": "01-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Isuikwuato",
+    "code": "01-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Obingwa",
+    "code": "01-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ohafia",
+    "code": "01-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Osisioma",
+    "code": "01-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ugwunagbo",
+    "code": "01-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ukwa East",
+    "code": "01-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ukwa West",
+    "code": "01-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Umuahia North",
+    "code": "01-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Umuahia South",
+    "code": "01-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Umu - Nneochi",
+    "code": "01-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "01"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Demsa",
+    "code": "02-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Fufore",
+    "code": "02-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ganye",
+    "code": "02-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Girei",
+    "code": "02-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gombi",
+    "code": "02-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Guyuk",
+    "code": "02-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Hong",
+    "code": "02-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Jada",
+    "code": "02-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Lamurde",
+    "code": "02-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Madagali",
+    "code": "02-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Maiha",
+    "code": "02-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mayo - Belwa",
+    "code": "02-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Michika",
+    "code": "02-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mubi North",
+    "code": "02-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mubi South",
+    "code": "02-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Numan",
+    "code": "02-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Shelleng",
+    "code": "02-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Song",
+    "code": "02-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Toungo",
+    "code": "02-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Yola North",
+    "code": "02-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Yola South",
+    "code": "02-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "02"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Abak",
+    "code": "03-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Eastern Obolo",
+    "code": "03-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Eket",
+    "code": "03-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Esit Eket (Uquo)",
+    "code": "03-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Essien Udim",
+    "code": "03-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Etim Ekpo",
+    "code": "03-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Etinan",
+    "code": "03-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ibeno",
+    "code": "03-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ibesikpo Asutan",
+    "code": "03-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ibiono Ibom",
+    "code": "03-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ika",
+    "code": "03-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ikono",
+    "code": "03-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ikot Abasi",
+    "code": "03-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ikot Ekpene",
+    "code": "03-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ini",
+    "code": "03-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Itu",
+    "code": "03-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mbo",
+    "code": "03-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mkpat Enin",
+    "code": "03-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nsit Atai",
+    "code": "03-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nsit Ibom",
+    "code": "03-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nsit Ubium",
+    "code": "03-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Obot Akara",
+    "code": "03-22",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Okobo",
+    "code": "03-23",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Onna",
+    "code": "03-24",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oron",
+    "code": "03-25",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oruk Anam",
+    "code": "03-26",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Udung Uko",
+    "code": "03-27",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ukanafun",
+    "code": "03-28",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Uruan",
+    "code": "03-29",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Urue Offong/Oruko",
+    "code": "03-30",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Uyo",
+    "code": "03-31",
+    "parentLevel": "State/FCT",
+    "parentCode": "03"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Aguata",
+    "code": "04-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ayamelum",
+    "code": "04-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Anambra East",
+    "code": "04-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Anambra West",
+    "code": "04-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Anaocha",
+    "code": "04-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Awka North",
+    "code": "04-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Awka South",
+    "code": "04-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Dunukofia",
+    "code": "04-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ekwusigo",
+    "code": "04-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Idemili North",
+    "code": "04-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Idemili-South",
+    "code": "04-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ihiala",
+    "code": "04-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Njikoka",
+    "code": "04-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nnewi North",
+    "code": "04-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nnewi South",
+    "code": "04-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ogbaru",
+    "code": "04-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Onitsha-North",
+    "code": "04-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Onitsha -South",
+    "code": "04-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Orumba North",
+    "code": "04-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Orumba South",
+    "code": "04-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oyi",
+    "code": "04-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "04"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Alkaleri",
+    "code": "05-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bauchi",
+    "code": "05-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bogoro",
+    "code": "05-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Dambam",
+    "code": "05-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Darazo",
+    "code": "05-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Dass",
+    "code": "05-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gamawa",
+    "code": "05-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ganjuwa",
+    "code": "05-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Giade",
+    "code": "05-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Itas/Gadau",
+    "code": "05-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Jama'are",
+    "code": "05-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Katagum",
+    "code": "05-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kirfi",
+    "code": "05-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Misau",
+    "code": "05-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ningi",
+    "code": "05-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Shira",
+    "code": "05-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Tafawa Balewa",
+    "code": "05-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Toro",
+    "code": "05-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Warji",
+    "code": "05-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Zaki",
+    "code": "05-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "05"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Brass",
+    "code": "06-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "06"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ekeremor",
+    "code": "06-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "06"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kolokuma/Opokuma",
+    "code": "06-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "06"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nembe",
+    "code": "06-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "06"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ogbia",
+    "code": "06-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "06"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Sagbama",
+    "code": "06-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "06"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Southern Ijaw",
+    "code": "06-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "06"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Yenagoa",
+    "code": "06-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "06"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ado",
+    "code": "07-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Agatu",
+    "code": "07-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Apa",
+    "code": "07-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Buruku",
+    "code": "07-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gboko",
+    "code": "07-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Guma",
+    "code": "07-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gwer East",
+    "code": "07-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gwer West",
+    "code": "07-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Katsina-Ala",
+    "code": "07-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Konshisha",
+    "code": "07-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kwande",
+    "code": "07-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Logo",
+    "code": "07-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Makurdi",
+    "code": "07-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Obi",
+    "code": "07-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ogbadibo",
+    "code": "07-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oju",
+    "code": "07-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ohimini",
+    "code": "07-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Okpokwu",
+    "code": "07-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Otukpo",
+    "code": "07-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Tarka",
+    "code": "07-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ukum",
+    "code": "07-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ushongo",
+    "code": "07-22",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Vandeikya",
+    "code": "07-23",
+    "parentLevel": "State/FCT",
+    "parentCode": "07"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Abadam",
+    "code": "08-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Askira / Uba",
+    "code": "08-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bama",
+    "code": "08-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bayo",
+    "code": "08-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Biu",
+    "code": "08-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Chibok",
+    "code": "08-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Damboa",
+    "code": "08-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Dikwa",
+    "code": "08-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gubio",
+    "code": "08-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Guzamala",
+    "code": "08-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gwoza",
+    "code": "08-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Hawul",
+    "code": "08-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Jere",
+    "code": "08-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kaga",
+    "code": "08-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kala Balge",
+    "code": "08-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Konduga",
+    "code": "08-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kukawa",
+    "code": "08-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kwaya / Kusar",
+    "code": "08-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mafa",
+    "code": "08-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Magumeri",
+    "code": "08-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Maiduguri M. C.",
+    "code": "08-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Marte",
+    "code": "08-22",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mobbar",
+    "code": "08-23",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Monguno",
+    "code": "08-24",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ngala",
+    "code": "08-25",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nganzai",
+    "code": "08-26",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Shani",
+    "code": "08-27",
+    "parentLevel": "State/FCT",
+    "parentCode": "08"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Abi",
+    "code": "09-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Akamkpa",
+    "code": "09-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Akpabuyo",
+    "code": "09-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bakassi",
+    "code": "09-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bekwarra",
+    "code": "09-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Biase",
+    "code": "09-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Boki",
+    "code": "09-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Calabar Municipality",
+    "code": "09-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Calabar South",
+    "code": "09-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Etung",
+    "code": "09-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ikom",
+    "code": "09-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Obanliku",
+    "code": "09-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Obubra",
+    "code": "09-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Obudu",
+    "code": "09-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Odukpani",
+    "code": "09-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ogoja",
+    "code": "09-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Yakurr",
+    "code": "09-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Yala",
+    "code": "09-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "09"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Aniocha North",
+    "code": "10-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Aniocha - South",
+    "code": "10-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bomadi",
+    "code": "10-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Burutu",
+    "code": "10-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ethiope East",
+    "code": "10-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ethiope West",
+    "code": "10-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ika North- East",
+    "code": "10-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ika - South",
+    "code": "10-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Isoko North",
+    "code": "10-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Isoko South",
+    "code": "10-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ndokwa East",
+    "code": "10-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ndokwa West",
+    "code": "10-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Okpe",
+    "code": "10-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oshimili - North",
+    "code": "10-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oshimili - South",
+    "code": "10-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Patani",
+    "code": "10-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Sapele",
+    "code": "10-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Udu",
+    "code": "10-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ughelli North",
+    "code": "10-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ughelli South",
+    "code": "10-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ukwuani",
+    "code": "10-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Uvwie",
+    "code": "10-22",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Warri North",
+    "code": "10-23",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Warri South",
+    "code": "10-24",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Warri South West",
+    "code": "10-25",
+    "parentLevel": "State/FCT",
+    "parentCode": "10"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Abakaliki",
+    "code": "11-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "11"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Afikpo North",
+    "code": "11-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "11"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Afikpo South",
+    "code": "11-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "11"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ebonyi",
+    "code": "11-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "11"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ezza North",
+    "code": "11-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "11"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ezza South",
+    "code": "11-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "11"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ikwo",
+    "code": "11-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "11"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ishielu",
+    "code": "11-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "11"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ivo",
+    "code": "11-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "11"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Izzi",
+    "code": "11-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "11"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ohaozara",
+    "code": "11-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "11"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ohaukwu",
+    "code": "11-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "11"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Onicha",
+    "code": "11-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "11"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Akoko Edo",
+    "code": "12-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Egor",
+    "code": "12-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Esan Central",
+    "code": "12-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Esan North East",
+    "code": "12-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Esan South East",
+    "code": "12-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Esan West",
+    "code": "12-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Etsako Central",
+    "code": "12-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Etsako East",
+    "code": "12-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Etsako West",
+    "code": "12-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Igueben",
+    "code": "12-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ikpoba/Okha",
+    "code": "12-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oredo",
+    "code": "12-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Orhionmwon",
+    "code": "12-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ovia North East",
+    "code": "12-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ovia South West",
+    "code": "12-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Owan East",
+    "code": "12-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Owan West",
+    "code": "12-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Uhunmwode",
+    "code": "12-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "12"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ado Ekiti",
+    "code": "13-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "13"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Efon",
+    "code": "13-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "13"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ekiti East",
+    "code": "13-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "13"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ekiti West",
+    "code": "13-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "13"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ekiti South West",
+    "code": "13-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "13"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Emure",
+    "code": "13-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "13"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Aiyekire",
+    "code": "13-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "13"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ido / Osi",
+    "code": "13-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "13"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ijero",
+    "code": "13-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "13"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ikere",
+    "code": "13-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "13"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ikole",
+    "code": "13-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "13"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ilejemeje",
+    "code": "13-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "13"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Irepodun / Ifelodun",
+    "code": "13-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "13"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ise / Orun",
+    "code": "13-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "13"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Moba",
+    "code": "13-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "13"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oye",
+    "code": "13-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "13"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Aninri",
+    "code": "14-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Awgu",
+    "code": "14-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Enugu East",
+    "code": "14-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Enugu North",
+    "code": "14-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Enugu South",
+    "code": "14-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ezeagu",
+    "code": "14-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Igbo Etiti",
+    "code": "14-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Igbo Eze North",
+    "code": "14-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Igbo Eze South",
+    "code": "14-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Isi Uzo",
+    "code": "14-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nkanu East",
+    "code": "14-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nkanu West",
+    "code": "14-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nsukka",
+    "code": "14-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oji-River",
+    "code": "14-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Udenu",
+    "code": "14-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Udi",
+    "code": "14-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Uzo-Uwani",
+    "code": "14-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "14"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Abaji",
+    "code": "37-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "37"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bwari",
+    "code": "37-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "37"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gwagwalada",
+    "code": "37-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "37"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kuje",
+    "code": "37-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "37"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kwali",
+    "code": "37-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "37"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Municipal",
+    "code": "37-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "37"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Akko",
+    "code": "15-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "15"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Balanga",
+    "code": "15-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "15"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Billiri",
+    "code": "15-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "15"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Dukku",
+    "code": "15-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "15"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Funakaye",
+    "code": "15-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "15"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gombe",
+    "code": "15-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "15"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kaltungo",
+    "code": "15-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "15"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kwami",
+    "code": "15-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "15"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nafada",
+    "code": "15-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "15"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Shongom",
+    "code": "15-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "15"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Yalmaltu/ Deba",
+    "code": "15-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "15"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Aboh Mbaise",
+    "code": "16-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ahiazu Mbaise",
+    "code": "16-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ehime Mbano",
+    "code": "16-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ezinihitte Mbaise",
+    "code": "16-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ideato North",
+    "code": "16-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ideato South",
+    "code": "16-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ihitte Uboma",
+    "code": "16-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ikeduru",
+    "code": "16-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Isiala Mbano",
+    "code": "16-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Isu",
+    "code": "16-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mbaitoli",
+    "code": "16-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ngor Okpala",
+    "code": "16-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Njaba",
+    "code": "16-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nkwerre",
+    "code": "16-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nwangele",
+    "code": "16-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Obowo",
+    "code": "16-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oguta",
+    "code": "16-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ohaji Egbema",
+    "code": "16-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Okigwe",
+    "code": "16-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Onuimo",
+    "code": "16-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Orlu",
+    "code": "16-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Orsu",
+    "code": "16-22",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oru East",
+    "code": "16-23",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oru West",
+    "code": "16-24",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Owerri Municipal",
+    "code": "16-25",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Owerri North",
+    "code": "16-26",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Owerri West",
+    "code": "16-27",
+    "parentLevel": "State/FCT",
+    "parentCode": "16"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Auyo",
+    "code": "17-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Babura",
+    "code": "17-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Birnin Kudu",
+    "code": "17-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Birniwa",
+    "code": "17-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Buji",
+    "code": "17-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Dutse",
+    "code": "17-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Garki",
+    "code": "17-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gagarawa",
+    "code": "17-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gumel",
+    "code": "17-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Guri",
+    "code": "17-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gwaram",
+    "code": "17-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gwiwa",
+    "code": "17-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Hadejia",
+    "code": "17-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Jahun",
+    "code": "17-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kafin Hausa",
+    "code": "17-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kaugama",
+    "code": "17-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kazaure",
+    "code": "17-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kirika Samma",
+    "code": "17-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kiyawa",
+    "code": "17-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Maigatari",
+    "code": "17-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Malam Madori",
+    "code": "17-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Miga",
+    "code": "17-22",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ringim",
+    "code": "17-23",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Roni",
+    "code": "17-24",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Sule-Tankarkar",
+    "code": "17-25",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Taura",
+    "code": "17-26",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Yankwashi",
+    "code": "17-27",
+    "parentLevel": "State/FCT",
+    "parentCode": "17"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Birnin Gwari",
+    "code": "18-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Chikun",
+    "code": "18-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Giwa",
+    "code": "18-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Igabi",
+    "code": "18-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ikara",
+    "code": "18-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Jaba",
+    "code": "18-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Jema'a",
+    "code": "18-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kachia",
+    "code": "18-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kaduna North",
+    "code": "18-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kaduna South",
+    "code": "18-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kagarko",
+    "code": "18-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kajuru",
+    "code": "18-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kaura",
+    "code": "18-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kauru",
+    "code": "18-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kubau",
+    "code": "18-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kudan",
+    "code": "18-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Lere",
+    "code": "18-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Makarfi",
+    "code": "18-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Sabon Gari",
+    "code": "18-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Sanga",
+    "code": "18-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Soba",
+    "code": "18-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Zangon Kataf",
+    "code": "18-22",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Zaria",
+    "code": "18-23",
+    "parentLevel": "State/FCT",
+    "parentCode": "18"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ajingi",
+    "code": "19-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Albasu",
+    "code": "19-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bagwai",
+    "code": "19-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bebeji",
+    "code": "19-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bichi",
+    "code": "19-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bunkure",
+    "code": "19-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Dala",
+    "code": "19-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Danbata",
+    "code": "19-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Dawaki Kudu",
+    "code": "19-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Dawaki Tofa",
+    "code": "19-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Doguwa",
+    "code": "19-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Fagge",
+    "code": "19-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gabasawa",
+    "code": "19-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Garko",
+    "code": "19-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Garun Malam",
+    "code": "19-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gaya",
+    "code": "19-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gezawa",
+    "code": "19-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gwale",
+    "code": "19-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gwarzo",
+    "code": "19-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kabo",
+    "code": "19-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kano Municipal",
+    "code": "19-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Karaye",
+    "code": "19-22",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kibiya",
+    "code": "19-23",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kiru",
+    "code": "19-24",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kumbotso",
+    "code": "19-25",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kunchi",
+    "code": "19-26",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kura",
+    "code": "19-27",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Madobi",
+    "code": "19-28",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Makoda",
+    "code": "19-29",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Minjibir",
+    "code": "19-30",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nasarawa",
+    "code": "19-31",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Rano",
+    "code": "19-32",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Rimin Gado",
+    "code": "19-33",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Rogo",
+    "code": "19-34",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Shanono",
+    "code": "19-35",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Sumaila",
+    "code": "19-36",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Takai",
+    "code": "19-37",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Tarauni",
+    "code": "19-38",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Tofa",
+    "code": "19-39",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Tsanyawa",
+    "code": "19-40",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Tudun Wada",
+    "code": "19-41",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ungogo",
+    "code": "19-42",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Warawa",
+    "code": "19-43",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Wudil",
+    "code": "19-44",
+    "parentLevel": "State/FCT",
+    "parentCode": "19"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bakori",
+    "code": "20-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Batagarawa",
+    "code": "20-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Batsari",
+    "code": "20-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Baure",
+    "code": "20-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bindawa",
+    "code": "20-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Charanchi",
+    "code": "20-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Dandume",
+    "code": "20-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Danja",
+    "code": "20-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Dan Musa",
+    "code": "20-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Daura",
+    "code": "20-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Dutsi",
+    "code": "20-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Dutsin-Ma",
+    "code": "20-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Faskari",
+    "code": "20-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Funtua",
+    "code": "20-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ingawa",
+    "code": "20-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Jibia",
+    "code": "20-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kafur",
+    "code": "20-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kaita",
+    "code": "20-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kankara",
+    "code": "20-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kankia",
+    "code": "20-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Katsina",
+    "code": "20-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kurfi",
+    "code": "20-22",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kusada",
+    "code": "20-23",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mai'adua",
+    "code": "20-24",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Malufashi",
+    "code": "20-25",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mani",
+    "code": "20-26",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mashi",
+    "code": "20-27",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Matazu",
+    "code": "20-28",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Musawa",
+    "code": "20-29",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Rimi",
+    "code": "20-30",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Sabuwa",
+    "code": "20-31",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Safana",
+    "code": "20-32",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Sandamu",
+    "code": "20-33",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Zango",
+    "code": "20-34",
+    "parentLevel": "State/FCT",
+    "parentCode": "20"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Aliero",
+    "code": "21-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Arewa",
+    "code": "21-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Argungu",
+    "code": "21-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Augie",
+    "code": "21-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bagudo",
+    "code": "21-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Birnin Kebbi",
+    "code": "21-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bunza",
+    "code": "21-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Dandi",
+    "code": "21-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Fakai",
+    "code": "21-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gwandu",
+    "code": "21-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Jega",
+    "code": "21-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kalgo",
+    "code": "21-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Koko/Besse",
+    "code": "21-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Maiyama",
+    "code": "21-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ngaski",
+    "code": "21-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Sakaba",
+    "code": "21-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Shanga",
+    "code": "21-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Suru",
+    "code": "21-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Wasagu/Danko",
+    "code": "21-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Yauri",
+    "code": "21-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Zuru",
+    "code": "21-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "21"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Adavi",
+    "code": "22-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ajaokuta",
+    "code": "22-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ankpa",
+    "code": "22-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bassa",
+    "code": "22-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Dekina",
+    "code": "22-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ibaji",
+    "code": "22-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Idah",
+    "code": "22-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Igalamela/Odolu",
+    "code": "22-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ijumu",
+    "code": "22-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kabba/Bunu",
+    "code": "22-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kogi . K. K.",
+    "code": "22-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Lokoja",
+    "code": "22-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mopa Moro",
+    "code": "22-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ofu",
+    "code": "22-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ogori Mangogo",
+    "code": "22-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Okehi",
+    "code": "22-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Okene",
+    "code": "22-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Olamaboro",
+    "code": "22-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Omala",
+    "code": "22-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Yagba East",
+    "code": "22-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Yagba West",
+    "code": "22-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "22"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Asa",
+    "code": "23-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "23"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Baruten",
+    "code": "23-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "23"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Edu",
+    "code": "23-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "23"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ekiti",
+    "code": "23-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "23"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ifelodun",
+    "code": "23-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "23"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ilorin East",
+    "code": "23-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "23"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ilorin-South",
+    "code": "23-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "23"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ilorin-West",
+    "code": "23-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "23"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Irepodun",
+    "code": "23-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "23"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Isin",
+    "code": "23-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "23"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kaiama",
+    "code": "23-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "23"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Moro",
+    "code": "23-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "23"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Offa",
+    "code": "23-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "23"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oke - Ero",
+    "code": "23-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "23"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oyun",
+    "code": "23-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "23"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Patigi",
+    "code": "23-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "23"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Agege",
+    "code": "24-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ajeromi/Ifelodun",
+    "code": "24-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Alimosho",
+    "code": "24-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Amuwo-Odofin",
+    "code": "24-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Apapa",
+    "code": "24-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Badagry",
+    "code": "24-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Epe",
+    "code": "24-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Eti-Osa",
+    "code": "24-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ibeju/Lekki",
+    "code": "24-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ifako-Ijaye",
+    "code": "24-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ikeja",
+    "code": "24-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ikorodu",
+    "code": "24-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kosofe",
+    "code": "24-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Lagos Island",
+    "code": "24-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Lagos Mainland",
+    "code": "24-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mushin",
+    "code": "24-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ojo",
+    "code": "24-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oshodi/Isolo",
+    "code": "24-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Somolu",
+    "code": "24-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Surulere",
+    "code": "24-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "24"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Akwanga",
+    "code": "25-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "25"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Awe",
+    "code": "25-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "25"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Doma",
+    "code": "25-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "25"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Karu",
+    "code": "25-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "25"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Keana",
+    "code": "25-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "25"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Keffi",
+    "code": "25-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "25"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kokona",
+    "code": "25-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "25"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Lafia",
+    "code": "25-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "25"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nasarawa Eggon",
+    "code": "25-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "25"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Toto",
+    "code": "25-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "25"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Wamba",
+    "code": "25-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "25"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nasarawa",
+    "code": "25-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "25"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Obi",
+    "code": "25-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "25"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Agaie",
+    "code": "26-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Agwara",
+    "code": "26-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bida",
+    "code": "26-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Borgu",
+    "code": "26-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bosso",
+    "code": "26-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Chanchaga",
+    "code": "26-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Edatti",
+    "code": "26-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gbako",
+    "code": "26-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gurara",
+    "code": "26-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Katcha",
+    "code": "26-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kontagora",
+    "code": "26-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Lapai",
+    "code": "26-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Lavun",
+    "code": "26-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Magama",
+    "code": "26-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mariga",
+    "code": "26-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mashegu",
+    "code": "26-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mokwa",
+    "code": "26-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Munya",
+    "code": "26-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Paikoro",
+    "code": "26-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Rafi",
+    "code": "26-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Rijau",
+    "code": "26-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Shiroro",
+    "code": "26-22",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Suleja",
+    "code": "26-23",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Tafa",
+    "code": "26-24",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Wushishi",
+    "code": "26-25",
+    "parentLevel": "State/FCT",
+    "parentCode": "26"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Abeokuta North",
+    "code": "27-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Abeokuta South",
+    "code": "27-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ado Odo-Ota",
+    "code": "27-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Egbado North",
+    "code": "27-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Egbado South",
+    "code": "27-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ewekoro",
+    "code": "27-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ifo",
+    "code": "27-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ijebu East",
+    "code": "27-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ijebu North",
+    "code": "27-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ijebu North East",
+    "code": "27-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ijebu Ode",
+    "code": "27-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ikenne",
+    "code": "27-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Imeko/Afon",
+    "code": "27-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ipokia",
+    "code": "27-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Obafemi/Owode",
+    "code": "27-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Odeda",
+    "code": "27-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Odogbolu",
+    "code": "27-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ogun Water Side",
+    "code": "27-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Remo North",
+    "code": "27-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Sagamu",
+    "code": "27-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "27"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Akoko North East",
+    "code": "28-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Akoko North West",
+    "code": "28-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Akoko South East",
+    "code": "28-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Akoko South West",
+    "code": "28-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Akure North",
+    "code": "28-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Akure South",
+    "code": "28-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ese-Odo",
+    "code": "28-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Idanre",
+    "code": "28-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ifedore",
+    "code": "28-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ilaje",
+    "code": "28-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ileoluji/Okeigbo",
+    "code": "28-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Irele",
+    "code": "28-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Odigbo",
+    "code": "28-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Okitipupa",
+    "code": "28-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ondo East",
+    "code": "28-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ondo West",
+    "code": "28-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ose",
+    "code": "28-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Owo",
+    "code": "28-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "28"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Atakumosa East",
+    "code": "29-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Atakumosa West",
+    "code": "29-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ayedaade",
+    "code": "29-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ayedire",
+    "code": "29-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Boluwaduro",
+    "code": "29-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Boripe",
+    "code": "29-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ede North",
+    "code": "29-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ede South",
+    "code": "29-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Egbedore",
+    "code": "29-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ejigbo",
+    "code": "29-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ife Central",
+    "code": "29-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ifedayo",
+    "code": "29-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ife East",
+    "code": "29-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ife North",
+    "code": "29-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ife South",
+    "code": "29-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ila",
+    "code": "29-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ilesa East",
+    "code": "29-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ilesa West",
+    "code": "29-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Irewole",
+    "code": "29-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Isokan",
+    "code": "29-22",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Iwo",
+    "code": "29-23",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Obokun",
+    "code": "29-24",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Odo-Otin",
+    "code": "29-25",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ola-Oluwa",
+    "code": "29-26",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Olorunda",
+    "code": "29-27",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oriade",
+    "code": "29-28",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Orolu",
+    "code": "29-29",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Osogbo",
+    "code": "29-30",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Irepodun",
+    "code": "29-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ifelodun",
+    "code": "29-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "29"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Afijio",
+    "code": "30-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Akinyele",
+    "code": "30-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Atiba",
+    "code": "30-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Atisbo",
+    "code": "30-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Egbeda",
+    "code": "30-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ibadan North",
+    "code": "30-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ibadan North East",
+    "code": "30-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ibadan North West",
+    "code": "30-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ibadan South-East",
+    "code": "30-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ibadan South West",
+    "code": "30-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ibarapa Central",
+    "code": "30-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ibarapa East",
+    "code": "30-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ibarapa North",
+    "code": "30-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ido",
+    "code": "30-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Irepo",
+    "code": "30-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Iseyin",
+    "code": "30-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Itesiwaju",
+    "code": "30-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Iwajowa",
+    "code": "30-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kajola",
+    "code": "30-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Lagelu",
+    "code": "30-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ogbomoso North",
+    "code": "30-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ogbomoso South",
+    "code": "30-22",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ogo-Oluwa",
+    "code": "30-23",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Olorunsogo",
+    "code": "30-24",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oluyole",
+    "code": "30-25",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ona-Ara",
+    "code": "30-26",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oorelope",
+    "code": "30-27",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ori Ire",
+    "code": "30-28",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oyo East",
+    "code": "30-29",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oyo West",
+    "code": "30-30",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Saki East",
+    "code": "30-31",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Saki West",
+    "code": "30-32",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Surulere",
+    "code": "30-33",
+    "parentLevel": "State/FCT",
+    "parentCode": "30"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Barikin Ladi",
+    "code": "31-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bokkos",
+    "code": "31-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Jos East",
+    "code": "31-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Jos North",
+    "code": "31-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Jos South",
+    "code": "31-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kanam",
+    "code": "31-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kanke",
+    "code": "31-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Langtang North",
+    "code": "31-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Langtang South",
+    "code": "31-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mangu",
+    "code": "31-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Mikang",
+    "code": "31-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Pankshin",
+    "code": "31-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Qua'an Pan",
+    "code": "31-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Riyom",
+    "code": "31-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Shendam",
+    "code": "31-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Wase",
+    "code": "31-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bassa",
+    "code": "31-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "31"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Abua-Odual",
+    "code": "32-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ahoada East",
+    "code": "32-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ahoada West",
+    "code": "32-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Akuku Toru",
+    "code": "32-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Andoni",
+    "code": "32-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Asari-Toru",
+    "code": "32-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bonny",
+    "code": "32-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Degema",
+    "code": "32-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Eleme",
+    "code": "32-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Emohua",
+    "code": "32-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Etche",
+    "code": "32-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gokana",
+    "code": "32-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ikwerre",
+    "code": "32-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Khana",
+    "code": "32-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Obio/Akpor",
+    "code": "32-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ogba/Egbema/Ndoni",
+    "code": "32-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ogu/Bolo",
+    "code": "32-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Okrika",
+    "code": "32-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Omuma",
+    "code": "32-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Opobo/Nkoro",
+    "code": "32-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Oyigbo",
+    "code": "32-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Port Harcourt",
+    "code": "32-22",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Tai",
+    "code": "32-23",
+    "parentLevel": "State/FCT",
+    "parentCode": "32"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Binji",
+    "code": "33-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bodinga",
+    "code": "33-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Dange/Shuni",
+    "code": "33-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gada",
+    "code": "33-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Goronyo",
+    "code": "33-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gudu",
+    "code": "33-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gwadabawa",
+    "code": "33-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Illela",
+    "code": "33-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Isa",
+    "code": "33-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kware",
+    "code": "33-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kebbe",
+    "code": "33-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Rabah",
+    "code": "33-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "S/Birni",
+    "code": "33-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Shagari",
+    "code": "33-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Silame",
+    "code": "33-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Sokoto North",
+    "code": "33-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Sokoto South",
+    "code": "33-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Tambuwal",
+    "code": "33-18",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Tangaza",
+    "code": "33-19",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Tureta",
+    "code": "33-20",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Wamakko",
+    "code": "33-21",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Wurno",
+    "code": "33-22",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Yabo",
+    "code": "33-23",
+    "parentLevel": "State/FCT",
+    "parentCode": "33"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ardo - Kola",
+    "code": "34-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "34"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bali",
+    "code": "34-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "34"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Donga",
+    "code": "34-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "34"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gashaka",
+    "code": "34-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "34"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gassol",
+    "code": "34-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "34"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ibi",
+    "code": "34-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "34"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Jalingo",
+    "code": "34-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "34"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Karim-Lamido",
+    "code": "34-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "34"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kurmi",
+    "code": "34-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "34"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Lau",
+    "code": "34-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "34"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Sardauna",
+    "code": "34-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "34"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Takum",
+    "code": "34-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "34"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Ussa",
+    "code": "34-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "34"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Wukari",
+    "code": "34-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "34"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Yorro",
+    "code": "34-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "34"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Zing",
+    "code": "34-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "34"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bade",
+    "code": "35-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bursari",
+    "code": "35-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Damaturu",
+    "code": "35-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Fika",
+    "code": "35-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Fune",
+    "code": "35-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Geidam",
+    "code": "35-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gujba",
+    "code": "35-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gulani",
+    "code": "35-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Jakusko",
+    "code": "35-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Karasawa",
+    "code": "35-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Machina",
+    "code": "35-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nangere",
+    "code": "35-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Nguru",
+    "code": "35-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Potiskum",
+    "code": "35-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Tarmuwa",
+    "code": "35-15",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Yunusari",
+    "code": "35-16",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Yusufari",
+    "code": "35-17",
+    "parentLevel": "State/FCT",
+    "parentCode": "35"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Anka",
+    "code": "36-01",
+    "parentLevel": "State/FCT",
+    "parentCode": "36"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bakura",
+    "code": "36-02",
+    "parentLevel": "State/FCT",
+    "parentCode": "36"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Birnin Magaji",
+    "code": "36-03",
+    "parentLevel": "State/FCT",
+    "parentCode": "36"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bukkuyum",
+    "code": "36-04",
+    "parentLevel": "State/FCT",
+    "parentCode": "36"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Bungudu",
+    "code": "36-05",
+    "parentLevel": "State/FCT",
+    "parentCode": "36"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gummi",
+    "code": "36-06",
+    "parentLevel": "State/FCT",
+    "parentCode": "36"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Gusau",
+    "code": "36-07",
+    "parentLevel": "State/FCT",
+    "parentCode": "36"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Kaura Namoda",
+    "code": "36-08",
+    "parentLevel": "State/FCT",
+    "parentCode": "36"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Maradun",
+    "code": "36-09",
+    "parentLevel": "State/FCT",
+    "parentCode": "36"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Maru",
+    "code": "36-10",
+    "parentLevel": "State/FCT",
+    "parentCode": "36"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Shinkafi",
+    "code": "36-11",
+    "parentLevel": "State/FCT",
+    "parentCode": "36"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Talata Mafara",
+    "code": "36-12",
+    "parentLevel": "State/FCT",
+    "parentCode": "36"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Tsafe",
+    "code": "36-13",
+    "parentLevel": "State/FCT",
+    "parentCode": "36"
+  },
+  {
+    "level": "Local Government Area/FCT Area Council",
+    "name": "Zurmi",
+    "code": "36-14",
+    "parentLevel": "State/FCT",
+    "parentCode": "36"
+  }
+]

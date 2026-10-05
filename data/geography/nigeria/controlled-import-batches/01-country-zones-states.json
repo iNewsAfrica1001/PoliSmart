@@ -1,0 +1,308 @@
+[
+  {
+    "level": "Country",
+    "name": "Nigeria",
+    "code": "PS-NG"
+  },
+  {
+    "level": "Geopolitical Zone",
+    "name": "North Central",
+    "code": "PS-GPZ-NC",
+    "parentLevel": "Country",
+    "parentCode": "PS-NG"
+  },
+  {
+    "level": "Geopolitical Zone",
+    "name": "North East",
+    "code": "PS-GPZ-NE",
+    "parentLevel": "Country",
+    "parentCode": "PS-NG"
+  },
+  {
+    "level": "Geopolitical Zone",
+    "name": "North West",
+    "code": "PS-GPZ-NW",
+    "parentLevel": "Country",
+    "parentCode": "PS-NG"
+  },
+  {
+    "level": "Geopolitical Zone",
+    "name": "South East",
+    "code": "PS-GPZ-SE",
+    "parentLevel": "Country",
+    "parentCode": "PS-NG"
+  },
+  {
+    "level": "Geopolitical Zone",
+    "name": "South South",
+    "code": "PS-GPZ-SS",
+    "parentLevel": "Country",
+    "parentCode": "PS-NG"
+  },
+  {
+    "level": "Geopolitical Zone",
+    "name": "South West",
+    "code": "PS-GPZ-SW",
+    "parentLevel": "Country",
+    "parentCode": "PS-NG"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Abia",
+    "code": "01",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SE"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Adamawa",
+    "code": "02",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NE"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Akwa Ibom",
+    "code": "03",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SS"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Anambra",
+    "code": "04",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SE"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Bauchi",
+    "code": "05",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NE"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Bayelsa",
+    "code": "06",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SS"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Benue",
+    "code": "07",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NC"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Borno",
+    "code": "08",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NE"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Cross River",
+    "code": "09",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SS"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Delta",
+    "code": "10",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SS"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Ebonyi",
+    "code": "11",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SE"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Edo",
+    "code": "12",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SS"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Ekiti",
+    "code": "13",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SW"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Enugu",
+    "code": "14",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SE"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Federal Capital Territory (FCT)",
+    "code": "37",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NC"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Gombe",
+    "code": "15",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NE"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Imo",
+    "code": "16",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SE"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Jigawa",
+    "code": "17",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NW"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Kaduna",
+    "code": "18",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NW"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Kano",
+    "code": "19",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NW"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Katsina",
+    "code": "20",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NW"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Kebbi",
+    "code": "21",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NW"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Kogi",
+    "code": "22",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NC"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Kwara",
+    "code": "23",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NC"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Lagos",
+    "code": "24",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SW"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Nasarawa",
+    "code": "25",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NC"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Niger",
+    "code": "26",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NC"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Ogun",
+    "code": "27",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SW"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Ondo",
+    "code": "28",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SW"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Osun",
+    "code": "29",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SW"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Oyo",
+    "code": "30",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SW"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Plateau",
+    "code": "31",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NC"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Rivers",
+    "code": "32",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-SS"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Sokoto",
+    "code": "33",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NW"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Taraba",
+    "code": "34",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NE"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Yobe",
+    "code": "35",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NE"
+  },
+  {
+    "level": "State/FCT",
+    "name": "Zamfara",
+    "code": "36",
+    "parentLevel": "Geopolitical Zone",
+    "parentCode": "PS-GPZ-NW"
+  }
+]

@@ -1,0 +1,41 @@
+{
+  "records": 9627,
+  "counts": {
+    "Country": 1,
+    "Geopolitical Zone": 6,
+    "State/FCT": 37,
+    "Senatorial District": 0,
+    "Federal Constituency": 0,
+    "Local Government Area/FCT Area Council": 774,
+    "Ward/Registration Area": 8809
+  },
+  "issues": [],
+  "ready": true,
+  "stateCodeReconciliation": {
+    "matched": true,
+    "mismatches": []
+  },
+  "sourceNormalization": {
+    "rawOfficialWardRows": 8810,
+    "normalizedWardRecords": 8809,
+    "exactDuplicateRowsRemoved": [
+      {
+        "code": "07-07-09",
+        "name": "Mbaikyaan",
+        "retainedOfficialId": "1462",
+        "duplicateOfficialId": "8810"
+      }
+    ],
+    "note": "Only byte-equivalent code/name duplicates from the official endpoint are collapsed; conflicting duplicate codes are fatal."
+  },
+  "provenance": {
+    "officialHierarchy": "https://cvr.inecnigeria.org/pu",
+    "extractionEndpoints": [
+      "/PublicApi/lgas/1/Search",
+      "/PublicApi/wards/1/Search"
+    ],
+    "sourceVersionDate": null,
+    "sourceVersionNote": "The official live locator does not publish an explicit dataset version date.",
+    "retrievalDate": "2026-09-25"
+  }
+}

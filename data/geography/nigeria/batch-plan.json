@@ -1,0 +1,22 @@
+{
+  "maximumRowsPerRequest": 5000,
+  "parentOrdering": "Earlier batch or same batch",
+  "batches": [
+    {
+      "file": "controlled-import-batches/01-country-zones-states.json",
+      "recordCount": 44
+    },
+    {
+      "file": "controlled-import-batches/02-lgas-area-councils.json",
+      "recordCount": 774
+    },
+    {
+      "file": "controlled-import-batches/03-wards-0001-4500.json",
+      "recordCount": 4500
+    },
+    {
+      "file": "controlled-import-batches/04-wards-4501-8809.json",
+      "recordCount": 4309
+    }
+  ]
+}
