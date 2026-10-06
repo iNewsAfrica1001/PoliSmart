@@ -35,6 +35,8 @@
     "db:validate:production": "node scripts/validate-production-database.mjs",
     "db:bootstrap:production": "node scripts/bootstrap-production-application.mjs",
     "db:backfill:campaign-geography": "node scripts/backfill-campaign-geography.mjs",
+    "db:rehearsal:campaign-geography:bootstrap": "node scripts/bootstrap-campaign-geography-rehearsal.mjs",
+    "db:rehearsal:campaign-geography:sentinel": "node scripts/manage-campaign-geography-rehearsal-sentinel.mjs",
     "db:seed": "prisma db seed",
     "import:afrobarometer": "node scripts/import-afrobarometer.mjs",
     "import:afrobarometer:production": "node scripts/import-afrobarometer-production.mjs"
