@@ -16,6 +16,7 @@ import { FundraisingPage } from "./pages/FundraisingPage";
 import { PrelaunchRequestPage } from "./pages/PrelaunchRequestPage";
 import { PrelaunchLeadReviewPage } from "./pages/PrelaunchLeadReviewPage";
 import { GeographicManagementPage } from "./pages/GeographicManagementPage";
+import { CampaignGeographyPage } from "./pages/CampaignGeographyPage";
 import { PrivacyOperationsPage } from "./pages/PrivacyOperationsPage";
 import {
   disabledFeatures,
@@ -39,6 +40,7 @@ const pageTitles: Record<string, string> = {
   billing: "Billing",
   "prelaunch-leads": "Pre-launch Requests",
   geography: "Geographic Administration",
+  "campaign-geography": "Campaign Geography",
   "privacy-operations": "Privacy Operations",
 };
 
@@ -129,6 +131,7 @@ function WorkspaceApp() {
       canReadCompliance={membership?.canReadCompliance === true}
       canReadFundraising={membership?.canReadFundraising === true}
       canReviewPrelaunchLeads={membership?.canReviewPrelaunchLeads === true}
+      canViewCampaignGeography={membership?.canViewCampaignGeography === true}
       tenantId={membership?.tenantId || ""}
       features={features}
       onNavigate={setPage}
@@ -172,6 +175,15 @@ function WorkspaceApp() {
           <section className="restricted-state">
             <h1>Restricted access</h1>
             <p>Geographic administration requires Super Administrator authorization.</p>
+          </section>
+        )
+      ) : page === "campaign-geography" ? (
+        membership?.canViewCampaignGeography ? (
+          <CampaignGeographyPage user={user} />
+        ) : (
+          <section className="restricted-state" aria-labelledby="campaign-geography-restricted">
+            <h1 id="campaign-geography-restricted">Restricted access</h1>
+            <p>Campaign Geography requires an authorized campaign administration role.</p>
           </section>
         )
       ) : page === "privacy-operations" ? (

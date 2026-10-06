@@ -39,6 +39,8 @@ export type SessionUser = {
     canManagePolicy?: boolean;
     canManageCommunications?: boolean;
     canApproveKnowledge?: boolean;
+    canViewCampaignGeography?: boolean;
+    canManageCampaignGeography?: boolean;
     canReadFundraising?: boolean;
     canManageFundraising?: boolean;
     canArchiveFundraising?: boolean;

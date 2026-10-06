@@ -3160,6 +3160,60 @@ textarea:focus-visible {
 .empty-state p {
   font-size: 12px;
 }
+.campaign-geography-guidance {
+  display: flex;
+  gap: 14px;
+  margin: 24px 0;
+  padding: 18px;
+  border-left: 4px solid var(--green);
+  background: #e7f5ef;
+}
+.campaign-geography-guidance > svg { flex: 0 0 auto; color: var(--green); }
+.campaign-geography-guidance h2 { margin: 0 0 5px; font-size: 15px; }
+.campaign-geography-guidance p { margin: 0; color: #315f52; font-size: 12px; line-height: 1.6; }
+.campaign-geography-controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(300px, 2fr) minmax(180px, .75fr);
+  gap: 16px;
+  align-items: end;
+  margin-bottom: 20px;
+}
+.campaign-geography-controls label { display: grid; gap: 7px; font-size: 11px; font-weight: 800; }
+.campaign-geography-controls label span { color: var(--muted); font-size: 10px; font-weight: 500; }
+.campaign-geography-controls input,
+.campaign-geography-controls select {
+  min-height: 42px;
+  border: 1px solid #cad5d0;
+  border-radius: 4px;
+  background: #fff;
+  padding: 10px;
+}
+.campaign-geography-controls form { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: end; }
+.campaign-geography-controls form label { grid-row: 1; }
+.campaign-geography-controls button,
+.geography-breadcrumbs button,
+.geography-area-actions button,
+.geography-pagination button {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  padding: 8px 12px;
+  font-weight: 800;
+}
+.geography-breadcrumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0 0 18px; }
+.geography-breadcrumbs span { display: flex; align-items: center; gap: 4px; }
+.geography-breadcrumbs svg { width: 15px; color: var(--muted); }
+.geography-breadcrumbs button[aria-current="page"] { color: var(--green); border-color: var(--green); }
+.campaign-geography-messages:empty { display: none; }
+.campaign-geography-messages .ops-confirmation { display: block; }
+.geography-area-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.geography-area-actions .primary-action { min-height: 42px; background: var(--green); color: #fff; }
+.geography-remove { color: #8e2929; border-color: #d6aaaa !important; }
+.status-pill--assigned { background: #d9f1e7; color: #165d46; }
+.geography-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 18px; }
+.geography-pagination span { font-size: 11px; font-weight: 800; }
+.campaign-geography-readonly { color: var(--muted); font-size: 12px; }
 @media (max-width: 780px) {
   .ops-heading {
     display: block;
@@ -3178,6 +3232,11 @@ textarea:focus-visible {
   .ops-form > div {
     grid-column: auto;
   }
+  .campaign-geography-controls { grid-template-columns: 1fr; }
+  .campaign-geography-controls form { grid-template-columns: 1fr 1fr; }
+  .campaign-geography-controls form label { grid-column: 1 / -1; }
+  .ops-list > article { grid-template-columns: auto 1fr; }
+  .geography-area-actions { grid-column: 1 / -1; justify-content: flex-start; }
   .onboarding-steps,
   .assistant-guide {
     grid-template-columns: 1fr;

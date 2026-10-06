@@ -43,6 +43,8 @@ function publicUser(user) {
         canManagePolicy: hasPermission({ role }, PERMISSIONS.POLICY_MANAGE),
         canManageCommunications: hasPermission({ role }, PERMISSIONS.COMMUNICATIONS_MANAGE),
         canApproveKnowledge: hasPermission({ role }, PERMISSIONS.KNOWLEDGE_APPROVE),
+        canViewCampaignGeography: hasPermission({ role }, PERMISSIONS.CAMPAIGN_GEOGRAPHY_VIEW),
+        canManageCampaignGeography: hasPermission({ role }, PERMISSIONS.CAMPAIGN_GEOGRAPHY_MANAGE),
         canReadFundraising: hasPermission({ role }, PERMISSIONS.FUNDRAISING_READ),
         canManageFundraising: hasPermission({ role }, PERMISSIONS.FUNDRAISING_MANAGE),
         canArchiveFundraising: hasPermission({ role }, PERMISSIONS.FUNDRAISING_ARCHIVE),
