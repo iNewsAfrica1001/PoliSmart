@@ -166,3 +166,25 @@ test("Campaign Geography foundation migration is additive, empty, and restrictiv
   assert.doesNotMatch(sql, /\b(?:DROP|TRUNCATE|DELETE\s+FROM|INSERT\s+INTO|UPDATE\s+"?\w+"?\s+SET)\b/i);
   assert.doesNotMatch(sql, /ALTER\s+TABLE\s+"(?:geographic_levels|geographic_areas)"/i);
 });
+
+test("Campaign Geography assignment controls are additive and hardened", () => {
+  const sql = readFileSync(
+    "prisma/migrations/0021_campaign_geography_assignment_controls/migration.sql",
+    "utf8",
+  );
+  for (const permission of ["campaign-geography:view", "campaign-geography:manage"])
+    assert.match(sql, new RegExp(permission));
+  for (const fn of ["campaign_geography_assign", "campaign_geography_deactivate"]) {
+    assert.match(sql, new RegExp(`CREATE OR REPLACE FUNCTION public\\.${fn}`));
+    assert.match(sql, new RegExp(`ALTER FUNCTION public\\.${fn}[\\s\\S]*OWNER TO polismart_migrator`));
+    assert.match(sql, new RegExp(`REVOKE ALL ON FUNCTION public\\.${fn}[\\s\\S]*FROM PUBLIC`));
+    assert.match(sql, new RegExp(`GRANT EXECUTE ON FUNCTION public\\.${fn}[\\s\\S]*TO polismart_runtime`));
+  }
+  assert.equal((sql.match(/SECURITY DEFINER/g) || []).length, 2);
+  assert.equal((sql.match(/SET search_path = pg_catalog, public/g) || []).length, 2);
+  assert.equal((sql.match(/pg_advisory_xact_lock/g) || []).length, 2);
+  assert.doesNotMatch(sql, /EXECUTE\s+(?:FORMAT|IMMEDIATE)|format\s*\(/i);
+  assert.doesNotMatch(sql, /GRANT\s+(?:INSERT|UPDATE|DELETE|TRUNCATE).*campaign_geographic_assignments/i);
+  assert.doesNotMatch(sql, /\b(?:DROP|TRUNCATE|DELETE\s+FROM)\b/i);
+  assert.doesNotMatch(sql, /ALTER TABLE\s+"?(?:master_geographic|campaign_geographic)/i);
+});

@@ -28,6 +28,7 @@ import {
 } from "./server/routes/features.js";
 import { createPrelaunchReviewRouter, createPrelaunchRouter } from "./server/routes/prelaunch.js";
 import { createPrivacyOperationsRouter } from "./server/routes/privacyOperations.js";
+import { createCampaignGeographyRouter } from "./server/routes/campaignGeography.js";
 import {
   authenticateRequests,
   requireSession,
@@ -46,12 +47,14 @@ import { createWorkspaceSearchRepository } from "./server/repositories/workspace
 import { createFundraisingRepository } from "./server/repositories/fundraisingRepository.js";
 import { createPrelaunchLeadRepository } from "./server/repositories/prelaunchLeadRepository.js";
 import { createPrivacyOperationsRepository } from "./server/repositories/privacyOperationsRepository.js";
+import { createCampaignGeographyRepository } from "./server/repositories/campaignGeographyRepository.js";
 import { createAuthenticationService } from "./server/services/authentication.js";
 import { createAccountNotificationService } from "./server/services/accountNotifications.js";
 import { createKnowledgeBaseService } from "./server/services/knowledgeBase.js";
 import { createAiProvider } from "./server/services/aiProvider.js";
 import { createAiAssistantService } from "./server/services/aiAssistant.js";
 import { createIntelligenceWorkflowService } from "./server/services/intelligenceWorkflows.js";
+import { createCampaignGeographyService } from "./server/services/campaignGeography.js";
 import { GEOGRAPHIC_IMPORT_LIMITS } from "./server/services/geographicManagement.js";
 import { createGovernanceService } from "./server/services/governance.js";
 import { createDocumentStorage } from "./server/services/documentStorage.js";
@@ -261,6 +264,12 @@ app.use(
   }),
 );
 app.use("/api/campaigns", createCampaignRouter(createCampaignRepository(prisma)));
+app.use(
+  "/api/campaign-geography",
+  createCampaignGeographyRouter(
+    createCampaignGeographyService(createCampaignGeographyRepository(prisma)),
+  ),
+);
 app.use(
   "/api/search",
   createWorkspaceSearchRouter(createWorkspaceSearchRepository(prisma), {

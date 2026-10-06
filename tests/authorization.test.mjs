@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { PERMISSIONS, ROLES } from "../server/config/authorization.js";
+import { PERMISSIONS, ROLE_PERMISSION_POLICY, ROLES } from "../server/config/authorization.js";
 import {
   authorize,
   belongsToOrganization,
@@ -63,6 +63,18 @@ test("platform administrators receive the complete deterministic policy", () => 
   for (const permission of Object.values(PERMISSIONS)) {
     assert.equal(hasPermission(administrator, permission), true);
   }
+});
+
+test("Campaign Geography permissions are limited to Campaign and Super Administrators", () => {
+  for (const [role, permissions] of Object.entries(ROLE_PERMISSION_POLICY)) {
+    const expected = [ROLES.CAMPAIGN_ADMINISTRATOR, ROLES.SUPER_ADMINISTRATOR].includes(role);
+    assert.equal(permissions.includes(PERMISSIONS.CAMPAIGN_GEOGRAPHY_VIEW), expected, role);
+    assert.equal(permissions.includes(PERMISSIONS.CAMPAIGN_GEOGRAPHY_MANAGE), expected, role);
+  }
+  assert.equal(
+    ROLE_PERMISSION_POLICY[ROLES.CAMPAIGN_ADMINISTRATOR].includes(PERMISSIONS.GEOGRAPHY_MANAGE),
+    false,
+  );
 });
 
 test("organization-scoped authorization rejects cross-tenant access", () => {

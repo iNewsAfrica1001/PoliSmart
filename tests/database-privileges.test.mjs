@@ -6,6 +6,7 @@ import path from "node:path";
 import { Prisma } from "@prisma/client";
 import {
   RUNTIME_DATABASE_PRIVILEGES,
+  RUNTIME_FUNCTION_PRIVILEGES,
   RUNTIME_SEQUENCE_PRIVILEGES,
 } from "../server/config/databasePrivileges.js";
 
@@ -156,6 +157,21 @@ test("Campaign Geography foundation is read-only for runtime until services are 
     sql,
     /GRANT[\s\S]*\b(?:INSERT|UPDATE|DELETE|TRUNCATE|REFERENCES|TRIGGER|CREATE|ALTER|OWNERSHIP|BYPASSRLS|CREATEDB|CREATEROLE)\b/i,
   );
+});
+
+test("Campaign Geography controlled functions are the only authorized runtime mutation surface", () => {
+  assert.deepEqual(RUNTIME_FUNCTION_PRIVILEGES, {
+    "public.campaign_geography_assign(uuid,uuid,uuid,uuid[])": ["EXECUTE"],
+    "public.campaign_geography_deactivate(uuid,uuid,uuid,uuid[])": ["EXECUTE"],
+  });
+  for (const table of [
+    "master_geographic_levels",
+    "master_geographic_areas",
+    "campaign_geographic_assignments",
+  ]) {
+    assert.deepEqual(RUNTIME_DATABASE_PRIVILEGES[table].tablePrivileges, ["SELECT"]);
+    assert.deepEqual(RUNTIME_DATABASE_PRIVILEGES[table].updateColumns, []);
+  }
 });
 
 test("disabled financial tables receive no runtime privilege", () => {

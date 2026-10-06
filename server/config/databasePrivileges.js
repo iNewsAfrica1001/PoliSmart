@@ -137,3 +137,8 @@ export const RUNTIME_DATABASE_PRIVILEGES = Object.freeze({
 });
 
 export const RUNTIME_SEQUENCE_PRIVILEGES = Object.freeze({});
+
+export const RUNTIME_FUNCTION_PRIVILEGES = Object.freeze({
+  "public.campaign_geography_assign(uuid,uuid,uuid,uuid[])": Object.freeze(["EXECUTE"]),
+  "public.campaign_geography_deactivate(uuid,uuid,uuid,uuid[])": Object.freeze(["EXECUTE"]),
+});
