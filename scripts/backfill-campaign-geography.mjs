@@ -17,11 +17,11 @@ const createRepository = (client, root = client) => ({
 
 let db;
 try {
-  const { mode, confirmation } = parseBackfillCliArgs(process.argv.slice(2));
+  const { mode, confirmation, productionSelector } = parseBackfillCliArgs(process.argv.slice(2));
   if (required.some((name) => !process.env[name])) throw Object.assign(new Error("Required controlled backfill environment is incomplete."), { code:"ENVIRONMENT_INCOMPLETE" });
   process.env.DATABASE_URL = process.env.MIGRATION_DATABASE_URL;
   db = new PrismaClient();
-  const result=await runCampaignGeographyBackfill({repository:createRepository(db),expectedIdentity:{projectId:process.env.POLISMART_NEON_PROJECT_ID,branchId:process.env.POLISMART_NEON_BRANCH_ID,branchName:process.env.POLISMART_NEON_BRANCH_NAME,database:process.env.POLISMART_DATABASE_NAME},mode,confirmation,commit:process.env.POLISMART_AUTHORIZED_COMMIT,checkpointId:process.env.POLISMART_CHECKPOINT_ID||null});
+  const result=await runCampaignGeographyBackfill({repository:createRepository(db),expectedIdentity:{projectId:process.env.POLISMART_NEON_PROJECT_ID,branchId:process.env.POLISMART_NEON_BRANCH_ID,branchName:process.env.POLISMART_NEON_BRANCH_NAME,database:process.env.POLISMART_DATABASE_NAME},mode,confirmation,productionSelector,productionDryRunAuthorization:process.env.POLISMART_PRODUCTION_BACKFILL_DRY_RUN_AUTHORIZATION,productionExecuteAuthorization:process.env.POLISMART_PRODUCTION_BACKFILL_EXECUTE_AUTHORIZATION,commit:process.env.POLISMART_AUTHORIZED_COMMIT,checkpointId:process.env.POLISMART_CHECKPOINT_ID||null});
   console.log(JSON.stringify(result,null,2));
 } catch(error) { console.error(JSON.stringify({status:"FAILED",code:error.code||"BACKFILL_FAILED",errorType:error.constructor?.name||"Error"})); process.exitCode=1; }
 finally { if(db) await db.$disconnect(); delete process.env.DATABASE_URL; delete process.env.MIGRATION_DATABASE_URL; }

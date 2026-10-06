@@ -7,6 +7,16 @@ export const ASSIGNMENT_CHUNK_SIZE = 500;
 export const CAMPAIGN_GEOGRAPHY_ASSIGNMENT_NAMESPACE = "bb930f36-4da2-5ea8-9e35-093b8086ac32";
 export const CAMPAIGN_GEOGRAPHY_EXECUTION_CONFIRMATION =
   "BACKFILL AUTHORIZED CAMPAIGN GEOGRAPHY";
+export const PRODUCTION_DRY_RUN_AUTHORIZATION =
+  "PRODUCTION DRY RUN AUTHORIZED CAMPAIGN GEOGRAPHY";
+export const PRODUCTION_EXECUTE_AUTHORIZATION =
+  "PRODUCTION EXECUTION AUTHORIZED CAMPAIGN GEOGRAPHY";
+export const PRODUCTION_IDENTITY = Object.freeze({
+  projectId: "young-base-56422836",
+  branchId: "br-noisy-forest-axlven4c",
+  branchName: "production",
+  database: "neondb",
+});
 export const PRODUCTION_NEON_BRANCH_ID = "br-noisy-forest-axlven4c";
 export const EXPECTED_LEVELS = Object.freeze([
   ["Country", 0, 1],
@@ -67,13 +77,28 @@ export function uuidV5(name, namespace = CAMPAIGN_GEOGRAPHY_ASSIGNMENT_NAMESPACE
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-export function assertSafeIdentity(identity, expected) {
-  if (!identity?.branchId || !expected?.projectId || !expected?.branchId || !expected?.database)
+export function assertSafeIdentity(identity, expected, control = {}) {
+  if (!identity?.branchId || !identity?.database || !expected?.projectId || !expected?.branchId || !expected?.branchName || !expected?.database)
     fail("IDENTITY_UNPROVEN", "Database identity is incomplete.");
-  if (identity.branchId === PRODUCTION_NEON_BRANCH_ID || expected.branchId === PRODUCTION_NEON_BRANCH_ID)
-    fail("PRODUCTION_PROHIBITED", "Production execution is prohibited.");
   if (identity.branchId !== expected.branchId || identity.database !== expected.database)
     fail("IDENTITY_MISMATCH", "Database identity does not match the authorized target.");
+  const isProduction = identity.branchId === PRODUCTION_NEON_BRANCH_ID || expected.branchId === PRODUCTION_NEON_BRANCH_ID;
+  if (isProduction) {
+    if (expected.projectId !== PRODUCTION_IDENTITY.projectId || expected.branchId !== PRODUCTION_IDENTITY.branchId ||
+        expected.branchName !== PRODUCTION_IDENTITY.branchName || expected.database !== PRODUCTION_IDENTITY.database)
+      fail("IDENTITY_MISMATCH", "Database identity does not match the authorized target.");
+    if (control.productionSelector === "dry-run") {
+      if (control.mode !== "dry-run" || control.confirmation !== undefined ||
+          control.dryRunAuthorization !== PRODUCTION_DRY_RUN_AUTHORIZATION)
+        fail("PRODUCTION_PROHIBITED", "Production dry-run authorization is invalid.");
+    } else if (control.productionSelector === "execute") {
+      if (control.mode !== "execute" || control.executeAuthorization !== PRODUCTION_EXECUTE_AUTHORIZATION ||
+          control.confirmation !== CAMPAIGN_GEOGRAPHY_EXECUTION_CONFIRMATION)
+        fail("PRODUCTION_PROHIBITED", "Production execution authorization is invalid.");
+    } else fail("PRODUCTION_PROHIBITED", "Production operation is prohibited without explicit authorization.");
+  } else if (control.productionSelector) {
+    fail("PRODUCTION_SELECTOR_TARGET_MISMATCH", "Production authorization cannot target a non-Production database.");
+  }
   return {
     databaseVerified: { database: identity.database, branchId: identity.branchId },
     operatorExpected: { projectId: expected.projectId, branchName: expected.branchName },
@@ -84,11 +109,15 @@ export function parseBackfillCliArgs(args) {
   let mode = "dry-run";
   let modeSeen = false;
   let confirmation;
+  let productionSelector;
   for (const arg of args) {
     if (arg === "--dry-run" || arg === "--execute") {
       if (modeSeen) fail("CLI_AMBIGUOUS_MODE", "Specify at most one mode option.");
       modeSeen = true;
       mode = arg === "--execute" ? "execute" : "dry-run";
+    } else if (arg === "--production-dry-run" || arg === "--production-execute") {
+      if (productionSelector !== undefined) fail("CLI_AMBIGUOUS_PRODUCTION_SELECTOR", "Specify one Production selector once.");
+      productionSelector = arg === "--production-execute" ? "execute" : "dry-run";
     } else if (arg.startsWith("--confirm=")) {
       if (confirmation !== undefined) fail("CLI_DUPLICATE_CONFIRMATION", "Specify confirmation once.");
       confirmation = arg.slice("--confirm=".length);
@@ -98,7 +127,9 @@ export function parseBackfillCliArgs(args) {
   if (mode === "dry-run" && confirmation !== undefined) fail("CLI_AMBIGUOUS_CONFIRMATION", "Confirmation is valid only with execute mode.");
   if (mode === "execute" && confirmation !== CAMPAIGN_GEOGRAPHY_EXECUTION_CONFIRMATION)
     fail("EXECUTION_NOT_AUTHORIZED", "Exact execution confirmation is required.");
-  return { mode, confirmation };
+  if (productionSelector !== undefined && (!modeSeen || productionSelector !== mode))
+    fail("CLI_INCOMPATIBLE_PRODUCTION_SELECTOR", "Production selector requires its explicit matching mode.");
+  return { mode, confirmation, productionSelector };
 }
 
 function detectCycles(areas) {
@@ -176,8 +207,14 @@ export function classifyTarget(target, plan) {
   return "ALREADY_COMPLETE";
 }
 
-export async function runCampaignGeographyBackfill({ repository, expectedIdentity, mode = "dry-run", confirmation, commit, checkpointId = null }) {
-  const identity = assertSafeIdentity(await repository.getIdentity(), expectedIdentity);
+export async function runCampaignGeographyBackfill({ repository, expectedIdentity, mode = "dry-run", confirmation, productionSelector, productionDryRunAuthorization, productionExecuteAuthorization, commit, checkpointId = null }) {
+  const identity = assertSafeIdentity(await repository.getIdentity(), expectedIdentity, {
+    mode,
+    confirmation,
+    productionSelector,
+    dryRunAuthorization: productionDryRunAuthorization,
+    executeAuthorization: productionExecuteAuthorization,
+  });
   const prepare = async (repo) => {
     const source = await repo.readSource();
     const actors = await repo.findEligibleActors(source.areas[0]?.tenantId);
