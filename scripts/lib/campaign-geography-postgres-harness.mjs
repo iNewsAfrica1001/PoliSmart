@@ -267,10 +267,26 @@ async function verifyFixtureSetup(db, fixture) {
   for (const [key, value] of Object.entries(expected)) assert(actual[key] === value, `fixture setup verification failed for ${key}`);
 }
 
-async function cleanupFixture(db, f) {
+export const MUTABLE_FIXTURE_CLEANUP_SQL = Object.freeze([
+  "DELETE FROM public.campaign_geographic_assignments WHERE tenant_id IN ($1::uuid,$2::uuid)",
+  "DELETE FROM public.memberships WHERE tenant_id IN ($1::uuid,$2::uuid)",
+  "DELETE FROM public.campaigns WHERE id IN ($1::uuid,$2::uuid)",
+  "DELETE FROM public.organizations WHERE id IN ($1::uuid,$2::uuid)",
+  "DELETE FROM public.auth_users WHERE id IN ($1::uuid,$2::uuid)",
+  "DELETE FROM public.master_geographic_areas WHERE id IN ($1::uuid,$2::uuid)",
+  "DELETE FROM public.master_geographic_levels WHERE id=$1::uuid",
+]);
+
+export function verifyFixtureCleanupState(counts) {
+  const { audits = 0, ...mutable } = counts ?? {};
+  assert(!Object.values(mutable).some(Number), "fixture cleanup verification failed: mutable fixture residue remains");
+  assert(Number.isInteger(audits) && audits >= 0, "fixture cleanup verification failed: durable audit evidence count is invalid");
+  return Object.freeze({ mutableFixtureResidue: 0, durableAuditEvidence: audits });
+}
+
+export async function cleanupFixture(db, f) {
   const i = f.ids;
   await db.$transaction(async (tx) => {
-    await query(tx, "DELETE FROM public.security_audit_events WHERE tenant_id IN ($1::uuid,$2::uuid)", i.tenant, i.tenant2);
     await query(tx, "DELETE FROM public.campaign_geographic_assignments WHERE tenant_id IN ($1::uuid,$2::uuid)", i.tenant, i.tenant2);
     await query(tx, "DELETE FROM public.memberships WHERE tenant_id IN ($1::uuid,$2::uuid)", i.tenant, i.tenant2);
     await query(tx, "DELETE FROM public.campaigns WHERE id IN ($1::uuid,$2::uuid)", i.campaign, i.campaign2);
@@ -281,8 +297,8 @@ async function cleanupFixture(db, f) {
   });
 }
 
-async function verifyFixtureCleanup(db, identity) {
-  assert(!Object.values(await fixtureCounts(db, identity.ids)).some(Number), "fixture cleanup verification failed");
+export async function verifyFixtureCleanup(db, identity) {
+  return verifyFixtureCleanupState(await fixtureCounts(db, identity.ids));
 }
 
 const invoke = (db, fn, f, actor, areas, tenant = f.ids.tenant, campaign = f.ids.campaign) =>

@@ -1,11 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { assertFixtureNamespaceAvailable, buildRehearsalSentinelRetirement, buildRehearsalSentinelSetup,
-  deriveFixtureIdentity, expectSqlState, FIXTURE_COUNTS_SQL, PRODUCTION_BRANCH_ID, REHEARSAL_ENVIRONMENT, REHEARSAL_PURPOSE,
+  cleanupFixture, deriveFixtureIdentity, expectSqlState, FIXTURE_COUNTS_SQL, MUTABLE_FIXTURE_CLEANUP_SQL,
+  PRODUCTION_BRANCH_ID, REHEARSAL_ENVIRONMENT, REHEARSAL_PURPOSE,
   runConfiguredHarnessFlow, runFixtureLifecycle, validateRehearsalConfiguration, validateRehearsalSentinel,
-  validateSentinelInstallationAuthorization,
+  validateSentinelInstallationAuthorization, verifyFixtureCleanupState,
 } from "../scripts/lib/campaign-geography-postgres-harness.mjs";
 import fs from "node:fs";
+import { spawnSync } from "node:child_process";
 
 const authorization = Object.freeze({ projectId: "project-rehearsal", branchId: "br-rehearsal-only",
   nonce: "authorization-nonce-unique", database: "neondb", purpose: REHEARSAL_PURPOSE,
@@ -127,6 +129,41 @@ test("cleanup failure fails closed and preserves both primary and cleanup errors
     verifySetup: async () => { throw new Error("primary failure"); }, execute: async () => {},
     cleanup: async () => { throw new Error("cleanup failure"); }, verifyCleanup: async () => {},
   }), (error) => error instanceof AggregateError && error.errors.length === 2);
+});
+
+test("mutable cleanup preserves append-only rehearsal audits and removes only fixture-owned business state", async () => {
+  const statements = [];
+  const db = { $transaction: async (operation) => operation({
+    $queryRawUnsafe: async (sql, ...values) => { statements.push({ sql, values }); return []; },
+  }) };
+  const ids = deriveFixtureIdentity("cleanup-nonce", "authorized assignment").ids;
+  await cleanupFixture(db, { ids });
+  assert.deepEqual(statements.map(({ sql }) => sql), MUTABLE_FIXTURE_CLEANUP_SQL);
+  assert.equal(statements.some(({ sql }) => /security_audit_events/i.test(sql)), false);
+  assert.equal(statements.some(({ sql }) => /\b(?:UPDATE|TRUNCATE)\b/i.test(sql)), false);
+  assert.equal(statements.every(({ values }) => values.every((value) => Object.values(ids).includes(value))), true);
+});
+
+test("cleanup verification accepts attributable durable audit evidence but rejects any mutable residue", () => {
+  assert.deepEqual(verifyFixtureCleanupState({ organizations: 0, campaigns: 0, users: 0, memberships: 0,
+    assignments: 0, areas: 0, levels: 0, audits: 3 }), { mutableFixtureResidue: 0, durableAuditEvidence: 3 });
+  assert.throws(() => verifyFixtureCleanupState({ organizations: 1, audits: 3 }), /mutable fixture residue/);
+  assert.throws(() => verifyFixtureCleanupState({ organizations: 0, audits: -1 }), /audit evidence count/);
+});
+
+test("importing the PostgreSQL integration module is side-effect free", () => {
+  const target = new URL("./campaign-geography-postgres.integration.mjs", import.meta.url).href;
+  const child = spawnSync(process.execPath, ["--input-type=module", "--eval", `await import(${JSON.stringify(target)});`], {
+    cwd: process.cwd(), encoding: "utf8", env: { ...process.env,
+      CAMPAIGN_GEOGRAPHY_REHEARSAL_MIGRATOR_URL: "",
+      CAMPAIGN_GEOGRAPHY_REHEARSAL_RUNTIME_URL: "",
+      CAMPAIGN_GEOGRAPHY_REHEARSAL_UNPRIVILEGED_URL: "",
+      CAMPAIGN_GEOGRAPHY_REHEARSAL_AUTHORIZATION: "",
+    },
+  });
+  assert.equal(child.status, 0, child.stderr);
+  assert.equal(child.stdout, "");
+  assert.equal(child.stderr, "");
 });
 
 test("expected-rejection matcher accepts only the exact SQLSTATE", async () => {

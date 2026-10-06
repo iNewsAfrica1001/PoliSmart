@@ -1,4 +1,5 @@
 import test from "node:test";
+import { pathToFileURL } from "node:url";
 
 const migratorUrl = process.env.CAMPAIGN_GEOGRAPHY_REHEARSAL_MIGRATOR_URL;
 const runtimeUrl = process.env.CAMPAIGN_GEOGRAPHY_REHEARSAL_RUNTIME_URL;
@@ -16,15 +17,20 @@ const behaviors = [
   "controlled runtime function execution", "runtime direct table-write denial",
 ];
 
-// Genuine PostgreSQL assertions; dormant until a separately authorized isolated rehearsal has
-// trusted operator authorization plus a matching database-side sentinel. DATABASE_URL is rejected.
-for (const behavior of behaviors) {
-  test(`PostgreSQL rehearsal: ${behavior}`, { skip: !enabled }, async () => {
-    const authorization = JSON.parse(authorizationText);
-    const { runCampaignGeographyPostgresBehavior } = await import("../scripts/lib/campaign-geography-postgres-harness.mjs");
-    await runCampaignGeographyPostgresBehavior({ behavior, migratorUrl, runtimeUrl, unprivilegedUrl, authorization,
-      genericDatabaseUrl: process.env.DATABASE_URL });
-  });
+export function registerCampaignGeographyPostgresTests() {
+  // Genuine PostgreSQL assertions; dormant until a separately authorized isolated rehearsal has
+  // trusted operator authorization plus a matching database-side sentinel. DATABASE_URL is rejected.
+  for (const behavior of behaviors) {
+    test(`PostgreSQL rehearsal: ${behavior}`, { skip: !enabled }, async () => {
+      const authorization = JSON.parse(authorizationText);
+      const { runCampaignGeographyPostgresBehavior } = await import("../scripts/lib/campaign-geography-postgres-harness.mjs");
+      await runCampaignGeographyPostgresBehavior({ behavior, migratorUrl, runtimeUrl, unprivilegedUrl, authorization,
+        genericDatabaseUrl: process.env.DATABASE_URL });
+    });
+  }
 }
 
 export const CAMPAIGN_GEOGRAPHY_POSTGRES_BEHAVIORS = Object.freeze(behaviors);
+
+const isDirectTestEntry = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectTestEntry) registerCampaignGeographyPostgresTests();
