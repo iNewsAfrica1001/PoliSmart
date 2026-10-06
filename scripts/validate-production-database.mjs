@@ -8,7 +8,10 @@ import {
   RUNTIME_FUNCTION_PRIVILEGES,
   RUNTIME_SEQUENCE_PRIVILEGES,
 } from "../server/config/databasePrivileges.js";
-import { validateRuntimeFunctions } from "./lib/runtime-function-validation.mjs";
+import {
+  validateProtectedGeographyTables,
+  validateRuntimeFunctions,
+} from "./lib/runtime-function-validation.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const migrations = fs
@@ -119,6 +122,13 @@ try {
     ORDER BY sequence_name
   `;
   const functionPermissions = await prisma.$queryRawUnsafe(`
+    WITH RECURSIVE runtime_inherited(roleid) AS (
+      SELECT membership.roleid FROM pg_auth_members membership
+       WHERE membership.member = (SELECT oid FROM pg_roles WHERE rolname = 'polismart_runtime')
+      UNION
+      SELECT membership.roleid FROM pg_auth_members membership
+      JOIN runtime_inherited inherited ON membership.member = inherited.roleid
+    )
     SELECT expected.signature,
       procedure.oid IS NOT NULL AS exists,
       owner.rolname AS owner,
@@ -128,6 +138,7 @@ try {
         ELSE has_function_privilege('polismart_runtime', procedure.oid, 'EXECUTE') END AS runtime_execute,
       COALESCE(privileges.public_execute, false) AS public_execute,
       COALESCE(privileges.unexpected_execute_roles, ARRAY[]::text[]) AS unexpected_execute_roles
+      , COALESCE(inherited_privileges.roles, ARRAY[]::text[]) AS inherited_execute_roles
     FROM (VALUES ${functionRows}) AS expected(signature)
     LEFT JOIN pg_proc procedure ON procedure.oid = to_regprocedure(expected.signature)
     LEFT JOIN pg_roles owner ON owner.oid = procedure.proowner
@@ -141,8 +152,34 @@ try {
       FROM aclexplode(COALESCE(procedure.proacl, acldefault('f', procedure.proowner))) acl
       LEFT JOIN pg_roles role ON role.oid = acl.grantee
     ) privileges ON true
+    LEFT JOIN LATERAL (
+      SELECT array_agg(role.rolname ORDER BY role.rolname) AS roles
+      FROM runtime_inherited inherited
+      JOIN pg_roles role ON role.oid = inherited.roleid
+      WHERE procedure.oid IS NOT NULL
+        AND has_function_privilege(role.oid, procedure.oid, 'EXECUTE')
+    ) inherited_privileges ON true
     ORDER BY expected.signature
   `);
+  const protectedGeographyTables = await prisma.$queryRaw`
+    SELECT table_class.relname AS table_name,
+      owner.rolname AS owner,
+      owner.rolname = 'polismart_runtime' AS runtime_owner,
+      has_table_privilege('polismart_runtime', table_class.oid, 'SELECT') AS select_privilege,
+      has_table_privilege('polismart_runtime', table_class.oid, 'INSERT') AS insert_privilege,
+      has_table_privilege('polismart_runtime', table_class.oid, 'UPDATE') AS update_privilege,
+      has_table_privilege('polismart_runtime', table_class.oid, 'DELETE') AS delete_privilege,
+      has_table_privilege('polismart_runtime', table_class.oid, 'TRUNCATE') AS truncate_privilege
+    FROM pg_class table_class
+    JOIN pg_namespace namespace ON namespace.oid = table_class.relnamespace
+    JOIN pg_roles owner ON owner.oid = table_class.relowner
+    WHERE namespace.nspname = 'public'
+      AND table_class.relname IN (
+        'master_geographic_levels', 'master_geographic_areas',
+        'campaign_geographic_assignments'
+      )
+    ORDER BY table_class.relname
+  `;
   const isolationChecks = await prisma.$queryRaw`
     SELECT
       (SELECT COUNT(*)::int FROM campaigns c
@@ -201,6 +238,9 @@ try {
     functionPermissions,
     RUNTIME_FUNCTION_PRIVILEGES,
   );
+  const protectedGeographyTableErrors = validateProtectedGeographyTables(
+    protectedGeographyTables,
+  );
   const permissionWarnings = [
     ...(connection.is_superuser ? ["Application role is a superuser."] : []),
     ...(connection.can_create_database ? ["Application role can create databases."] : []),
@@ -215,6 +255,7 @@ try {
     columnPrivilegeErrors.length === 0 &&
     sequencePrivilegeErrors.length === 0 &&
     functionPrivilegeErrors.length === 0 &&
+    protectedGeographyTableErrors.length === 0 &&
     Boolean(vector) &&
     migrationHistoryValid &&
     Number(indexStatus[0].invalid) === 0 &&
@@ -258,6 +299,7 @@ try {
           columnPrivilegeErrors,
           sequencePrivilegeErrors,
           functionPrivilegeErrors,
+          protectedGeographyTableErrors,
           leastPrivilegeWarnings: permissionWarnings,
         },
         publicData: publicData[0],

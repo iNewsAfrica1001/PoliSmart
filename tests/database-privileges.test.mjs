@@ -9,7 +9,10 @@ import {
   RUNTIME_FUNCTION_PRIVILEGES,
   RUNTIME_SEQUENCE_PRIVILEGES,
 } from "../server/config/databasePrivileges.js";
-import { validateRuntimeFunctions } from "../scripts/lib/runtime-function-validation.mjs";
+import {
+  validateProtectedGeographyTables,
+  validateRuntimeFunctions,
+} from "../scripts/lib/runtime-function-validation.mjs";
 
 const migrationRoot = "prisma/migrations";
 const migrationSql = () =>
@@ -185,6 +188,7 @@ test("runtime function validator accepts exact policy and fails closed on owner,
     runtime_execute: true,
     public_execute: false,
     unexpected_execute_roles: [],
+    inherited_execute_roles: [],
   }));
   assert.deepEqual(validateRuntimeFunctions(rows, RUNTIME_FUNCTION_PRIVILEGES), []);
   const drifted = rows.map((row, index) =>
@@ -200,11 +204,54 @@ test("runtime function validator accepts exact policy and fails closed on owner,
     `${rows[1].signature}:SEARCH_PATH`,
     `${rows[1].signature}:RUNTIME_EXECUTE`,
   ]);
+  const inherited = rows.map((row, index) =>
+    index === 0 ? { ...row, inherited_execute_roles: ["unexpected_parent_role"] } : row,
+  );
+  assert.equal(
+    validateRuntimeFunctions(inherited, RUNTIME_FUNCTION_PRIVILEGES).includes(
+      `${rows[0].signature}:INHERITED_EXECUTE_ROLE`,
+    ),
+    true,
+  );
   const validator = readFileSync("scripts/validate-production-database.mjs", "utf8");
   assert.match(validator, /RUNTIME_FUNCTION_PRIVILEGES/);
   assert.match(validator, /functionPrivilegeErrors\.length === 0/);
   assert.match(validator, /has_function_privilege\('polismart_runtime'/);
   assert.match(validator, /acl\.grantee = 0/);
+  assert.match(validator, /runtime_inherited/);
+  assert.match(validator, /protectedGeographyTableErrors\.length === 0/);
+});
+
+test("protected geography table validator checks ownership and every effective write privilege", () => {
+  const rows = ["master_geographic_levels", "master_geographic_areas", "campaign_geographic_assignments"].map(
+    (table_name) => ({
+      table_name,
+      owner: "polismart_migrator",
+      runtime_owner: false,
+      select_privilege: true,
+      insert_privilege: false,
+      update_privilege: false,
+      delete_privilege: false,
+      truncate_privilege: false,
+    }),
+  );
+  assert.deepEqual(validateProtectedGeographyTables(rows), []);
+  const drift = rows.map((row, index) =>
+    index === 0
+      ? { ...row, owner: "polismart_runtime", runtime_owner: true, insert_privilege: true }
+      : index === 1
+        ? { ...row, update_privilege: true, delete_privilege: true }
+        : { ...row, truncate_privilege: true, select_privilege: false },
+  );
+  assert.deepEqual(validateProtectedGeographyTables(drift), [
+    "master_geographic_levels:OWNER",
+    "master_geographic_levels:RUNTIME_OWNER",
+    "master_geographic_levels:INSERT",
+    "master_geographic_areas:UPDATE",
+    "master_geographic_areas:DELETE",
+    "campaign_geographic_assignments:SELECT",
+    "campaign_geographic_assignments:TRUNCATE",
+  ]);
 });
 
 test("disabled financial tables receive no runtime privilege", () => {

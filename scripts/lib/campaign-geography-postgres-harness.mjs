@@ -1,94 +1,314 @@
+import crypto from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 
-const sql = (client, fragments, ...values) => client.$queryRawUnsafe(fragments, ...values);
+export const REHEARSAL_PURPOSE = "campaign-geography-increment-3a";
+export const REHEARSAL_ENVIRONMENT = "non-production";
+export const PRODUCTION_BRANCH_ID = "br-noisy-forest-axlven4c";
+export const SENTINEL_TABLE = "security_audit_events";
+export const SENTINEL_ACTION = "CAMPAIGN_GEOGRAPHY_REHEARSAL_SENTINEL";
 
-function requireFixture(fixture, names) {
-  for (const name of names)
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(fixture[name] || ""))
-      throw new Error(`Isolated rehearsal fixture is missing ${name}.`);
+const requiredAuthorization = ["projectId", "branchId", "nonce", "database"];
+const fail = (message) => new Error(`Campaign Geography rehearsal refused: ${message}`);
+const assert = (condition, message) => { if (!condition) throw fail(message); };
+const query = (client, text, ...values) => client.$queryRawUnsafe(text, ...values);
+
+function deterministicUuid(label) {
+  const hex = crypto.createHash("sha256").update(`increment-3a:${label}`).digest("hex").slice(0, 32);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20)}`;
 }
 
-export async function runCampaignGeographyPostgresBehavior({
-  behavior,
-  migratorUrl,
-  runtimeUrl,
-  fixture,
-}) {
-  requireFixture(fixture, ["tenantId", "campaignId", "authorizedActorId"]);
-  const migrator = new PrismaClient({ datasourceUrl: migratorUrl });
-  const runtime = new PrismaClient({ datasourceUrl: runtimeUrl });
-  const invoke = (functionName, actorId, ids) =>
-    sql(
-      runtime,
-      `SELECT public.${functionName}($1::uuid,$2::uuid,$3::uuid,$4::uuid[]) AS result`,
-      fixture.tenantId,
-      fixture.campaignId,
-      actorId,
-      ids,
-    );
+export function validateRehearsalConfiguration({ authorization, migratorUrl, runtimeUrl, unprivilegedUrl, genericDatabaseUrl }) {
+  if (genericDatabaseUrl) throw fail("generic DATABASE_URL fallback is prohibited");
+  if (!migratorUrl || !runtimeUrl || !unprivilegedUrl) throw fail("all rehearsal-specific database URLs are required");
+  if (!authorization || typeof authorization !== "object") throw fail("operator authorization is required");
+  for (const field of requiredAuthorization)
+    if (typeof authorization[field] !== "string" || !authorization[field].trim()) throw fail(`authorization ${field} is required`);
+  if (authorization.branchId === PRODUCTION_BRANCH_ID) throw fail("Production branch is denied");
+  if (authorization.purpose !== REHEARSAL_PURPOSE) throw fail("authorization purpose mismatch");
+  if (authorization.environment !== REHEARSAL_ENVIRONMENT) throw fail("authorization environment mismatch");
+  let migrator;
+  let runtime;
+  let unprivileged;
+  try { migrator = new URL(migratorUrl); runtime = new URL(runtimeUrl); unprivileged = new URL(unprivilegedUrl); }
+  catch { throw fail("rehearsal-specific database URL is malformed"); }
+  if (![migrator, runtime, unprivileged].every((url) => url.protocol.startsWith("postgres"))) throw fail("rehearsal URLs must use PostgreSQL");
+  if (new Set([migrator.username, runtime.username, unprivileged.username]).size !== 3) throw fail("rehearsal identities must be distinct");
+  if (![runtime, unprivileged].every((url) => url.hostname === migrator.hostname && url.port === migrator.port && url.pathname === migrator.pathname))
+    throw fail("rehearsal identities must address the same database");
+  if (decodeURIComponent(migrator.pathname.slice(1)) !== authorization.database) throw fail("authorized database name does not match the connection target");
+  return Object.freeze({ ...authorization });
+}
+
+export function validateRehearsalSentinel(authorization, sentinel, now = new Date()) {
+  if (!sentinel || typeof sentinel !== "object") throw fail("database rehearsal sentinel is absent");
+  for (const field of ["project_id", "branch_id", "authorization_nonce", "purpose", "environment", "database_name", "expires_at"])
+    if (sentinel[field] == null || String(sentinel[field]).length === 0) throw fail("database rehearsal sentinel is malformed");
+  for (const [name, actual, expected] of [
+    ["project", sentinel.project_id, authorization.projectId], ["branch", sentinel.branch_id, authorization.branchId],
+    ["nonce", sentinel.authorization_nonce, authorization.nonce], ["purpose", sentinel.purpose, REHEARSAL_PURPOSE],
+    ["environment", sentinel.environment, REHEARSAL_ENVIRONMENT], ["database", sentinel.database_name, authorization.database],
+  ]) if (actual !== expected) throw fail(`sentinel ${name} mismatch`);
+  const expiry = new Date(sentinel.expires_at);
+  if (!Number.isFinite(expiry.getTime()) || expiry <= now || sentinel.consumed_at != null) throw fail("database rehearsal sentinel is stale");
+  return true;
+}
+
+export function buildRehearsalSentinelSetup({ authorization, expiresAt }) {
+  return Object.freeze({
+    table: SENTINEL_TABLE,
+    action: SENTINEL_ACTION,
+    record: Object.freeze({ tenant_id: null, actor_id: null, action: SENTINEL_ACTION, entity: "rehearsal",
+      entity_id: null, metadata: Object.freeze({ projectId: authorization.projectId, branchId: authorization.branchId,
+        nonce: authorization.nonce, purpose: REHEARSAL_PURPOSE, environment: REHEARSAL_ENVIRONMENT,
+        database: authorization.database, expiresAt }) }),
+  });
+}
+
+export function extractSqlState(error) {
+  for (const value of [error?.meta?.code, error?.code, error?.cause?.code])
+    if (typeof value === "string" && /^[0-9A-Z]{5}$/.test(value)) return value;
+  return null;
+}
+
+export async function expectSqlState(operation, expected, label) {
+  try { await operation(); }
+  catch (error) {
+    const actual = extractSqlState(error);
+    if (actual === expected) return;
+    throw fail(`${label} returned SQLSTATE ${actual || "NONE"}; expected ${expected}`);
+  }
+  throw fail(`${label} unexpectedly succeeded; expected SQLSTATE ${expected}`);
+}
+
+async function verifyConnection(client, authorization, role, requiresSentinel = true) {
+  const [identity] = await query(client, "SELECT current_database() AS database, current_user AS role");
+  assert(identity?.database === authorization.database, "database identity mismatch");
+  if (role) assert(identity?.role === role, "database role identity mismatch");
+  else assert(!["polismart_migrator", "polismart_runtime"].includes(identity?.role), "unprivileged role identity mismatch");
+  if (!requiresSentinel) return;
+  const rows = await query(client, `SELECT metadata->>'projectId' project_id,metadata->>'branchId' branch_id,
+      metadata->>'nonce' authorization_nonce,metadata->>'purpose' purpose,metadata->>'environment' environment,
+      metadata->>'database' database_name,metadata->>'expiresAt' expires_at,metadata->>'consumedAt' consumed_at
+    FROM public.${SENTINEL_TABLE}
+    WHERE action=$1 AND entity='rehearsal' AND metadata->>'nonce'=$2`, SENTINEL_ACTION, authorization.nonce);
+  assert(rows.length === 1, "database rehearsal sentinel is absent or ambiguous");
+  validateRehearsalSentinel(authorization, rows[0]);
+}
+
+async function verifyIdentityBeforeMutation(migrator, runtime, unprivileged, authorization) {
+  await verifyConnection(migrator, authorization, "polismart_migrator");
+  await verifyConnection(runtime, authorization, "polismart_runtime");
+  await verifyConnection(unprivileged, authorization, null, false);
+  const rows = await query(migrator, `SELECT finished_at,rolled_back_at FROM public._prisma_migrations
+    WHERE migration_name='0021_campaign_geography_assignment_controls'`);
+  assert(rows.length === 1 && rows[0].finished_at && !rows[0].rolled_back_at, "migration 0021 is not applied exactly once");
+}
+
+function fixtureIds(behavior) {
+  const key = behavior.replace(/\W+/g, "-").toLowerCase();
+  const id = (name) => deterministicUuid(`${key}:${name}`);
+  return { tenant: id("tenant"), tenant2: id("tenant2"), campaign: id("campaign"), campaign2: id("campaign2"),
+    actor: id("actor"), unauthorized: id("unauthorized"), ghLevel: id("gh-level"), ghArea: id("gh-area"), inactiveArea: id("inactive") };
+}
+
+async function fixtureCounts(db, ids) {
+  const [row] = await query(db, `SELECT
+    (SELECT count(*)::int FROM public.organizations WHERE id IN ($1,$2)) organizations,
+    (SELECT count(*)::int FROM public.campaigns WHERE id IN ($3,$4)) campaigns,
+    (SELECT count(*)::int FROM public.auth_users WHERE id IN ($5,$6)) users,
+    (SELECT count(*)::int FROM public.memberships WHERE tenant_id IN ($1,$2)) memberships,
+    (SELECT count(*)::int FROM public.campaign_geographic_assignments WHERE tenant_id IN ($1,$2)) assignments,
+    (SELECT count(*)::int FROM public.security_audit_events WHERE tenant_id IN ($1,$2)) audits,
+    (SELECT count(*)::int FROM public.master_geographic_areas WHERE id IN ($7,$8)) areas,
+    (SELECT count(*)::int FROM public.master_geographic_levels WHERE id=$9) levels`,
+    ids.tenant, ids.tenant2, ids.campaign, ids.campaign2, ids.actor, ids.unauthorized, ids.ghArea, ids.inactiveArea, ids.ghLevel);
+  return row;
+}
+
+async function canonicalPath(db) {
+  const rows = await query(db, `SELECT a.id,a.parent_id,a.level_id,l.name level_name FROM public.master_geographic_areas a
+    JOIN public.master_geographic_levels l ON l.id=a.level_id AND l.country_code=a.country_code
+    WHERE a.country_code='NG' AND a.is_active AND l.is_active ORDER BY l.order_index,a.code`);
+  const ward = rows.find((row) => row.level_name === "Ward/Registration Area");
+  const lga = ward && rows.find((row) => row.id === ward.parent_id);
+  const state = lga && rows.find((row) => row.id === lga.parent_id);
+  const zone = state && rows.find((row) => row.id === state.parent_id);
+  const country = zone && rows.find((row) => row.id === zone.parent_id);
+  assert(country && zone && state && lga && ward, "canonical active Nigeria fixture ancestry is unavailable");
+  return { country, zone, state, lga, ward };
+}
+
+async function setupFixture(db, behavior) {
+  const ids = fixtureIds(behavior);
+  assert(!Object.values(await fixtureCounts(db, ids)).some(Number), "fixture namespace collision detected");
+  const path = await canonicalPath(db);
+  await db.$transaction(async (tx) => {
+    await query(tx, `INSERT INTO public.auth_users(id,email,password_hash,display_name,created_at,updated_at) VALUES
+      ($1,$2,'fixture-only','Authorized Fixture',now(),now()),($3,$4,'fixture-only','Unauthorized Fixture',now(),now())`,
+      ids.actor, `${ids.actor}@invalid.example`, ids.unauthorized, `${ids.unauthorized}@invalid.example`);
+    await query(tx, `INSERT INTO public.organizations(id,name,slug,country,is_demo,created_at,updated_at) VALUES
+      ($1,'I3A Fixture',$2,'Nigeria',true,now(),now()),($3,'I3A Fixture 2',$4,'Nigeria',true,now(),now())`,
+      ids.tenant, `i3a-${ids.tenant}`, ids.tenant2, `i3a-${ids.tenant2}`);
+    await query(tx, `INSERT INTO public.campaigns(id,tenant_id,name,slug,status,is_demo,country,election_type,created_at,updated_at) VALUES
+      ($1,$2,'I3A Fixture','fixture','DRAFT',true,'Nigeria','TEST',now(),now()),
+      ($3,$4,'I3A Fixture 2','fixture-2','DRAFT',true,'Nigeria','TEST',now(),now())`, ids.campaign, ids.tenant, ids.campaign2, ids.tenant2);
+    await query(tx, `INSERT INTO public.memberships(id,tenant_id,user_id,role,status,created_at,updated_at) VALUES
+      (gen_random_uuid(),$1,$2,'CAMPAIGN_ADMINISTRATOR','ACTIVE',now(),now()),
+      (gen_random_uuid(),$1,$3,'ANALYST','SUSPENDED',now(),now())`, ids.tenant, ids.actor, ids.unauthorized);
+    await query(tx, `INSERT INTO public.master_geographic_levels(id,country_code,name,order_index,is_active,created_at,updated_at)
+      VALUES($1,'ZQ','Country',0,true,now(),now())`, ids.ghLevel);
+    await query(tx, `INSERT INTO public.master_geographic_areas(id,level_id,parent_id,country_code,name,code,is_active,validation_status,created_at,updated_at) VALUES
+      ($1,$2,NULL,'ZQ','Foreign Fixture','I3A-ZQ',true,'TEST',now(),now()),
+      ($3,$4,$5,'NG','Inactive Fixture',$6,false,'TEST',now(),now())`,
+      ids.ghArea, ids.ghLevel, ids.inactiveArea, path.ward.level_id, path.lga.id, `I3A-${ids.inactiveArea}`);
+  });
+  const expected = { organizations: 2, campaigns: 2, users: 2, memberships: 2, assignments: 0, audits: 0, areas: 2, levels: 1 };
+  const actual = await fixtureCounts(db, ids);
+  for (const [key, value] of Object.entries(expected)) assert(actual[key] === value, `fixture setup verification failed for ${key}`);
+  return { ids, ...path };
+}
+
+async function cleanupFixture(db, f) {
+  const i = f.ids;
+  await db.$transaction(async (tx) => {
+    await query(tx, "DELETE FROM public.security_audit_events WHERE tenant_id IN ($1,$2)", i.tenant, i.tenant2);
+    await query(tx, "DELETE FROM public.campaign_geographic_assignments WHERE tenant_id IN ($1,$2)", i.tenant, i.tenant2);
+    await query(tx, "DELETE FROM public.memberships WHERE tenant_id IN ($1,$2)", i.tenant, i.tenant2);
+    await query(tx, "DELETE FROM public.campaigns WHERE id IN ($1,$2)", i.campaign, i.campaign2);
+    await query(tx, "DELETE FROM public.organizations WHERE id IN ($1,$2)", i.tenant, i.tenant2);
+    await query(tx, "DELETE FROM public.auth_users WHERE id IN ($1,$2)", i.actor, i.unauthorized);
+    await query(tx, "DELETE FROM public.master_geographic_areas WHERE id IN ($1,$2)", i.ghArea, i.inactiveArea);
+    await query(tx, "DELETE FROM public.master_geographic_levels WHERE id=$1", i.ghLevel);
+  });
+  assert(!Object.values(await fixtureCounts(db, i)).some(Number), "fixture cleanup verification failed");
+}
+
+const invoke = (db, fn, f, actor, areas, tenant = f.ids.tenant, campaign = f.ids.campaign) =>
+  query(db, `SELECT public.${fn}($1::uuid,$2::uuid,$3::uuid,$4::uuid[]) result`, tenant, campaign, actor, areas);
+const assignmentRows = (db, f) => query(db, `SELECT master_geographic_area_id area_id,is_active,created_by_id,updated_by_id,created_at,removed_at
+  FROM public.campaign_geographic_assignments WHERE tenant_id=$1 AND campaign_id=$2 ORDER BY master_geographic_area_id`, f.ids.tenant, f.ids.campaign);
+const auditRows = (db, f) => query(db, `SELECT actor_id,action,entity,entity_id,metadata FROM public.security_audit_events
+  WHERE tenant_id=$1 AND entity_id=$2 ORDER BY created_at`, f.ids.tenant, f.ids.campaign);
+
+async function expectActiveSet(db, f, expected) {
+  const rows = (await assignmentRows(db, f)).filter((row) => row.is_active).map((row) => row.area_id).sort();
+  assert(JSON.stringify(rows) === JSON.stringify([...expected].sort()), "assignment resulting-state mismatch");
+}
+
+async function runScenario(behavior, migrator, runtime, unprivileged, f) {
+  const path = [f.country.id, f.zone.id, f.state.id, f.lga.id, f.ward.id];
+  if (["authorized assignment", "campaign-country match", "ancestry closure", "controlled runtime function execution"].includes(behavior)) {
+    await invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.ward.id]); await expectActiveSet(migrator, f, path); return;
+  }
+  if (behavior === "database actor authorization-state validation") {
+    await expectSqlState(() => invoke(runtime, "campaign_geography_assign", f, f.ids.unauthorized, [f.country.id]), "42501", behavior);
+    await expectActiveSet(migrator, f, []); return;
+  }
+  if (behavior === "foreign-country rejection") {
+    await expectSqlState(() => invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.ids.ghArea]), "22023", behavior);
+    await expectActiveSet(migrator, f, []); return;
+  }
+  if (["mixed-country rejection", "bulk all-or-nothing"].includes(behavior)) {
+    await expectSqlState(() => invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.ward.id, f.ids.ghArea]), "22023", behavior);
+    await expectActiveSet(migrator, f, []); assert((await auditRows(migrator, f)).length === 0, "rejected bulk operation wrote audit"); return;
+  }
+  if (behavior === "transaction rollback") {
+    const suffix = f.ids.tenant.replaceAll("-", ""); const trigger = `i3a_assignment_${suffix}`;
+    await query(migrator, `CREATE FUNCTION pg_temp.${trigger}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+      IF NEW.tenant_id='${f.ids.tenant}'::uuid AND NEW.master_geographic_area_id='${f.state.id}'::uuid
+      THEN RAISE EXCEPTION USING ERRCODE='P0001',MESSAGE='fixture assignment failure'; END IF; RETURN NEW; END $$`);
+    await query(migrator, `CREATE TRIGGER ${trigger} BEFORE INSERT ON public.campaign_geographic_assignments FOR EACH ROW EXECUTE FUNCTION pg_temp.${trigger}()`);
+    try { await expectSqlState(() => invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.ward.id]), "P0001", behavior); }
+    finally { await query(migrator, `DROP TRIGGER IF EXISTS ${trigger} ON public.campaign_geographic_assignments`); }
+    await expectActiveSet(migrator, f, []); assert((await auditRows(migrator, f)).length === 0, "transaction failure did not roll back"); return;
+  }
+  if (behavior === "parent-only assignment") {
+    await invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.state.id]); await expectActiveSet(migrator, f, path.slice(0, 3)); return;
+  }
+  if (behavior === "inactive master rejection") {
+    await expectSqlState(() => invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.ids.inactiveArea]), "22023", behavior);
+    await expectActiveSet(migrator, f, []); return;
+  }
+  if (["reactivation", "idempotent retry", "duplicate protection"].includes(behavior)) {
+    await invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.country.id]); const original = (await assignmentRows(migrator, f))[0];
+    if (behavior === "reactivation") {
+      await invoke(runtime, "campaign_geography_deactivate", f, f.ids.actor, [f.country.id]);
+      await invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.country.id]);
+      const current = (await assignmentRows(migrator, f))[0];
+      assert(current.created_by_id === original.created_by_id && +current.created_at === +original.created_at && current.removed_at == null && current.is_active, "reactivation history mismatch");
+    } else {
+      await invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.country.id, f.country.id]);
+      assert((await assignmentRows(migrator, f)).length === 1, "idempotency or duplicate protection failed");
+    } return;
+  }
+  if (behavior === "soft deactivation") {
+    await invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.country.id]); await invoke(runtime, "campaign_geography_deactivate", f, f.ids.actor, [f.country.id]);
+    const [row] = await assignmentRows(migrator, f); assert(row && !row.is_active && row.removed_at && row.updated_by_id === f.ids.actor, "soft deactivation state mismatch"); return;
+  }
+  if (behavior === "deactivation ancestry revalidation") {
+    await query(migrator, "UPDATE public.master_geographic_areas SET is_active=true WHERE id=$1", f.ids.inactiveArea);
+    await invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.ids.inactiveArea]);
+    await query(migrator, "UPDATE public.master_geographic_areas SET parent_id=$1 WHERE id=$2", f.country.id, f.ids.inactiveArea);
+    try { await expectSqlState(() => invoke(runtime, "campaign_geography_deactivate", f, f.ids.actor, [f.ids.inactiveArea]), "22023", behavior); }
+    finally { await query(migrator, "UPDATE public.master_geographic_areas SET parent_id=$1 WHERE id=$2", f.lga.id, f.ids.inactiveArea); }
+    await expectActiveSet(migrator, f, [...path.slice(0, 4), f.ids.inactiveArea]); return;
+  }
+  if (behavior === "blocked ancestor removal") {
+    await invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.ward.id]);
+    await expectSqlState(() => invoke(runtime, "campaign_geography_deactivate", f, f.ids.actor, [f.country.id]), "23503", behavior);
+    await expectActiveSet(migrator, f, path); return;
+  }
+  if (behavior === "audit rollback") {
+    const suffix = f.ids.tenant.replaceAll("-", ""); const trigger = `i3a_audit_${suffix}`;
+    await query(migrator, `CREATE FUNCTION pg_temp.${trigger}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+      IF NEW.tenant_id='${f.ids.tenant}'::uuid THEN RAISE EXCEPTION USING ERRCODE='P0001',MESSAGE='fixture audit failure'; END IF; RETURN NEW; END $$`);
+    await query(migrator, `CREATE TRIGGER ${trigger} BEFORE INSERT ON public.security_audit_events FOR EACH ROW EXECUTE FUNCTION pg_temp.${trigger}()`);
+    try { await expectSqlState(() => invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.country.id]), "P0001", behavior); }
+    finally { await query(migrator, `DROP TRIGGER IF EXISTS ${trigger} ON public.security_audit_events`); }
+    await expectActiveSet(migrator, f, []); assert((await auditRows(migrator, f)).length === 0, "audit failure did not roll back"); return;
+  }
+  if (behavior === "audit actor attribution") {
+    await invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.country.id]); const [audit] = await auditRows(migrator, f);
+    assert(audit?.actor_id === f.ids.actor && audit.entity === "campaign" && audit.entity_id === f.ids.campaign && audit.action === "CAMPAIGN_GEOGRAPHY_ASSIGNMENTS_ADDED", "audit actor/scope mismatch"); return;
+  }
+  if (behavior === "concurrent operations") {
+    await Promise.all([invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.ward.id]), invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.ward.id])]);
+    await expectActiveSet(migrator, f, path); const rows = await assignmentRows(migrator, f);
+    assert(new Set(rows.map((row) => row.area_id)).size === rows.length && (await auditRows(migrator, f)).length === 2, "concurrent state mismatch"); return;
+  }
+  if (behavior.startsWith("PUBLIC EXECUTE")) {
+    const fn = behavior.includes("deactivation") ? "campaign_geography_deactivate" : "campaign_geography_assign";
+    await expectSqlState(() => invoke(unprivileged, fn, f, f.ids.actor, [f.country.id]), "42501", behavior); return;
+  }
+  if (behavior === "runtime direct table-write denial") {
+    const tables = ["master_geographic_levels", "master_geographic_areas", "campaign_geographic_assignments"];
+    for (const table of tables) {
+      const [p] = await query(runtime, `SELECT has_table_privilege(current_user,$1,'INSERT') i,has_table_privilege(current_user,$1,'UPDATE') u,
+        has_table_privilege(current_user,$1,'DELETE') d,has_table_privilege(current_user,$1,'TRUNCATE') t`, `public.${table}`);
+      assert(!Object.values(p).some(Boolean), `runtime has effective write privilege on ${table}`);
+      await expectSqlState(() => query(runtime, `UPDATE public.${table} SET updated_at=updated_at WHERE false`), "42501", `${table} UPDATE denial`);
+      await expectSqlState(() => query(runtime, `DELETE FROM public.${table} WHERE false`), "42501", `${table} DELETE denial`);
+    }
+    for (const [table, sql] of [
+      ["master level", "INSERT INTO public.master_geographic_levels(id,country_code,name,order_index,is_active,created_at,updated_at) VALUES(gen_random_uuid(),'ZZ','denied',99,true,now(),now())"],
+      ["master area", "INSERT INTO public.master_geographic_areas(id,level_id,country_code,name,code,is_active,created_at,updated_at) VALUES(gen_random_uuid(),gen_random_uuid(),'ZZ','denied','denied',true,now(),now())"],
+      ["assignment", "INSERT INTO public.campaign_geographic_assignments(id,tenant_id,campaign_id,master_geographic_area_id,created_by_id,updated_by_id,created_at,updated_at) VALUES(gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),now(),now())"],
+    ]) await expectSqlState(() => query(runtime, sql), "42501", `${table} INSERT denial`);
+    return;
+  }
+  throw fail(`unsupported executable behavior ${behavior}`);
+}
+
+export async function runCampaignGeographyPostgresBehavior({ behavior, migratorUrl, runtimeUrl, unprivilegedUrl, authorization, genericDatabaseUrl }) {
+  const approved = validateRehearsalConfiguration({ authorization, migratorUrl, runtimeUrl, unprivilegedUrl, genericDatabaseUrl });
+  const migrator = new PrismaClient({ datasourceUrl: migratorUrl }); const runtime = new PrismaClient({ datasourceUrl: runtimeUrl });
+  const unprivileged = new PrismaClient({ datasourceUrl: unprivilegedUrl }); let fixture;
   try {
-    if (behavior === "PUBLIC EXECUTE denial") {
-      const [row] = await sql(
-        migrator,
-        `SELECT EXISTS (
-           SELECT 1 FROM pg_proc p,
-             LATERAL aclexplode(COALESCE(p.proacl, acldefault('f', p.proowner))) acl
-          WHERE p.oid = to_regprocedure('public.campaign_geography_assign(uuid,uuid,uuid,uuid[])')
-            AND acl.grantee = 0 AND acl.privilege_type = 'EXECUTE'
-         ) AS allowed`,
-      );
-      if (row.allowed) throw new Error("PUBLIC unexpectedly has function EXECUTE.");
-      return;
-    }
-    if (behavior === "runtime direct table-write denial") {
-      let denied = false;
-      try {
-        await runtime.$transaction(async (tx) => {
-          await tx.campaignGeographicAssignment.deleteMany({ where: { campaignId: fixture.campaignId } });
-          throw new Error("ROLLBACK_UNEXPECTED_WRITE");
-        });
-      } catch (error) {
-        denied = !String(error?.message).includes("ROLLBACK_UNEXPECTED_WRITE");
-      }
-      if (!denied) throw new Error("Runtime direct table mutation unexpectedly succeeded.");
-      return;
-    }
-    if (behavior === "controlled runtime function execution") {
-      requireFixture(fixture, ["countryAreaId"]);
-      await invoke("campaign_geography_assign", fixture.authorizedActorId, [fixture.countryAreaId]);
-      return;
-    }
-    // The remaining cases use a separately reviewed fixture action. Keeping the dispatch explicit
-    // makes every rehearsal behavior independently reportable and prevents arbitrary SQL input.
-    const action = fixture.actions?.[behavior];
-    if (!action || !["assign", "deactivate", "expect-rejection", "verify-state"].includes(action.type))
-      throw new Error(`Isolated rehearsal fixture does not define ${behavior}.`);
-    if (!(action.areaIds || []).every((id) => /^[0-9a-f-]{36}$/iu.test(id)))
-      throw new Error(`${behavior} contains an invalid fixture area ID.`);
-    const actorId = action.actorId || fixture.authorizedActorId;
-    const fn = action.function === "deactivate" ? "campaign_geography_deactivate" : "campaign_geography_assign";
-    let result;
-    let rejected = false;
-    try {
-      result =
-        behavior === "concurrent operations"
-          ? (await Promise.all([
-              invoke(fn, actorId, action.areaIds || []),
-              invoke(fn, actorId, action.areaIds || []),
-            ]))[0]
-          : await invoke(fn, actorId, action.areaIds || []);
-    } catch {
-      rejected = true;
-    }
-    if (action.type === "expect-rejection" && !rejected)
-      throw new Error(`${behavior} unexpectedly succeeded.`);
-    if (action.type !== "expect-rejection" && rejected)
-      throw new Error(`${behavior} unexpectedly failed.`);
-    if (action.expectedResult)
-      for (const [key, value] of Object.entries(action.expectedResult))
-        if (result?.[0]?.result?.[key] !== value)
-          throw new Error(`${behavior} result mismatch for ${key}.`);
+    await verifyIdentityBeforeMutation(migrator, runtime, unprivileged, approved);
+    fixture = await setupFixture(migrator, behavior);
+    await runScenario(behavior, migrator, runtime, unprivileged, fixture);
   } finally {
-    await Promise.allSettled([runtime.$disconnect(), migrator.$disconnect()]);
+    if (fixture) await cleanupFixture(migrator, fixture);
+    await Promise.allSettled([unprivileged.$disconnect(), runtime.$disconnect(), migrator.$disconnect()]);
   }
 }
