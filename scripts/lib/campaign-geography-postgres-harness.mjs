@@ -6,8 +6,9 @@ export const REHEARSAL_ENVIRONMENT = "non-production";
 export const PRODUCTION_BRANCH_ID = "br-noisy-forest-axlven4c";
 export const SENTINEL_TABLE = "security_audit_events";
 export const SENTINEL_ACTION = "CAMPAIGN_GEOGRAPHY_REHEARSAL_SENTINEL";
+export const SENTINEL_RETIRED_ACTION = "CAMPAIGN_GEOGRAPHY_REHEARSAL_SENTINEL_RETIRED";
 
-const requiredAuthorization = ["projectId", "branchId", "nonce", "database"];
+const requiredAuthorization = ["projectId", "branchId", "nonce", "database", "issuedAt", "expiresAt"];
 const fail = (message) => new Error(`Campaign Geography rehearsal refused: ${message}`);
 const assert = (condition, message) => { if (!condition) throw fail(message); };
 const query = (client, text, ...values) => client.$queryRawUnsafe(text, ...values);
@@ -17,15 +18,24 @@ function deterministicUuid(label) {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20)}`;
 }
 
-export function validateRehearsalConfiguration({ authorization, migratorUrl, runtimeUrl, unprivilegedUrl, genericDatabaseUrl }) {
-  if (genericDatabaseUrl) throw fail("generic DATABASE_URL fallback is prohibited");
-  if (!migratorUrl || !runtimeUrl || !unprivilegedUrl) throw fail("all rehearsal-specific database URLs are required");
+export function validateRehearsalAuthorization(authorization, now = new Date()) {
   if (!authorization || typeof authorization !== "object") throw fail("operator authorization is required");
   for (const field of requiredAuthorization)
     if (typeof authorization[field] !== "string" || !authorization[field].trim()) throw fail(`authorization ${field} is required`);
   if (authorization.branchId === PRODUCTION_BRANCH_ID) throw fail("Production branch is denied");
   if (authorization.purpose !== REHEARSAL_PURPOSE) throw fail("authorization purpose mismatch");
   if (authorization.environment !== REHEARSAL_ENVIRONMENT) throw fail("authorization environment mismatch");
+  const issued = new Date(authorization.issuedAt);
+  const expires = new Date(authorization.expiresAt);
+  if (!Number.isFinite(issued.getTime()) || !Number.isFinite(expires.getTime()) || issued >= expires || issued > now || expires <= now)
+    throw fail("authorization timing is invalid or expired");
+  return authorization;
+}
+
+export function validateRehearsalConfiguration({ authorization, migratorUrl, runtimeUrl, unprivilegedUrl, genericDatabaseUrl }) {
+  if (genericDatabaseUrl) throw fail("generic DATABASE_URL fallback is prohibited");
+  if (!migratorUrl || !runtimeUrl || !unprivilegedUrl) throw fail("all rehearsal-specific database URLs are required");
+  validateRehearsalAuthorization(authorization);
   let migrator;
   let runtime;
   let unprivileged;
@@ -41,27 +51,86 @@ export function validateRehearsalConfiguration({ authorization, migratorUrl, run
 
 export function validateRehearsalSentinel(authorization, sentinel, now = new Date()) {
   if (!sentinel || typeof sentinel !== "object") throw fail("database rehearsal sentinel is absent");
-  for (const field of ["project_id", "branch_id", "authorization_nonce", "purpose", "environment", "database_name", "expires_at"])
+  for (const field of ["project_id", "branch_id", "authorization_nonce", "purpose", "environment", "database_name", "issued_at", "expires_at"])
     if (sentinel[field] == null || String(sentinel[field]).length === 0) throw fail("database rehearsal sentinel is malformed");
   for (const [name, actual, expected] of [
     ["project", sentinel.project_id, authorization.projectId], ["branch", sentinel.branch_id, authorization.branchId],
     ["nonce", sentinel.authorization_nonce, authorization.nonce], ["purpose", sentinel.purpose, REHEARSAL_PURPOSE],
     ["environment", sentinel.environment, REHEARSAL_ENVIRONMENT], ["database", sentinel.database_name, authorization.database],
+    ["issued time", sentinel.issued_at, authorization.issuedAt], ["expiry time", sentinel.expires_at, authorization.expiresAt],
   ]) if (actual !== expected) throw fail(`sentinel ${name} mismatch`);
+  const issued = new Date(sentinel.issued_at);
   const expiry = new Date(sentinel.expires_at);
-  if (!Number.isFinite(expiry.getTime()) || expiry <= now || sentinel.consumed_at != null) throw fail("database rehearsal sentinel is stale");
+  if (!Number.isFinite(issued.getTime()) || !Number.isFinite(expiry.getTime()) || issued >= expiry || issued > now || expiry <= now || sentinel.retired_at != null)
+    throw fail("database rehearsal sentinel is stale or retired");
   return true;
 }
 
-export function buildRehearsalSentinelSetup({ authorization, expiresAt }) {
+export function validateSentinelInstallationAuthorization({ authorization, controlPlane, now = new Date() }) {
+  validateRehearsalAuthorization(authorization, now);
+  if (!controlPlane || controlPlane.projectId !== authorization.projectId || controlPlane.branchId !== authorization.branchId ||
+      controlPlane.database !== authorization.database) throw fail("control-plane target does not match authorization");
+  return true;
+}
+
+export function buildRehearsalSentinelSetup({ authorization, controlPlane }) {
+  validateSentinelInstallationAuthorization({ authorization, controlPlane });
   return Object.freeze({
     table: SENTINEL_TABLE,
     action: SENTINEL_ACTION,
     record: Object.freeze({ tenant_id: null, actor_id: null, action: SENTINEL_ACTION, entity: "rehearsal",
       entity_id: null, metadata: Object.freeze({ projectId: authorization.projectId, branchId: authorization.branchId,
         nonce: authorization.nonce, purpose: REHEARSAL_PURPOSE, environment: REHEARSAL_ENVIRONMENT,
-        database: authorization.database, expiresAt }) }),
+        database: authorization.database, issuedAt: authorization.issuedAt, expiresAt: authorization.expiresAt }) }),
   });
+}
+
+export function buildRehearsalSentinelRetirement({ authorization, retiredAt }) {
+  return Object.freeze({ table: SENTINEL_TABLE, action: SENTINEL_RETIRED_ACTION,
+    record: Object.freeze({ tenant_id: null, actor_id: null, action: SENTINEL_RETIRED_ACTION, entity: "rehearsal",
+      entity_id: null, metadata: Object.freeze({ nonce: authorization.nonce, purpose: REHEARSAL_PURPOSE,
+        projectId: authorization.projectId, branchId: authorization.branchId, retiredAt }) }) });
+}
+
+export function deriveFixtureIdentity(authorizationNonce, behavior) {
+  if (typeof authorizationNonce !== "string" || !authorizationNonce) throw fail("fixture authorization nonce is required");
+  const namespace = crypto.createHash("sha256")
+    .update(`${REHEARSAL_PURPOSE}\0${authorizationNonce}\0${behavior}`)
+    .digest("hex").slice(0, 24);
+  const id = (name) => deterministicUuid(`${namespace}:${name}`);
+  return Object.freeze({ namespace, ids: Object.freeze({ tenant: id("tenant"), tenant2: id("tenant2"),
+    campaign: id("campaign"), campaign2: id("campaign2"), actor: id("actor"), unauthorized: id("unauthorized"),
+    ghLevel: id("foreign-level"), ghArea: id("foreign-area"), inactiveArea: id("inactive") }) });
+}
+
+export function assertFixtureNamespaceAvailable(counts) {
+  if (!counts || Object.values(counts).some(Number)) throw fail("fixture namespace collision detected");
+  return true;
+}
+
+export async function runPreMutationGate({ verify, execute }) {
+  await verify();
+  return execute();
+}
+
+export async function runFixtureLifecycle({ identity, setup, verifySetup, execute, cleanup, verifyCleanup }) {
+  let committed = false;
+  let fixture;
+  let primaryError;
+  try {
+    fixture = await setup(identity);
+    committed = true;
+    await verifySetup(fixture);
+    await execute(fixture);
+  } catch (error) { primaryError = error; }
+  let cleanupError;
+  if (committed) {
+    try { await cleanup(fixture); await verifyCleanup(identity); }
+    catch (error) { cleanupError = error; }
+  }
+  if (primaryError && cleanupError) throw new AggregateError([primaryError, cleanupError], "Rehearsal operation and cleanup both failed.");
+  if (cleanupError) throw cleanupError;
+  if (primaryError) throw primaryError;
 }
 
 export function extractSqlState(error) {
@@ -86,11 +155,13 @@ async function verifyConnection(client, authorization, role, requiresSentinel = 
   if (role) assert(identity?.role === role, "database role identity mismatch");
   else assert(!["polismart_migrator", "polismart_runtime"].includes(identity?.role), "unprivileged role identity mismatch");
   if (!requiresSentinel) return;
-  const rows = await query(client, `SELECT metadata->>'projectId' project_id,metadata->>'branchId' branch_id,
-      metadata->>'nonce' authorization_nonce,metadata->>'purpose' purpose,metadata->>'environment' environment,
-      metadata->>'database' database_name,metadata->>'expiresAt' expires_at,metadata->>'consumedAt' consumed_at
-    FROM public.${SENTINEL_TABLE}
-    WHERE action=$1 AND entity='rehearsal' AND metadata->>'nonce'=$2`, SENTINEL_ACTION, authorization.nonce);
+  const rows = await query(client, `SELECT sentinel.metadata->>'projectId' project_id,sentinel.metadata->>'branchId' branch_id,
+      sentinel.metadata->>'nonce' authorization_nonce,sentinel.metadata->>'purpose' purpose,sentinel.metadata->>'environment' environment,
+      sentinel.metadata->>'database' database_name,sentinel.metadata->>'issuedAt' issued_at,sentinel.metadata->>'expiresAt' expires_at,
+      (SELECT max(retired.created_at)::text FROM public.${SENTINEL_TABLE} retired
+        WHERE retired.action=$2 AND retired.entity='rehearsal' AND retired.metadata->>'nonce'=sentinel.metadata->>'nonce') retired_at
+    FROM public.${SENTINEL_TABLE} sentinel
+    WHERE sentinel.action=$1 AND sentinel.entity='rehearsal' AND sentinel.metadata->>'nonce'=$3`, SENTINEL_ACTION, SENTINEL_RETIRED_ACTION, authorization.nonce);
   assert(rows.length === 1, "database rehearsal sentinel is absent or ambiguous");
   validateRehearsalSentinel(authorization, rows[0]);
 }
@@ -102,13 +173,6 @@ async function verifyIdentityBeforeMutation(migrator, runtime, unprivileged, aut
   const rows = await query(migrator, `SELECT finished_at,rolled_back_at FROM public._prisma_migrations
     WHERE migration_name='0021_campaign_geography_assignment_controls'`);
   assert(rows.length === 1 && rows[0].finished_at && !rows[0].rolled_back_at, "migration 0021 is not applied exactly once");
-}
-
-function fixtureIds(behavior) {
-  const key = behavior.replace(/\W+/g, "-").toLowerCase();
-  const id = (name) => deterministicUuid(`${key}:${name}`);
-  return { tenant: id("tenant"), tenant2: id("tenant2"), campaign: id("campaign"), campaign2: id("campaign2"),
-    actor: id("actor"), unauthorized: id("unauthorized"), ghLevel: id("gh-level"), ghArea: id("gh-area"), inactiveArea: id("inactive") };
 }
 
 async function fixtureCounts(db, ids) {
@@ -138,17 +202,23 @@ async function canonicalPath(db) {
   return { country, zone, state, lga, ward };
 }
 
-async function setupFixture(db, behavior) {
-  const ids = fixtureIds(behavior);
-  assert(!Object.values(await fixtureCounts(db, ids)).some(Number), "fixture namespace collision detected");
+async function prepareFixture(db, authorization, behavior) {
+  const identity = deriveFixtureIdentity(authorization.nonce, behavior);
+  const ids = identity.ids;
+  assertFixtureNamespaceAvailable(await fixtureCounts(db, ids));
   const path = await canonicalPath(db);
+  return { ...identity, ...path };
+}
+
+async function commitFixtureSetup(db, fixture) {
+  const { ids } = fixture;
   await db.$transaction(async (tx) => {
     await query(tx, `INSERT INTO public.auth_users(id,email,password_hash,display_name,created_at,updated_at) VALUES
       ($1,$2,'fixture-only','Authorized Fixture',now(),now()),($3,$4,'fixture-only','Unauthorized Fixture',now(),now())`,
       ids.actor, `${ids.actor}@invalid.example`, ids.unauthorized, `${ids.unauthorized}@invalid.example`);
     await query(tx, `INSERT INTO public.organizations(id,name,slug,country,is_demo,created_at,updated_at) VALUES
       ($1,'I3A Fixture',$2,'Nigeria',true,now(),now()),($3,'I3A Fixture 2',$4,'Nigeria',true,now(),now())`,
-      ids.tenant, `i3a-${ids.tenant}`, ids.tenant2, `i3a-${ids.tenant2}`);
+      ids.tenant, `i3a-${fixture.namespace}`, ids.tenant2, `i3a-${fixture.namespace}-2`);
     await query(tx, `INSERT INTO public.campaigns(id,tenant_id,name,slug,status,is_demo,country,election_type,created_at,updated_at) VALUES
       ($1,$2,'I3A Fixture','fixture','DRAFT',true,'Nigeria','TEST',now(),now()),
       ($3,$4,'I3A Fixture 2','fixture-2','DRAFT',true,'Nigeria','TEST',now(),now())`, ids.campaign, ids.tenant, ids.campaign2, ids.tenant2);
@@ -160,12 +230,16 @@ async function setupFixture(db, behavior) {
     await query(tx, `INSERT INTO public.master_geographic_areas(id,level_id,parent_id,country_code,name,code,is_active,validation_status,created_at,updated_at) VALUES
       ($1,$2,NULL,'ZQ','Foreign Fixture','I3A-ZQ',true,'TEST',now(),now()),
       ($3,$4,$5,'NG','Inactive Fixture',$6,false,'TEST',now(),now())`,
-      ids.ghArea, ids.ghLevel, ids.inactiveArea, path.ward.level_id, path.lga.id, `I3A-${ids.inactiveArea}`);
+      ids.ghArea, ids.ghLevel, ids.inactiveArea, fixture.ward.level_id, fixture.lga.id, `I3A-${ids.inactiveArea}`);
   });
+  return fixture;
+}
+
+async function verifyFixtureSetup(db, fixture) {
+  const { ids } = fixture;
   const expected = { organizations: 2, campaigns: 2, users: 2, memberships: 2, assignments: 0, audits: 0, areas: 2, levels: 1 };
   const actual = await fixtureCounts(db, ids);
   for (const [key, value] of Object.entries(expected)) assert(actual[key] === value, `fixture setup verification failed for ${key}`);
-  return { ids, ...path };
 }
 
 async function cleanupFixture(db, f) {
@@ -180,7 +254,10 @@ async function cleanupFixture(db, f) {
     await query(tx, "DELETE FROM public.master_geographic_areas WHERE id IN ($1,$2)", i.ghArea, i.inactiveArea);
     await query(tx, "DELETE FROM public.master_geographic_levels WHERE id=$1", i.ghLevel);
   });
-  assert(!Object.values(await fixtureCounts(db, i)).some(Number), "fixture cleanup verification failed");
+}
+
+async function verifyFixtureCleanup(db, identity) {
+  assert(!Object.values(await fixtureCounts(db, identity.ids)).some(Number), "fixture cleanup verification failed");
 }
 
 const invoke = (db, fn, f, actor, areas, tenant = f.ids.tenant, campaign = f.ids.campaign) =>
@@ -302,13 +379,22 @@ async function runScenario(behavior, migrator, runtime, unprivileged, f) {
 export async function runCampaignGeographyPostgresBehavior({ behavior, migratorUrl, runtimeUrl, unprivilegedUrl, authorization, genericDatabaseUrl }) {
   const approved = validateRehearsalConfiguration({ authorization, migratorUrl, runtimeUrl, unprivilegedUrl, genericDatabaseUrl });
   const migrator = new PrismaClient({ datasourceUrl: migratorUrl }); const runtime = new PrismaClient({ datasourceUrl: runtimeUrl });
-  const unprivileged = new PrismaClient({ datasourceUrl: unprivilegedUrl }); let fixture;
+  const unprivileged = new PrismaClient({ datasourceUrl: unprivilegedUrl });
   try {
-    await verifyIdentityBeforeMutation(migrator, runtime, unprivileged, approved);
-    fixture = await setupFixture(migrator, behavior);
-    await runScenario(behavior, migrator, runtime, unprivileged, fixture);
+    await runPreMutationGate({
+      verify: () => verifyIdentityBeforeMutation(migrator, runtime, unprivileged, approved),
+      execute: async () => {
+        const identity = await prepareFixture(migrator, approved, behavior);
+        await runFixtureLifecycle({ identity,
+          setup: (fixture) => commitFixtureSetup(migrator, fixture),
+          verifySetup: (fixture) => verifyFixtureSetup(migrator, fixture),
+          execute: (fixture) => runScenario(behavior, migrator, runtime, unprivileged, fixture),
+          cleanup: (fixture) => cleanupFixture(migrator, fixture),
+          verifyCleanup: (fixtureIdentity) => verifyFixtureCleanup(migrator, fixtureIdentity),
+        });
+      },
+    });
   } finally {
-    if (fixture) await cleanupFixture(migrator, fixture);
     await Promise.allSettled([unprivileged.$disconnect(), runtime.$disconnect(), migrator.$disconnect()]);
   }
 }
