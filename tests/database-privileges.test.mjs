@@ -70,12 +70,12 @@ test("runtime geographic updates allow required fields and prohibit provenance m
     );
 });
 
-test("migrations 0015-0019 exactly implement the reviewed table and column policy", () => {
+test("migrations 0015-0020 exactly implement the reviewed table and column policy", () => {
   const sql = readFileSync(
     "prisma/migrations/0015_runtime_privilege_catalog/migration.sql",
     "utf8",
   );
-  const grantsSql = `${sql}\n${readFileSync("prisma/migrations/0016_geographic_management/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0017_geographic_provenance_retrieval_date/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0018_command_center_reference_table_read_privileges/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0019_privacy_operations_controls/migration.sql", "utf8")}`;
+  const grantsSql = `${sql}\n${readFileSync("prisma/migrations/0016_geographic_management/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0017_geographic_provenance_retrieval_date/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0018_command_center_reference_table_read_privileges/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0019_privacy_operations_controls/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0020_campaign_geography_master_assignment_schema/migration.sql", "utf8")}`;
   const revokedTables = [
     ...grantsSql.matchAll(/REVOKE ALL PRIVILEGES ON TABLE([\s\S]*?)FROM "polismart_runtime";/g),
   ].flatMap((match) => identifiers(match[1]));
@@ -134,6 +134,27 @@ test("Command Center shared reference catalogs are read-only for runtime", () =>
   assert.doesNotMatch(
     sql,
     /\b(?:INSERT|UPDATE|DELETE|TRUNCATE|REFERENCES|TRIGGER|CREATE|ALTER|DROP|OWNERSHIP|BYPASSRLS|CREATEDB|CREATEROLE)\b/i,
+  );
+});
+
+test("Campaign Geography foundation is read-only for runtime until services are authorized", () => {
+  for (const table of [
+    "master_geographic_levels",
+    "master_geographic_areas",
+    "campaign_geographic_assignments",
+  ])
+    assert.deepEqual(RUNTIME_DATABASE_PRIVILEGES[table], {
+      tablePrivileges: ["SELECT"],
+      updateColumns: [],
+    });
+
+  const sql = readFileSync(
+    "prisma/migrations/0020_campaign_geography_master_assignment_schema/migration.sql",
+    "utf8",
+  );
+  assert.doesNotMatch(
+    sql,
+    /GRANT[\s\S]*\b(?:INSERT|UPDATE|DELETE|TRUNCATE|REFERENCES|TRIGGER|CREATE|ALTER|OWNERSHIP|BYPASSRLS|CREATEDB|CREATEROLE)\b/i,
   );
 });
 

@@ -49,6 +49,9 @@ export const RUNTIME_DATABASE_PRIVILEGES = Object.freeze({
     ["SELECT", "INSERT"],
     ["level_id", "parent_id", "name", "code", "is_active", "updated_at"],
   ),
+  master_geographic_levels: policy(["SELECT"]),
+  master_geographic_areas: policy(["SELECT"]),
+  campaign_geographic_assignments: policy(["SELECT"]),
   campaign_events: policy(["SELECT", "INSERT"]),
   volunteers: policy(
     ["SELECT", "INSERT"],

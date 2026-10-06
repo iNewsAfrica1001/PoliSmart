@@ -137,3 +137,32 @@ test("every migration contains a substantive schema change", () => {
     );
   }
 });
+
+test("Campaign Geography foundation migration is additive, empty, and restrictively related", () => {
+  const sql = readFileSync(
+    "prisma/migrations/0020_campaign_geography_master_assignment_schema/migration.sql",
+    "utf8",
+  );
+  for (const table of [
+    "master_geographic_levels",
+    "master_geographic_areas",
+    "campaign_geographic_assignments",
+  ])
+    assert.match(sql, new RegExp(`CREATE TABLE "${table}"`));
+
+  assert.match(sql, /UNIQUE INDEX "master_geographic_levels_country_code_name_key"/);
+  assert.match(sql, /UNIQUE INDEX "master_geographic_levels_country_code_order_index_key"/);
+  assert.match(sql, /UNIQUE INDEX "master_geographic_areas_country_code_level_id_code_key"/);
+  assert.match(sql, /UNIQUE INDEX "master_geographic_areas_level_id_parent_id_name_key"/);
+  assert.match(
+    sql,
+    /UNIQUE INDEX "campaign_geographic_assignments_tenant_id_campaign_id_master_geographic_area_id_key"/,
+  );
+  assert.match(
+    sql,
+    /FOREIGN KEY \("tenant_id", "campaign_id"\) REFERENCES "campaigns"\("tenant_id", "id"\) ON DELETE RESTRICT/,
+  );
+  assert.equal((sql.match(/ON DELETE RESTRICT/g) || []).length, 6);
+  assert.doesNotMatch(sql, /\b(?:DROP|TRUNCATE|DELETE\s+FROM|INSERT\s+INTO|UPDATE\s+"?\w+"?\s+SET)\b/i);
+  assert.doesNotMatch(sql, /ALTER\s+TABLE\s+"(?:geographic_levels|geographic_areas)"/i);
+});
