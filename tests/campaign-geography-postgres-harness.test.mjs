@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { assertFixtureNamespaceAvailable, buildRehearsalSentinelRetirement, buildRehearsalSentinelSetup,
-  deriveFixtureIdentity, expectSqlState, PRODUCTION_BRANCH_ID, REHEARSAL_ENVIRONMENT, REHEARSAL_PURPOSE,
+  deriveFixtureIdentity, expectSqlState, FIXTURE_COUNTS_SQL, PRODUCTION_BRANCH_ID, REHEARSAL_ENVIRONMENT, REHEARSAL_PURPOSE,
   runConfiguredHarnessFlow, runFixtureLifecycle, validateRehearsalConfiguration, validateRehearsalSentinel,
   validateSentinelInstallationAuthorization,
 } from "../scripts/lib/campaign-geography-postgres-harness.mjs";
+import fs from "node:fs";
 
 const authorization = Object.freeze({ projectId: "project-rehearsal", branchId: "br-rehearsal-only",
   nonce: "authorization-nonce-unique", database: "neondb", purpose: REHEARSAL_PURPOSE,
@@ -95,6 +96,15 @@ test("fixture namespace is deterministic, nonce-scoped, behavior-scoped, and SQL
 test("fixture collision fails closed without adopting or deleting unrelated state", () => {
   assert.throws(() => assertFixtureNamespaceAvailable({ organizations: 1, campaigns: 0 }), /collision/);
   assert.equal(assertFixtureNamespaceAvailable({ organizations: 0, campaigns: 0 }), true);
+});
+
+test("fixture collision and equivalent UUID queries preserve parameters with explicit casts", () => {
+  for (let index = 1; index <= 9; index += 1) assert.match(FIXTURE_COUNTS_SQL, new RegExp(`\\$${index}::uuid`));
+  assert.doesNotMatch(FIXTURE_COUNTS_SQL, /IN \([^)]*['"][0-9a-f-]+/i);
+  const source = fs.readFileSync(new URL("../scripts/lib/campaign-geography-postgres-harness.mjs", import.meta.url), "utf8");
+  const uuidComparisons = source.match(/(?:id|tenant_id|campaign_id|entity_id|parent_id)\s*(?:=|IN\s*\()[^\n;`]*/g) ?? [];
+  for (const comparison of uuidComparisons.filter((value) => /\$\d+/.test(value)))
+    assert.doesNotMatch(comparison, /\$\d+(?!::uuid)/, `UUID comparison lacks an explicit cast: ${comparison}`);
 });
 
 test("fixture lifecycle cleans after setup verification and behavior failures", async () => {

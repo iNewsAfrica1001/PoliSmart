@@ -196,16 +196,18 @@ async function verifyMigrationApplied(migrator) {
   assert(rows.length === 1 && rows[0].finished_at && !rows[0].rolled_back_at, "migration 0021 is not applied exactly once");
 }
 
+export const FIXTURE_COUNTS_SQL = `SELECT
+    (SELECT count(*)::int FROM public.organizations WHERE id IN ($1::uuid,$2::uuid)) organizations,
+    (SELECT count(*)::int FROM public.campaigns WHERE id IN ($3::uuid,$4::uuid)) campaigns,
+    (SELECT count(*)::int FROM public.auth_users WHERE id IN ($5::uuid,$6::uuid)) users,
+    (SELECT count(*)::int FROM public.memberships WHERE tenant_id IN ($1::uuid,$2::uuid)) memberships,
+    (SELECT count(*)::int FROM public.campaign_geographic_assignments WHERE tenant_id IN ($1::uuid,$2::uuid)) assignments,
+    (SELECT count(*)::int FROM public.security_audit_events WHERE tenant_id IN ($1::uuid,$2::uuid)) audits,
+    (SELECT count(*)::int FROM public.master_geographic_areas WHERE id IN ($7::uuid,$8::uuid)) areas,
+    (SELECT count(*)::int FROM public.master_geographic_levels WHERE id=$9::uuid) levels`;
+
 async function fixtureCounts(db, ids) {
-  const [row] = await query(db, `SELECT
-    (SELECT count(*)::int FROM public.organizations WHERE id IN ($1,$2)) organizations,
-    (SELECT count(*)::int FROM public.campaigns WHERE id IN ($3,$4)) campaigns,
-    (SELECT count(*)::int FROM public.auth_users WHERE id IN ($5,$6)) users,
-    (SELECT count(*)::int FROM public.memberships WHERE tenant_id IN ($1,$2)) memberships,
-    (SELECT count(*)::int FROM public.campaign_geographic_assignments WHERE tenant_id IN ($1,$2)) assignments,
-    (SELECT count(*)::int FROM public.security_audit_events WHERE tenant_id IN ($1,$2)) audits,
-    (SELECT count(*)::int FROM public.master_geographic_areas WHERE id IN ($7,$8)) areas,
-    (SELECT count(*)::int FROM public.master_geographic_levels WHERE id=$9) levels`,
+  const [row] = await query(db, FIXTURE_COUNTS_SQL,
     ids.tenant, ids.tenant2, ids.campaign, ids.campaign2, ids.actor, ids.unauthorized, ids.ghArea, ids.inactiveArea, ids.ghLevel);
   return row;
 }
@@ -235,23 +237,23 @@ async function commitFixtureSetup(db, fixture) {
   const { ids, uniqueValues: value } = fixture;
   await db.$transaction(async (tx) => {
     await query(tx, `INSERT INTO public.auth_users(id,email,password_hash,display_name,created_at,updated_at) VALUES
-      ($1,$2,'fixture-only','Authorized Fixture',now(),now()),($3,$4,'fixture-only','Unauthorized Fixture',now(),now())`,
+      ($1::uuid,$2,'fixture-only','Authorized Fixture',now(),now()),($3::uuid,$4,'fixture-only','Unauthorized Fixture',now(),now())`,
       ids.actor, value.actorEmail, ids.unauthorized, value.unauthorizedEmail);
     await query(tx, `INSERT INTO public.organizations(id,name,slug,country,is_demo,created_at,updated_at) VALUES
-      ($1,$2,$3,'Nigeria',true,now(),now()),($4,$5,$6,'Nigeria',true,now(),now())`,
+      ($1::uuid,$2,$3,'Nigeria',true,now(),now()),($4::uuid,$5,$6,'Nigeria',true,now(),now())`,
       ids.tenant, value.tenantName, value.tenantSlug, ids.tenant2, value.tenant2Name, value.tenant2Slug);
     await query(tx, `INSERT INTO public.campaigns(id,tenant_id,name,slug,status,is_demo,country,election_type,created_at,updated_at) VALUES
-      ($1,$2,$3,$4,'DRAFT',true,'Nigeria','TEST',now(),now()),
-      ($5,$6,$7,$8,'DRAFT',true,'Nigeria','TEST',now(),now())`, ids.campaign, ids.tenant, value.campaignName, value.campaignSlug,
+      ($1::uuid,$2::uuid,$3,$4,'DRAFT',true,'Nigeria','TEST',now(),now()),
+      ($5::uuid,$6::uuid,$7,$8,'DRAFT',true,'Nigeria','TEST',now(),now())`, ids.campaign, ids.tenant, value.campaignName, value.campaignSlug,
       ids.campaign2, ids.tenant2, value.campaign2Name, value.campaign2Slug);
     await query(tx, `INSERT INTO public.memberships(id,tenant_id,user_id,role,status,created_at,updated_at) VALUES
-      (gen_random_uuid(),$1,$2,'CAMPAIGN_ADMINISTRATOR','ACTIVE',now(),now()),
-      (gen_random_uuid(),$1,$3,'ANALYST','SUSPENDED',now(),now())`, ids.tenant, ids.actor, ids.unauthorized);
+      (gen_random_uuid(),$1::uuid,$2::uuid,'CAMPAIGN_ADMINISTRATOR','ACTIVE',now(),now()),
+      (gen_random_uuid(),$1::uuid,$3::uuid,'ANALYST','SUSPENDED',now(),now())`, ids.tenant, ids.actor, ids.unauthorized);
     await query(tx, `INSERT INTO public.master_geographic_levels(id,country_code,name,order_index,is_active,created_at,updated_at)
-      VALUES($1,$2,$3,$4,true,now(),now())`, ids.ghLevel, value.foreignCountryCode, value.foreignLevelName, value.foreignLevelOrder);
+      VALUES($1::uuid,$2,$3,$4,true,now(),now())`, ids.ghLevel, value.foreignCountryCode, value.foreignLevelName, value.foreignLevelOrder);
     await query(tx, `INSERT INTO public.master_geographic_areas(id,level_id,parent_id,country_code,name,code,is_active,validation_status,created_at,updated_at) VALUES
-      ($1,$2,NULL,$3,$4,$5,true,'TEST',now(),now()),
-      ($6,$7,$8,'NG',$9,$10,false,'TEST',now(),now())`,
+      ($1::uuid,$2::uuid,NULL,$3,$4,$5,true,'TEST',now(),now()),
+      ($6::uuid,$7::uuid,$8::uuid,'NG',$9,$10,false,'TEST',now(),now())`,
       ids.ghArea, ids.ghLevel, value.foreignCountryCode, value.foreignAreaName, value.foreignAreaCode,
       ids.inactiveArea, fixture.ward.level_id, fixture.lga.id, value.inactiveAreaName, value.inactiveAreaCode);
   });
@@ -268,14 +270,14 @@ async function verifyFixtureSetup(db, fixture) {
 async function cleanupFixture(db, f) {
   const i = f.ids;
   await db.$transaction(async (tx) => {
-    await query(tx, "DELETE FROM public.security_audit_events WHERE tenant_id IN ($1,$2)", i.tenant, i.tenant2);
-    await query(tx, "DELETE FROM public.campaign_geographic_assignments WHERE tenant_id IN ($1,$2)", i.tenant, i.tenant2);
-    await query(tx, "DELETE FROM public.memberships WHERE tenant_id IN ($1,$2)", i.tenant, i.tenant2);
-    await query(tx, "DELETE FROM public.campaigns WHERE id IN ($1,$2)", i.campaign, i.campaign2);
-    await query(tx, "DELETE FROM public.organizations WHERE id IN ($1,$2)", i.tenant, i.tenant2);
-    await query(tx, "DELETE FROM public.auth_users WHERE id IN ($1,$2)", i.actor, i.unauthorized);
-    await query(tx, "DELETE FROM public.master_geographic_areas WHERE id IN ($1,$2)", i.ghArea, i.inactiveArea);
-    await query(tx, "DELETE FROM public.master_geographic_levels WHERE id=$1", i.ghLevel);
+    await query(tx, "DELETE FROM public.security_audit_events WHERE tenant_id IN ($1::uuid,$2::uuid)", i.tenant, i.tenant2);
+    await query(tx, "DELETE FROM public.campaign_geographic_assignments WHERE tenant_id IN ($1::uuid,$2::uuid)", i.tenant, i.tenant2);
+    await query(tx, "DELETE FROM public.memberships WHERE tenant_id IN ($1::uuid,$2::uuid)", i.tenant, i.tenant2);
+    await query(tx, "DELETE FROM public.campaigns WHERE id IN ($1::uuid,$2::uuid)", i.campaign, i.campaign2);
+    await query(tx, "DELETE FROM public.organizations WHERE id IN ($1::uuid,$2::uuid)", i.tenant, i.tenant2);
+    await query(tx, "DELETE FROM public.auth_users WHERE id IN ($1::uuid,$2::uuid)", i.actor, i.unauthorized);
+    await query(tx, "DELETE FROM public.master_geographic_areas WHERE id IN ($1::uuid,$2::uuid)", i.ghArea, i.inactiveArea);
+    await query(tx, "DELETE FROM public.master_geographic_levels WHERE id=$1::uuid", i.ghLevel);
   });
 }
 
@@ -286,9 +288,9 @@ async function verifyFixtureCleanup(db, identity) {
 const invoke = (db, fn, f, actor, areas, tenant = f.ids.tenant, campaign = f.ids.campaign) =>
   query(db, `SELECT public.${fn}($1::uuid,$2::uuid,$3::uuid,$4::uuid[]) result`, tenant, campaign, actor, areas);
 const assignmentRows = (db, f) => query(db, `SELECT master_geographic_area_id area_id,is_active,created_by_id,updated_by_id,created_at,removed_at
-  FROM public.campaign_geographic_assignments WHERE tenant_id=$1 AND campaign_id=$2 ORDER BY master_geographic_area_id`, f.ids.tenant, f.ids.campaign);
+  FROM public.campaign_geographic_assignments WHERE tenant_id=$1::uuid AND campaign_id=$2::uuid ORDER BY master_geographic_area_id`, f.ids.tenant, f.ids.campaign);
 const auditRows = (db, f) => query(db, `SELECT actor_id,action,entity,entity_id,metadata FROM public.security_audit_events
-  WHERE tenant_id=$1 AND entity_id=$2 ORDER BY created_at`, f.ids.tenant, f.ids.campaign);
+  WHERE tenant_id=$1::uuid AND entity_id=$2::uuid ORDER BY created_at`, f.ids.tenant, f.ids.campaign);
 
 async function expectActiveSet(db, f, expected) {
   const rows = (await assignmentRows(db, f)).filter((row) => row.is_active).map((row) => row.area_id).sort();
@@ -346,11 +348,11 @@ async function runScenario(behavior, migrator, runtime, unprivileged, f) {
     const [row] = await assignmentRows(migrator, f); assert(row && !row.is_active && row.removed_at && row.updated_by_id === f.ids.actor, "soft deactivation state mismatch"); return;
   }
   if (behavior === "deactivation ancestry revalidation") {
-    await query(migrator, "UPDATE public.master_geographic_areas SET is_active=true WHERE id=$1", f.ids.inactiveArea);
+    await query(migrator, "UPDATE public.master_geographic_areas SET is_active=true WHERE id=$1::uuid", f.ids.inactiveArea);
     await invoke(runtime, "campaign_geography_assign", f, f.ids.actor, [f.ids.inactiveArea]);
-    await query(migrator, "UPDATE public.master_geographic_areas SET parent_id=$1 WHERE id=$2", f.country.id, f.ids.inactiveArea);
+    await query(migrator, "UPDATE public.master_geographic_areas SET parent_id=$1::uuid WHERE id=$2::uuid", f.country.id, f.ids.inactiveArea);
     try { await expectSqlState(() => invoke(runtime, "campaign_geography_deactivate", f, f.ids.actor, [f.ids.inactiveArea]), "22023", behavior); }
-    finally { await query(migrator, "UPDATE public.master_geographic_areas SET parent_id=$1 WHERE id=$2", f.lga.id, f.ids.inactiveArea); }
+    finally { await query(migrator, "UPDATE public.master_geographic_areas SET parent_id=$1::uuid WHERE id=$2::uuid", f.lga.id, f.ids.inactiveArea); }
     await expectActiveSet(migrator, f, [...path.slice(0, 4), f.ids.inactiveArea]); return;
   }
   if (behavior === "blocked ancestor removal") {

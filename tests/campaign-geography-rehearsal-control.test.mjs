@@ -67,7 +67,10 @@ test("password generation is cryptographically random-shaped and non-repeating",
 });
 
 test("credential destination is Git-ignored and CLI failures redact supplied secrets", () => {
-  assert.equal(assertGitIgnored(`${process.cwd()}/.env.campaign-geography-rehearsal.local`), true);
+  const destination = `${process.cwd()}/.env.campaign-geography-rehearsal.local`;
+  assert.equal(assertGitIgnored(destination), true);
+  const existed = fs.existsSync(destination);
+  const before = existed ? fs.statSync(destination) : null;
   const secret = "must-not-appear-anywhere";
   const result = spawnSync(process.execPath, ["scripts/bootstrap-campaign-geography-rehearsal.mjs"], {
     cwd: process.cwd(), encoding: "utf8", env: { ...process.env, DATABASE_URL: "", MIGRATION_DATABASE_URL: "",
@@ -77,7 +80,12 @@ test("credential destination is Git-ignored and CLI failures redact supplied sec
   });
   assert.notEqual(result.status, 0);
   assert.equal(`${result.stdout}${result.stderr}`.includes(secret), false);
-  assert.equal(fs.existsSync(`${process.cwd()}/.env.campaign-geography-rehearsal.local`), false);
+  assert.equal(fs.existsSync(destination), existed);
+  if (before) {
+    const after = fs.statSync(destination);
+    assert.equal(after.size, before.size);
+    assert.equal(after.mtimeMs, before.mtimeMs);
+  }
 });
 
 test("generic and migration database URL substitutions are rejected", () => {
