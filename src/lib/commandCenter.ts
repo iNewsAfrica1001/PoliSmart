@@ -58,9 +58,8 @@ export type CommandCenter = {
   };
 };
 export const commandCenterApi = {
-  load: async (tenantId: string, campaignId: string, country = "", geographicAreaId = "") => {
+  load: async (tenantId: string, campaignId: string, geographicAreaId = "") => {
     const query = new URLSearchParams();
-    if (country) query.set("country", country);
     if (geographicAreaId) query.set("geographicAreaId", geographicAreaId);
     const response = await fetch(`${API_BASE}/api/command-center/${campaignId}?${query}`, {
       credentials: "include",

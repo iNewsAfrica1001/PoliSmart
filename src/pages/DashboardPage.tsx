@@ -42,7 +42,6 @@ export function DashboardPage({
   const tenantId = user.memberships[0]?.tenantId || "";
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [campaignId, setCampaignId] = useState("");
-  const [country, setCountry] = useState("");
   const [areaId, setAreaId] = useState("");
   const [areas, setAreas] = useState<Array<{ id: string; name: string; level: { name: string } }>>(
     [],
@@ -52,13 +51,13 @@ export function DashboardPage({
   const [loading, setLoading] = useState(true);
   const [refreshStatus, setRefreshStatus] = useState("");
   const refreshInFlight = useRef(false);
+  const loadRequest = useRef(0);
   useEffect(() => {
     operationsApi
       .campaigns(tenantId)
       .then(({ campaigns: list }) => {
         setCampaigns(list);
         setCampaignId(list[0]?.id || "");
-        setCountry(list[0]?.country || "");
         if (list.length === 0) setLoading(false);
       })
       .catch(() => {
@@ -69,26 +68,33 @@ export function DashboardPage({
   const load = useCallback(
     async (announceRefresh = false) => {
       if (!campaignId || (announceRefresh && refreshInFlight.current)) return;
+      const requestId = ++loadRequest.current;
       if (announceRefresh) refreshInFlight.current = true;
       setLoading(true);
       setError("");
       setRefreshStatus(announceRefresh ? "Refreshing campaign intelligence…" : "");
       try {
-        const result = await commandCenterApi.load(tenantId, campaignId, country, areaId);
+        const result = await commandCenterApi.load(tenantId, campaignId, areaId);
+        if (requestId !== loadRequest.current) return;
         setData(result.dashboard);
         setAreas(result.geography);
+        if (areaId && !result.geography.some((area) => area.id === areaId)) setAreaId("");
         if (announceRefresh) setRefreshStatus("Updated just now.");
       } catch {
+        if (requestId !== loadRequest.current) return;
+        if (areaId) setAreaId("");
         setError(
           announceRefresh ? "Unable to refresh. Try again." : "Unable to load command center.",
         );
         if (announceRefresh) setRefreshStatus("Refresh failed.");
       } finally {
         if (announceRefresh) refreshInFlight.current = false;
-        setLoading(false);
+        if (requestId === loadRequest.current) {
+          setLoading(false);
+        }
       }
     },
-    [tenantId, campaignId, country, areaId],
+    [tenantId, campaignId, areaId],
   );
   useEffect(() => {
     void load();
@@ -123,10 +129,9 @@ export function DashboardPage({
           <select
             value={campaignId}
             onChange={(event) => {
-              const selected = campaigns.find((item) => item.id === event.target.value);
               setCampaignId(event.target.value);
-              setCountry(selected?.country || "");
               setAreaId("");
+              setAreas([]);
             }}
           >
             {campaigns.map((campaign) => (
@@ -139,15 +144,22 @@ export function DashboardPage({
         <label>
           Country
           <input
-            value={country}
-            onChange={(event) => setCountry(event.target.value)}
-            placeholder="All countries"
+            value={campaigns.find((campaign) => campaign.id === campaignId)?.country || ""}
+            readOnly
+            aria-readonly="true"
+            placeholder="Campaign country"
           />
         </label>
         <label>
           Geography
-          <select value={areaId} onChange={(event) => setAreaId(event.target.value)}>
-            <option value="">All geographic areas</option>
+          <select
+            value={areaId}
+            onChange={(event) => setAreaId(event.target.value)}
+            disabled={!campaignId || loading || areas.length === 0}
+          >
+            <option value="">
+              {areas.length ? "All assigned geographic areas" : "Campaign geography not configured"}
+            </option>
             {areas.map((area) => (
               <option key={area.id} value={area.id}>
                 {area.level.name}: {area.name}
@@ -156,6 +168,12 @@ export function DashboardPage({
           </select>
         </label>
       </section>
+      {!loading && data && areas.length === 0 && (
+        <p className="command-empty" role="status">
+          No geographic areas are assigned to this campaign. The all-campaign dashboard remains
+          available; authorized administrators can configure choices in Campaign Geography.
+        </p>
+      )}
       {error && (
         <p className="ops-error" role="alert">
           {error}

@@ -2,8 +2,39 @@ import { AFROBAROMETER_MINIMUM_SAMPLE_SIZE } from "../config/afrobarometer.js";
 
 export const COMMAND_CENTER_QUERY_COUNT = 13;
 
+const countryCode = (country) => {
+  const normalized = String(country || "")
+    .trim()
+    .toUpperCase();
+  if (normalized === "NIGERIA" || normalized === "NG") return "NG";
+  return null;
+};
+
 export function createCommandCenterRepository(database) {
   return {
+    async campaignContext(tenantId, campaignId, geographicAreaId) {
+      const campaign = await database.campaign.findFirst({
+        where: { id: campaignId, tenantId },
+        select: { id: true, country: true },
+      });
+      if (!campaign) return null;
+      if (!geographicAreaId) return { campaign, selectedGeography: null };
+      const code = countryCode(campaign.country);
+      if (!code) return { campaign, selectedGeography: null };
+      const selectedGeography = await database.campaignGeographicAssignment.findFirst({
+        where: {
+          tenantId,
+          campaignId,
+          masterGeographicAreaId: geographicAreaId,
+          isActive: true,
+          masterGeographicArea: {
+            is: { countryCode: code, isActive: true, level: { is: { isActive: true } } },
+          },
+        },
+        select: { masterGeographicAreaId: true },
+      });
+      return { campaign, selectedGeography };
+    },
     async snapshot({ tenantId, campaignId, country, geographicAreaId, now = new Date() }) {
       const since = new Date(now.getTime() - 86_400_000);
       const eventWhere = {
@@ -14,7 +45,13 @@ export function createCommandCenterRepository(database) {
       };
       const volunteerWhere = {
         tenantId,
-        ...(geographicAreaId ? { preferredAreaId: geographicAreaId } : {}),
+        ...(geographicAreaId
+          ? {
+              preferredArea: {
+                is: { id: geographicAreaId, tenantId, campaignId, isActive: true },
+              },
+            }
+          : {}),
       };
       const results = await database.$transaction([
         database.campaign.findFirst({
@@ -179,12 +216,34 @@ export function createCommandCenterRepository(database) {
         })),
       };
     },
-    geography(tenantId, campaignId) {
-      return database.geographicArea.findMany({
-        where: { tenantId, campaignId, isActive: true },
-        select: { id: true, name: true, level: { select: { name: true, orderIndex: true } } },
-        orderBy: [{ level: { orderIndex: "asc" } }, { name: "asc" }],
+    async geography(tenantId, campaignId, campaignCountry) {
+      const code = countryCode(campaignCountry);
+      if (!code) return [];
+      const assignments = await database.campaignGeographicAssignment.findMany({
+        where: {
+          tenantId,
+          campaignId,
+          isActive: true,
+          masterGeographicArea: {
+            is: { countryCode: code, isActive: true, level: { is: { isActive: true } } },
+          },
+        },
+        select: {
+          masterGeographicArea: {
+            select: {
+              id: true,
+              name: true,
+              level: { select: { name: true, orderIndex: true } },
+            },
+          },
+        },
+        orderBy: [
+          { masterGeographicArea: { level: { orderIndex: "asc" } } },
+          { masterGeographicArea: { name: "asc" } },
+          { masterGeographicAreaId: "asc" },
+        ],
       });
+      return assignments.map(({ masterGeographicArea }) => masterGeographicArea);
     },
   };
 }

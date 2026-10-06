@@ -64,6 +64,7 @@ test("command center uses a bounded query plan and aggregate survey table only",
     volunteer: model("volunteer"),
     knowledgeDocument: model("knowledgeDocument"),
     surveyAggregateResult: model("surveyAggregateResult"),
+    campaignGeographicAssignment: model("campaignGeographicAssignment"),
     $transaction: async (queries) => Promise.all(queries),
   };
   const repository = createCommandCenterRepository(database);
@@ -92,6 +93,13 @@ test("command center uses a bounded query plan and aggregate survey table only",
   assert.equal(eventQuery.where.campaignId, "campaign-a");
   assert.equal(eventQuery.where.geographicAreaId, "area-a");
   assert.equal(eventQuery.take, 6);
+  const volunteerQuery = calls.find(([name]) => name === "volunteer")[2];
+  assert.deepEqual(volunteerQuery.where, {
+    tenantId: "tenant-a",
+    preferredArea: {
+      is: { id: "area-a", tenantId: "tenant-a", campaignId: "campaign-a", isActive: true },
+    },
+  });
 });
 
 test("command center aggregate relations are covered by the runtime read model", () => {
@@ -105,22 +113,108 @@ test("command center aggregate relations are covered by the runtime read model",
     assert.deepEqual(RUNTIME_DATABASE_PRIVILEGES[table].tablePrivileges, ["SELECT"]);
 });
 
-test("command center operational geography excludes inactive staged imports", async () => {
+test("command center geography includes only active campaign assignments and active master rows", async () => {
   let query;
   const repository = createCommandCenterRepository({
-    geographicArea: {
+    campaignGeographicAssignment: {
       findMany: async (input) => {
         query = input;
-        return [];
+        return [
+          {
+            masterGeographicArea: {
+              id: "area-a",
+              name: "Assigned area",
+              level: { name: "Ward", orderIndex: 6 },
+            },
+          },
+        ];
       },
     },
   });
-  await repository.geography("tenant-a", "campaign-a");
+  assert.deepEqual(await repository.geography("tenant-a", "campaign-a", "Nigeria"), [
+    { id: "area-a", name: "Assigned area", level: { name: "Ward", orderIndex: 6 } },
+  ]);
   assert.deepEqual(query.where, {
     tenantId: "tenant-a",
     campaignId: "campaign-a",
     isActive: true,
+    masterGeographicArea: {
+      is: {
+        countryCode: "NG",
+        isActive: true,
+        level: { is: { isActive: true } },
+      },
+    },
   });
+  assert.equal(query.orderBy[0].masterGeographicArea.level.orderIndex, "asc");
+  assert.equal(query.where.masterGeographicArea.is.children, undefined);
+});
+
+test("command center validates selected geography against tenant, campaign, country, and active assignment", async () => {
+  const calls = [];
+  const repository = createCommandCenterRepository({
+    campaign: {
+      findFirst: async (query) => {
+        calls.push(["campaign", query]);
+        return { id: "campaign-a", country: "Nigeria" };
+      },
+    },
+    campaignGeographicAssignment: {
+      findFirst: async (query) => {
+        calls.push(["assignment", query]);
+        return { masterGeographicAreaId: "40000000-0000-4000-8000-000000000004" };
+      },
+    },
+  });
+  const result = await repository.campaignContext(
+    "tenant-a",
+    "campaign-a",
+    "40000000-0000-4000-8000-000000000004",
+  );
+  assert.equal(
+    result.selectedGeography.masterGeographicAreaId,
+    "40000000-0000-4000-8000-000000000004",
+  );
+  assert.deepEqual(calls[0][1].where, { id: "campaign-a", tenantId: "tenant-a" });
+  assert.deepEqual(calls[1][1].where, {
+    tenantId: "tenant-a",
+    campaignId: "campaign-a",
+    masterGeographicAreaId: "40000000-0000-4000-8000-000000000004",
+    isActive: true,
+    masterGeographicArea: {
+      is: {
+        countryCode: "NG",
+        isActive: true,
+        level: { is: { isActive: true } },
+      },
+    },
+  });
+});
+
+test("unsupported campaign countries have no assignment-governed geography fallback", async () => {
+  let assignmentReads = 0;
+  const repository = createCommandCenterRepository({
+    campaign: {
+      findFirst: async () => ({ id: "campaign-a", country: "Kisiwa" }),
+    },
+    campaignGeographicAssignment: {
+      findFirst: async () => {
+        assignmentReads += 1;
+      },
+      findMany: async () => {
+        assignmentReads += 1;
+        return [];
+      },
+    },
+  });
+  const context = await repository.campaignContext(
+    "tenant-a",
+    "campaign-a",
+    "40000000-0000-4000-8000-000000000004",
+  );
+  assert.equal(context.selectedGeography, null);
+  assert.deepEqual(await repository.geography("tenant-a", "campaign-a", "Kisiwa"), []);
+  assert.equal(assignmentReads, 0);
 });
 
 test("public visualization contract contains source, sample, round, and weighting", () => {
