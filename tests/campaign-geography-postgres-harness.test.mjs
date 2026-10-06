@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { assertFixtureNamespaceAvailable, buildRehearsalSentinelRetirement, buildRehearsalSentinelSetup,
   deriveFixtureIdentity, expectSqlState, PRODUCTION_BRANCH_ID, REHEARSAL_ENVIRONMENT, REHEARSAL_PURPOSE,
-  runFixtureLifecycle, runPreMutationGate, validateRehearsalConfiguration, validateRehearsalSentinel,
+  runConfiguredHarnessFlow, runFixtureLifecycle, validateRehearsalConfiguration, validateRehearsalSentinel,
   validateSentinelInstallationAuthorization,
 } from "../scripts/lib/campaign-geography-postgres-harness.mjs";
 
@@ -51,13 +51,25 @@ test("sentinel installation requires matching control-plane evidence and denies 
   }));
 });
 
-test("complete pre-mutation gate blocks absent sentinel and Production mislabel before mutation", async () => {
-  let mutations = 0;
-  await assert.rejects(runPreMutationGate({ verify: async () => validateRehearsalSentinel(authorization, null),
-    execute: async () => { mutations += 1; } }), /sentinel is absent/);
-  assert.equal(mutations, 0);
-  assert.throws(() => validateRehearsalConfiguration({ authorization: { ...authorization, branchId: PRODUCTION_BRANCH_ID }, ...urls }));
-  assert.equal(mutations, 0);
+test("complete configured flow reaches missing sentinel lookup and blocks every downstream stage", async () => {
+  const calls = { evidence: 0, migration: 0, fixture: 0, business: 0, behavior: 0 };
+  const stage = (name) => async () => { calls[name] += 1; };
+  await assert.rejects(runConfiguredHarnessFlow({ configuration: { authorization, ...urls },
+    loadVerifiedEvidence: async () => { calls.evidence += 1; return { branchId: authorization.branchId, sentinel: null }; },
+    stages: [stage("migration"), stage("fixture"), stage("business"), stage("behavior")],
+  }), /database rehearsal sentinel is absent/);
+  assert.deepEqual(calls, { evidence: 1, migration: 0, fixture: 0, business: 0, behavior: 0 });
+});
+
+test("complete configured flow trusts verified Production evidence over safe caller labels", async () => {
+  const calls = { evidence: 0, migration: 0, fixture: 0, business: 0, behavior: 0 };
+  const stage = (name) => async () => { calls[name] += 1; };
+  await assert.rejects(runConfiguredHarnessFlow({ configuration: { authorization, ...urls },
+    loadVerifiedEvidence: async () => { calls.evidence += 1; return {
+      branchId: PRODUCTION_BRANCH_ID, sentinel: { ...sentinel, branch_id: PRODUCTION_BRANCH_ID },
+    }; }, stages: [stage("migration"), stage("fixture"), stage("business"), stage("behavior")],
+  }), /verified Production branch is denied/);
+  assert.deepEqual(calls, { evidence: 1, migration: 0, fixture: 0, business: 0, behavior: 0 });
 });
 
 test("fixture namespace is deterministic, nonce-scoped, behavior-scoped, and SQL-identifier safe", () => {
@@ -68,6 +80,14 @@ test("fixture namespace is deterministic, nonce-scoped, behavior-scoped, and SQL
   assert.deepEqual(first, repeat);
   assert.notEqual(first.namespace, otherNonce.namespace);
   assert.notEqual(first.namespace, otherBehavior.namespace);
+  for (const group of ["ids", "uniqueValues"]) {
+    const firstValues = Object.values(first[group]);
+    const otherNonceValues = new Set(Object.values(otherNonce[group]));
+    assert.equal(firstValues.some((value) => otherNonceValues.has(value)), false,
+      `${group} contains a cross-rehearsal fixture collision`);
+  }
+  assert.notDeepEqual(first.ids, otherBehavior.ids);
+  assert.notDeepEqual(first.uniqueValues, otherBehavior.uniqueValues);
   assert.match(first.namespace, /^[a-f0-9]{24}$/);
   assert.doesNotMatch(JSON.stringify(first), /DROP TABLE|nonce A/);
 });

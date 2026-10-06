@@ -98,9 +98,22 @@ export function deriveFixtureIdentity(authorizationNonce, behavior) {
     .update(`${REHEARSAL_PURPOSE}\0${authorizationNonce}\0${behavior}`)
     .digest("hex").slice(0, 24);
   const id = (name) => deterministicUuid(`${namespace}:${name}`);
+  const token = namespace.slice(0, 12);
+  const orderIndex = 100_000 + (Number.parseInt(namespace.slice(0, 7), 16) % 900_000);
   return Object.freeze({ namespace, ids: Object.freeze({ tenant: id("tenant"), tenant2: id("tenant2"),
     campaign: id("campaign"), campaign2: id("campaign2"), actor: id("actor"), unauthorized: id("unauthorized"),
-    ghLevel: id("foreign-level"), ghArea: id("foreign-area"), inactiveArea: id("inactive") }) });
+    ghLevel: id("foreign-level"), ghArea: id("foreign-area"), inactiveArea: id("inactive") }),
+    // Database-generated membership/assignment/audit IDs and the canonical NG path are not fixture-owned identities.
+    // Every fixture-owned textual or numeric identity below is nonce + behavior scoped and parameter-bound in SQL.
+    uniqueValues: Object.freeze({ actorEmail: `${id("actor")}@invalid.example`, unauthorizedEmail: `${id("unauthorized")}@invalid.example`,
+      tenantName: `I3A Fixture ${token}`, tenant2Name: `I3A Fixture 2 ${token}`,
+      tenantSlug: `i3a-${namespace}`, tenant2Slug: `i3a-${namespace}-2`,
+      campaignName: `I3A Campaign ${token}`, campaign2Name: `I3A Campaign 2 ${token}`,
+      campaignSlug: `fixture-${namespace}`, campaign2Slug: `fixture-${namespace}-2`,
+      foreignCountryCode: `ZQ${namespace.slice(0, 6).toUpperCase()}`,
+      foreignLevelName: `Fixture Country ${token}`, foreignLevelOrder: orderIndex,
+      foreignAreaName: `Foreign Fixture ${token}`, foreignAreaCode: `I3A-ZQ-${namespace}`,
+      inactiveAreaName: `Inactive Fixture ${token}`, inactiveAreaCode: `I3A-INACTIVE-${namespace}` }) });
 }
 
 export function assertFixtureNamespaceAvailable(counts) {
@@ -108,9 +121,14 @@ export function assertFixtureNamespaceAvailable(counts) {
   return true;
 }
 
-export async function runPreMutationGate({ verify, execute }) {
-  await verify();
-  return execute();
+export async function runConfiguredHarnessFlow({ configuration, loadVerifiedEvidence, stages }) {
+  const approved = validateRehearsalConfiguration(configuration);
+  const evidence = await loadVerifiedEvidence(approved);
+  assert(evidence && typeof evidence === "object", "database/control evidence is absent");
+  // The verified evidence is authoritative: caller-authored safe labels cannot override a Production identity.
+  assert(evidence.branchId !== PRODUCTION_BRANCH_ID, "verified Production branch is denied");
+  validateRehearsalSentinel(approved, evidence.sentinel);
+  for (const stage of stages) await stage(approved, evidence);
 }
 
 export async function runFixtureLifecycle({ identity, setup, verifySetup, execute, cleanup, verifyCleanup }) {
@@ -149,27 +167,30 @@ export async function expectSqlState(operation, expected, label) {
   throw fail(`${label} unexpectedly succeeded; expected SQLSTATE ${expected}`);
 }
 
-async function verifyConnection(client, authorization, role, requiresSentinel = true) {
+async function verifyConnection(client, authorization, role) {
   const [identity] = await query(client, "SELECT current_database() AS database, current_user AS role");
   assert(identity?.database === authorization.database, "database identity mismatch");
   if (role) assert(identity?.role === role, "database role identity mismatch");
   else assert(!["polismart_migrator", "polismart_runtime"].includes(identity?.role), "unprivileged role identity mismatch");
-  if (!requiresSentinel) return;
-  const rows = await query(client, `SELECT sentinel.metadata->>'projectId' project_id,sentinel.metadata->>'branchId' branch_id,
+}
+
+async function loadVerifiedEvidence(migrator, runtime, unprivileged, authorization) {
+  await verifyConnection(migrator, authorization, "polismart_migrator");
+  await verifyConnection(runtime, authorization, "polismart_runtime");
+  await verifyConnection(unprivileged, authorization, null);
+  const rows = await query(migrator, `SELECT sentinel.metadata->>'projectId' project_id,sentinel.metadata->>'branchId' branch_id,
       sentinel.metadata->>'nonce' authorization_nonce,sentinel.metadata->>'purpose' purpose,sentinel.metadata->>'environment' environment,
       sentinel.metadata->>'database' database_name,sentinel.metadata->>'issuedAt' issued_at,sentinel.metadata->>'expiresAt' expires_at,
       (SELECT max(retired.created_at)::text FROM public.${SENTINEL_TABLE} retired
         WHERE retired.action=$2 AND retired.entity='rehearsal' AND retired.metadata->>'nonce'=sentinel.metadata->>'nonce') retired_at
     FROM public.${SENTINEL_TABLE} sentinel
     WHERE sentinel.action=$1 AND sentinel.entity='rehearsal' AND sentinel.metadata->>'nonce'=$3`, SENTINEL_ACTION, SENTINEL_RETIRED_ACTION, authorization.nonce);
-  assert(rows.length === 1, "database rehearsal sentinel is absent or ambiguous");
-  validateRehearsalSentinel(authorization, rows[0]);
+  assert(rows.length <= 1, "database rehearsal sentinel is ambiguous");
+  const sentinel = rows[0] ?? null;
+  return { branchId: sentinel?.branch_id ?? null, sentinel };
 }
 
-async function verifyIdentityBeforeMutation(migrator, runtime, unprivileged, authorization) {
-  await verifyConnection(migrator, authorization, "polismart_migrator");
-  await verifyConnection(runtime, authorization, "polismart_runtime");
-  await verifyConnection(unprivileged, authorization, null, false);
+async function verifyMigrationApplied(migrator) {
   const rows = await query(migrator, `SELECT finished_at,rolled_back_at FROM public._prisma_migrations
     WHERE migration_name='0021_campaign_geography_assignment_controls'`);
   assert(rows.length === 1 && rows[0].finished_at && !rows[0].rolled_back_at, "migration 0021 is not applied exactly once");
@@ -211,26 +232,28 @@ async function prepareFixture(db, authorization, behavior) {
 }
 
 async function commitFixtureSetup(db, fixture) {
-  const { ids } = fixture;
+  const { ids, uniqueValues: value } = fixture;
   await db.$transaction(async (tx) => {
     await query(tx, `INSERT INTO public.auth_users(id,email,password_hash,display_name,created_at,updated_at) VALUES
       ($1,$2,'fixture-only','Authorized Fixture',now(),now()),($3,$4,'fixture-only','Unauthorized Fixture',now(),now())`,
-      ids.actor, `${ids.actor}@invalid.example`, ids.unauthorized, `${ids.unauthorized}@invalid.example`);
+      ids.actor, value.actorEmail, ids.unauthorized, value.unauthorizedEmail);
     await query(tx, `INSERT INTO public.organizations(id,name,slug,country,is_demo,created_at,updated_at) VALUES
-      ($1,'I3A Fixture',$2,'Nigeria',true,now(),now()),($3,'I3A Fixture 2',$4,'Nigeria',true,now(),now())`,
-      ids.tenant, `i3a-${fixture.namespace}`, ids.tenant2, `i3a-${fixture.namespace}-2`);
+      ($1,$2,$3,'Nigeria',true,now(),now()),($4,$5,$6,'Nigeria',true,now(),now())`,
+      ids.tenant, value.tenantName, value.tenantSlug, ids.tenant2, value.tenant2Name, value.tenant2Slug);
     await query(tx, `INSERT INTO public.campaigns(id,tenant_id,name,slug,status,is_demo,country,election_type,created_at,updated_at) VALUES
-      ($1,$2,'I3A Fixture','fixture','DRAFT',true,'Nigeria','TEST',now(),now()),
-      ($3,$4,'I3A Fixture 2','fixture-2','DRAFT',true,'Nigeria','TEST',now(),now())`, ids.campaign, ids.tenant, ids.campaign2, ids.tenant2);
+      ($1,$2,$3,$4,'DRAFT',true,'Nigeria','TEST',now(),now()),
+      ($5,$6,$7,$8,'DRAFT',true,'Nigeria','TEST',now(),now())`, ids.campaign, ids.tenant, value.campaignName, value.campaignSlug,
+      ids.campaign2, ids.tenant2, value.campaign2Name, value.campaign2Slug);
     await query(tx, `INSERT INTO public.memberships(id,tenant_id,user_id,role,status,created_at,updated_at) VALUES
       (gen_random_uuid(),$1,$2,'CAMPAIGN_ADMINISTRATOR','ACTIVE',now(),now()),
       (gen_random_uuid(),$1,$3,'ANALYST','SUSPENDED',now(),now())`, ids.tenant, ids.actor, ids.unauthorized);
     await query(tx, `INSERT INTO public.master_geographic_levels(id,country_code,name,order_index,is_active,created_at,updated_at)
-      VALUES($1,'ZQ','Country',0,true,now(),now())`, ids.ghLevel);
+      VALUES($1,$2,$3,$4,true,now(),now())`, ids.ghLevel, value.foreignCountryCode, value.foreignLevelName, value.foreignLevelOrder);
     await query(tx, `INSERT INTO public.master_geographic_areas(id,level_id,parent_id,country_code,name,code,is_active,validation_status,created_at,updated_at) VALUES
-      ($1,$2,NULL,'ZQ','Foreign Fixture','I3A-ZQ',true,'TEST',now(),now()),
-      ($3,$4,$5,'NG','Inactive Fixture',$6,false,'TEST',now(),now())`,
-      ids.ghArea, ids.ghLevel, ids.inactiveArea, fixture.ward.level_id, fixture.lga.id, `I3A-${ids.inactiveArea}`);
+      ($1,$2,NULL,$3,$4,$5,true,'TEST',now(),now()),
+      ($6,$7,$8,'NG',$9,$10,false,'TEST',now(),now())`,
+      ids.ghArea, ids.ghLevel, value.foreignCountryCode, value.foreignAreaName, value.foreignAreaCode,
+      ids.inactiveArea, fixture.ward.level_id, fixture.lga.id, value.inactiveAreaName, value.inactiveAreaCode);
   });
   return fixture;
 }
@@ -377,13 +400,14 @@ async function runScenario(behavior, migrator, runtime, unprivileged, f) {
 }
 
 export async function runCampaignGeographyPostgresBehavior({ behavior, migratorUrl, runtimeUrl, unprivilegedUrl, authorization, genericDatabaseUrl }) {
-  const approved = validateRehearsalConfiguration({ authorization, migratorUrl, runtimeUrl, unprivilegedUrl, genericDatabaseUrl });
+  const configuration = { authorization, migratorUrl, runtimeUrl, unprivilegedUrl, genericDatabaseUrl };
+  validateRehearsalConfiguration(configuration);
   const migrator = new PrismaClient({ datasourceUrl: migratorUrl }); const runtime = new PrismaClient({ datasourceUrl: runtimeUrl });
   const unprivileged = new PrismaClient({ datasourceUrl: unprivilegedUrl });
   try {
-    await runPreMutationGate({
-      verify: () => verifyIdentityBeforeMutation(migrator, runtime, unprivileged, approved),
-      execute: async () => {
+    await runConfiguredHarnessFlow({ configuration,
+      loadVerifiedEvidence: (approved) => loadVerifiedEvidence(migrator, runtime, unprivileged, approved),
+      stages: [() => verifyMigrationApplied(migrator), async (approved) => {
         const identity = await prepareFixture(migrator, approved, behavior);
         await runFixtureLifecycle({ identity,
           setup: (fixture) => commitFixtureSetup(migrator, fixture),
@@ -392,7 +416,7 @@ export async function runCampaignGeographyPostgresBehavior({ behavior, migratorU
           cleanup: (fixture) => cleanupFixture(migrator, fixture),
           verifyCleanup: (fixtureIdentity) => verifyFixtureCleanup(migrator, fixtureIdentity),
         });
-      },
+      }],
     });
   } finally {
     await Promise.allSettled([unprivileged.$disconnect(), runtime.$disconnect(), migrator.$disconnect()]);
