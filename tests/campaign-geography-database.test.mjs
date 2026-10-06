@@ -39,4 +39,8 @@ test("function contracts bound unique input, reject inactive masters, and block 
   assert.equal((sql.match(/a\.is_active AND l\.is_active/g) || []).length >= 2, true);
   assert.match(sql, /An assigned descendant prevents geographic removal/);
   assert.match(sql, /removed_at = NULL/);
+  assert.equal((sql.match(/a\.country_code = v_campaign_country/g) || []).length >= 4, true);
+  assert.equal((sql.match(/Campaign country is unsupported/g) || []).length, 2);
+  assert.equal((sql.match(/WITH RECURSIVE ancestry/g) || []).length, 2);
+  assert.equal((sql.match(/tree\.country_code <> v_campaign_country/g) || []).length, 2);
 });

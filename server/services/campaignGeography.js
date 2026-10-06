@@ -47,6 +47,7 @@ async function controlledMutation(operation) {
     if (
       databaseMessage.includes("master geographic area is inactive or unavailable") ||
       databaseMessage.includes("Master geographic ancestry is invalid") ||
+      databaseMessage.includes("Campaign country is unsupported") ||
       databaseMessage.includes("Campaign geography selection is")
     )
       fail("Campaign geography selection is invalid.", 400, "INVALID_CAMPAIGN_GEOGRAPHY_SELECTION");

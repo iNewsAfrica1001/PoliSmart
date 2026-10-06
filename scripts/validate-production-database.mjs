@@ -5,8 +5,10 @@ import { fileURLToPath } from "node:url";
 import { PrismaClient } from "@prisma/client";
 import {
   RUNTIME_DATABASE_PRIVILEGES,
+  RUNTIME_FUNCTION_PRIVILEGES,
   RUNTIME_SEQUENCE_PRIVILEGES,
 } from "../server/config/databasePrivileges.js";
+import { validateRuntimeFunctions } from "./lib/runtime-function-validation.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const migrations = fs
@@ -28,6 +30,9 @@ const privilegeRows = Object.keys(RUNTIME_DATABASE_PRIVILEGES)
       (privilege) => `(${sqlString(table)}, ${sqlString(privilege)})`,
     ),
   )
+  .join(",\n");
+const functionRows = Object.keys(RUNTIME_FUNCTION_PRIVILEGES)
+  .map((signature) => `(${sqlString(signature)})`)
   .join(",\n");
 try {
   const [connection] = await prisma.$queryRaw`
@@ -113,6 +118,31 @@ try {
     WHERE sequence_schema = 'public'
     ORDER BY sequence_name
   `;
+  const functionPermissions = await prisma.$queryRawUnsafe(`
+    SELECT expected.signature,
+      procedure.oid IS NOT NULL AS exists,
+      owner.rolname AS owner,
+      COALESCE(procedure.prosecdef, false) AS security_definer,
+      COALESCE(procedure.proconfig, ARRAY[]::text[]) AS configuration,
+      CASE WHEN procedure.oid IS NULL THEN false
+        ELSE has_function_privilege('polismart_runtime', procedure.oid, 'EXECUTE') END AS runtime_execute,
+      COALESCE(privileges.public_execute, false) AS public_execute,
+      COALESCE(privileges.unexpected_execute_roles, ARRAY[]::text[]) AS unexpected_execute_roles
+    FROM (VALUES ${functionRows}) AS expected(signature)
+    LEFT JOIN pg_proc procedure ON procedure.oid = to_regprocedure(expected.signature)
+    LEFT JOIN pg_roles owner ON owner.oid = procedure.proowner
+    LEFT JOIN LATERAL (
+      SELECT
+        bool_or(acl.grantee = 0 AND acl.privilege_type = 'EXECUTE') AS public_execute,
+        array_agg(DISTINCT role.rolname ORDER BY role.rolname)
+          FILTER (WHERE acl.privilege_type = 'EXECUTE'
+            AND role.rolname NOT IN ('polismart_runtime', 'polismart_migrator'))
+          AS unexpected_execute_roles
+      FROM aclexplode(COALESCE(procedure.proacl, acldefault('f', procedure.proowner))) acl
+      LEFT JOIN pg_roles role ON role.oid = acl.grantee
+    ) privileges ON true
+    ORDER BY expected.signature
+  `);
   const isolationChecks = await prisma.$queryRaw`
     SELECT
       (SELECT COUNT(*)::int FROM campaigns c
@@ -167,6 +197,10 @@ try {
     const expected = RUNTIME_SEQUENCE_PRIVILEGES[sequence_name]?.includes("USAGE") ?? false;
     return Boolean(usage) === expected ? [] : [`${sequence_name}:USAGE`];
   });
+  const functionPrivilegeErrors = validateRuntimeFunctions(
+    functionPermissions,
+    RUNTIME_FUNCTION_PRIVILEGES,
+  );
   const permissionWarnings = [
     ...(connection.is_superuser ? ["Application role is a superuser."] : []),
     ...(connection.can_create_database ? ["Application role can create databases."] : []),
@@ -180,6 +214,7 @@ try {
     tablePrivilegeErrors.length === 0 &&
     columnPrivilegeErrors.length === 0 &&
     sequencePrivilegeErrors.length === 0 &&
+    functionPrivilegeErrors.length === 0 &&
     Boolean(vector) &&
     migrationHistoryValid &&
     Number(indexStatus[0].invalid) === 0 &&
@@ -222,6 +257,7 @@ try {
           tablePrivilegeErrors,
           columnPrivilegeErrors,
           sequencePrivilegeErrors,
+          functionPrivilegeErrors,
           leastPrivilegeWarnings: permissionWarnings,
         },
         publicData: publicData[0],

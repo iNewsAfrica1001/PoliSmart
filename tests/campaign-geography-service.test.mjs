@@ -56,6 +56,16 @@ test("inaccessible campaigns fail closed and client tenant fields are rejected",
     service.assign({ tenantId, campaignId, actorId, body: { tenantId, masterAreaIds: [areaId] } }),
     (error) => error.status === 400,
   );
+  for (const field of ["actorId", "actor_id", "userId", "user_id", "createdById", "updatedById"])
+    await assert.rejects(
+      service.assign({
+        tenantId,
+        campaignId,
+        actorId,
+        body: { masterAreaIds: [areaId], [field]: "spoofed" },
+      }),
+      (error) => error.status === 400,
+    );
 });
 
 test("bulk validation rejects malformed, unknown, and oversized inputs and deduplicates retry input", async () => {

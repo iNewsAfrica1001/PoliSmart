@@ -9,6 +9,7 @@ import {
   RUNTIME_FUNCTION_PRIVILEGES,
   RUNTIME_SEQUENCE_PRIVILEGES,
 } from "../server/config/databasePrivileges.js";
+import { validateRuntimeFunctions } from "../scripts/lib/runtime-function-validation.mjs";
 
 const migrationRoot = "prisma/migrations";
 const migrationSql = () =>
@@ -172,6 +173,38 @@ test("Campaign Geography controlled functions are the only authorized runtime mu
     assert.deepEqual(RUNTIME_DATABASE_PRIVILEGES[table].tablePrivileges, ["SELECT"]);
     assert.deepEqual(RUNTIME_DATABASE_PRIVILEGES[table].updateColumns, []);
   }
+});
+
+test("runtime function validator accepts exact policy and fails closed on owner, grant, and hardening drift", () => {
+  const rows = Object.keys(RUNTIME_FUNCTION_PRIVILEGES).map((signature) => ({
+    signature,
+    exists: true,
+    owner: "polismart_migrator",
+    security_definer: true,
+    configuration: ["search_path=pg_catalog, public"],
+    runtime_execute: true,
+    public_execute: false,
+    unexpected_execute_roles: [],
+  }));
+  assert.deepEqual(validateRuntimeFunctions(rows, RUNTIME_FUNCTION_PRIVILEGES), []);
+  const drifted = rows.map((row, index) =>
+    index === 0
+      ? { ...row, owner: "polismart_runtime", public_execute: true, unexpected_execute_roles: ["analyst"] }
+      : { ...row, runtime_execute: false, security_definer: false, configuration: [] },
+  );
+  assert.deepEqual(validateRuntimeFunctions(drifted, RUNTIME_FUNCTION_PRIVILEGES), [
+    `${rows[0].signature}:OWNER`,
+    `${rows[0].signature}:PUBLIC_EXECUTE`,
+    `${rows[0].signature}:UNEXPECTED_EXECUTE_ROLE`,
+    `${rows[1].signature}:SECURITY_DEFINER`,
+    `${rows[1].signature}:SEARCH_PATH`,
+    `${rows[1].signature}:RUNTIME_EXECUTE`,
+  ]);
+  const validator = readFileSync("scripts/validate-production-database.mjs", "utf8");
+  assert.match(validator, /RUNTIME_FUNCTION_PRIVILEGES/);
+  assert.match(validator, /functionPrivilegeErrors\.length === 0/);
+  assert.match(validator, /has_function_privilege\('polismart_runtime'/);
+  assert.match(validator, /acl\.grantee = 0/);
 });
 
 test("disabled financial tables receive no runtime privilege", () => {

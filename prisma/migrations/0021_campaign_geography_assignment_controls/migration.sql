@@ -30,6 +30,7 @@ DECLARE
   v_requested uuid[];
   v_target_ids uuid[];
   v_requested_count integer;
+  v_campaign_country text;
   v_added integer;
   v_reactivated integer;
   v_unchanged integer;
@@ -51,11 +52,17 @@ BEGIN
     pg_catalog.hashtextextended(p_tenant_id::text || ':' || p_campaign_id::text, 739204022)
   );
 
-  IF NOT EXISTS (
-    SELECT 1 FROM public.campaigns c
-    WHERE c.id = p_campaign_id AND c.tenant_id = p_tenant_id
-  ) THEN
+  SELECT CASE pg_catalog.upper(pg_catalog.btrim(c.country))
+           WHEN 'NIGERIA' THEN 'NG' WHEN 'NG' THEN 'NG' ELSE NULL
+         END
+    INTO v_campaign_country
+    FROM public.campaigns c
+   WHERE c.id = p_campaign_id AND c.tenant_id = p_tenant_id;
+  IF NOT FOUND THEN
     RAISE EXCEPTION USING ERRCODE = 'P0002', MESSAGE = 'Campaign not found.';
+  END IF;
+  IF v_campaign_country IS NULL THEN
+    RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Campaign country is unsupported.';
   END IF;
   IF NOT EXISTS (
     SELECT 1
@@ -72,7 +79,8 @@ BEGIN
 
   IF (SELECT count(*) FROM public.master_geographic_areas a
       JOIN public.master_geographic_levels l ON l.id = a.level_id AND l.country_code = a.country_code
-      WHERE a.id = ANY(v_requested) AND a.is_active AND l.is_active) <> v_requested_count THEN
+      WHERE a.id = ANY(v_requested) AND a.country_code = v_campaign_country
+        AND a.is_active AND l.is_active) <> v_requested_count THEN
     RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'A master geographic area is inactive or unavailable.';
   END IF;
 
@@ -80,7 +88,8 @@ BEGIN
     SELECT a.id, a.id, a.parent_id, a.level_id, a.country_code, ARRAY[a.id], 0
     FROM public.master_geographic_areas a
     JOIN public.master_geographic_levels l ON l.id = a.level_id AND l.country_code = a.country_code
-    WHERE a.id = ANY(v_requested) AND a.is_active AND l.is_active
+    WHERE a.id = ANY(v_requested) AND a.country_code = v_campaign_country
+      AND a.is_active AND l.is_active
     UNION ALL
     SELECT tree.origin_id, parent.id, parent.parent_id, parent.level_id, parent.country_code,
            tree.path || parent.id, tree.depth + 1
@@ -96,7 +105,8 @@ BEGIN
     JOIN public.master_geographic_levels child_level ON child_level.id = tree.level_id
     LEFT JOIN public.master_geographic_areas parent ON parent.id = tree.parent_id
     LEFT JOIN public.master_geographic_levels parent_level ON parent_level.id = parent.level_id
-    WHERE (tree.parent_id IS NULL AND (child_level.order_index <> 0 OR child_level.name <> 'Country'))
+    WHERE tree.country_code <> v_campaign_country
+       OR (tree.parent_id IS NULL AND (child_level.order_index <> 0 OR child_level.name <> 'Country'))
        OR (tree.parent_id IS NOT NULL AND (
             parent.id IS NULL OR parent.country_code <> tree.country_code OR
             parent_level.order_index <> CASE child_level.order_index
@@ -182,6 +192,7 @@ AS $function$
 DECLARE
   v_requested uuid[];
   v_requested_count integer;
+  v_campaign_country text;
   v_deactivated integer;
   v_unchanged integer;
   v_active_total integer;
@@ -199,11 +210,17 @@ BEGIN
   PERFORM pg_catalog.pg_advisory_xact_lock(
     pg_catalog.hashtextextended(p_tenant_id::text || ':' || p_campaign_id::text, 739204022)
   );
-  IF NOT EXISTS (
-    SELECT 1 FROM public.campaigns c
-    WHERE c.id = p_campaign_id AND c.tenant_id = p_tenant_id
-  ) THEN
+  SELECT CASE pg_catalog.upper(pg_catalog.btrim(c.country))
+           WHEN 'NIGERIA' THEN 'NG' WHEN 'NG' THEN 'NG' ELSE NULL
+         END
+    INTO v_campaign_country
+    FROM public.campaigns c
+   WHERE c.id = p_campaign_id AND c.tenant_id = p_tenant_id;
+  IF NOT FOUND THEN
     RAISE EXCEPTION USING ERRCODE = 'P0002', MESSAGE = 'Campaign not found.';
+  END IF;
+  IF v_campaign_country IS NULL THEN
+    RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Campaign country is unsupported.';
   END IF;
   IF NOT EXISTS (
     SELECT 1
@@ -217,8 +234,50 @@ BEGIN
   END IF;
   IF (SELECT count(*) FROM public.master_geographic_areas a
       JOIN public.master_geographic_levels l ON l.id = a.level_id AND l.country_code = a.country_code
-      WHERE a.id = ANY(v_requested) AND a.is_active AND l.is_active) <> v_requested_count THEN
+      WHERE a.id = ANY(v_requested) AND a.country_code = v_campaign_country
+        AND a.is_active AND l.is_active) <> v_requested_count THEN
     RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'A master geographic area is inactive or unavailable.';
+  END IF;
+
+  IF EXISTS (
+    WITH RECURSIVE ancestry(origin_id, id, parent_id, level_id, country_code, path, depth) AS (
+      SELECT a.id, a.id, a.parent_id, a.level_id, a.country_code, ARRAY[a.id], 0
+      FROM public.master_geographic_areas a
+      JOIN public.master_geographic_levels l
+        ON l.id = a.level_id AND l.country_code = a.country_code
+      WHERE a.id = ANY(v_requested) AND a.country_code = v_campaign_country
+        AND a.is_active AND l.is_active
+      UNION ALL
+      SELECT tree.origin_id, parent.id, parent.parent_id, parent.level_id, parent.country_code,
+             tree.path || parent.id, tree.depth + 1
+      FROM ancestry tree
+      JOIN public.master_geographic_areas parent ON parent.id = tree.parent_id
+      JOIN public.master_geographic_levels parent_level
+        ON parent_level.id = parent.level_id AND parent_level.country_code = parent.country_code
+      WHERE parent.is_active AND parent_level.is_active AND tree.depth < 16
+        AND NOT parent.id = ANY(tree.path)
+    ), invalid AS (
+      SELECT tree.id
+      FROM ancestry tree
+      JOIN public.master_geographic_levels child_level ON child_level.id = tree.level_id
+      LEFT JOIN public.master_geographic_areas parent ON parent.id = tree.parent_id
+      LEFT JOIN public.master_geographic_levels parent_level ON parent_level.id = parent.level_id
+      WHERE tree.country_code <> v_campaign_country
+         OR (tree.parent_id IS NULL AND (child_level.order_index <> 0 OR child_level.name <> 'Country'))
+         OR (tree.parent_id IS NOT NULL AND (
+              parent.id IS NULL OR parent.country_code <> tree.country_code OR
+              parent_level.order_index <> CASE child_level.order_index
+                WHEN 1 THEN 0 WHEN 2 THEN 1 WHEN 5 THEN 2 WHEN 6 THEN 5 ELSE -1 END
+            ))
+    ), roots AS (
+      SELECT origin_id, count(*) FILTER (WHERE parent_id IS NULL) AS root_count
+      FROM ancestry GROUP BY origin_id
+    )
+    SELECT 1 FROM invalid
+    UNION ALL
+    SELECT 1 FROM roots WHERE root_count <> 1
+  ) THEN
+    RAISE EXCEPTION USING ERRCODE = '22023', MESSAGE = 'Master geographic ancestry is invalid.';
   END IF;
 
   IF EXISTS (

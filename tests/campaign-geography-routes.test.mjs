@@ -61,3 +61,28 @@ test("all four reviewed route contracts are mounted", async () => {
   await request(app).post(`/campaign-geography/${campaignId}/assignments`).set(headers).send({ masterAreaIds: [areaId] }).expect(200);
   await request(app).post(`/campaign-geography/${campaignId}/assignments/deactivate`).set(headers).send({ masterAreaIds: [areaId] }).expect(200);
 });
+
+test("mutation actor is derived only from the authenticated session and actor aliases are rejected", async () => {
+  let received;
+  const app = appFor("CAMPAIGN_ADMINISTRATOR", {
+    assign: async (input) => {
+      received = input;
+      if (Object.keys(input.body).some((key) => key !== "masterAreaIds"))
+        throw Object.assign(new Error("Unknown assignment field."), { status: 400 });
+      return { requested: 1 };
+    },
+  });
+  const headers = { "X-Organization-Id": tenantId };
+  await request(app)
+    .post(`/campaign-geography/${campaignId}/assignments`)
+    .set(headers)
+    .send({ masterAreaIds: [areaId] })
+    .expect(200);
+  assert.equal(received.actorId, "actor");
+  for (const field of ["actorId", "actor_id", "userId", "user_id", "createdById", "updatedById"])
+    await request(app)
+      .post(`/campaign-geography/${campaignId}/assignments`)
+      .set(headers)
+      .send({ masterAreaIds: [areaId], [field]: "spoofed-authorized-user" })
+      .expect(400);
+});
