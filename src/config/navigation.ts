@@ -36,6 +36,7 @@ export const navigation: NavigationItem[] = [
   { label: "Media", icon: Radio, page: "media", enabled: true },
   { label: "Communications", icon: MessageSquareText, page: "communications", enabled: true },
   { label: "Campaigns", icon: Megaphone, page: "campaigns", enabled: true },
+  { label: "Team Administration", icon: UsersRound, page: "team", enabled: true },
   { label: "Campaign Geography", icon: MapPinned, page: "campaign-geography", enabled: true },
   { label: "Field Operations", icon: BriefcaseBusiness, page: "field", enabled: true },
   { label: "Volunteers", icon: UsersRound, page: "volunteers", enabled: true },

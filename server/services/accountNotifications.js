@@ -199,7 +199,15 @@ export function createAccountNotificationService(config = {}, options = {}) {
       })
     : null;
 
-  async function send({ email, subject, path, heading, description, actionLabel, html: suppliedHtml }) {
+  async function send({
+    email,
+    subject,
+    path,
+    heading,
+    description,
+    actionLabel,
+    html: suppliedHtml,
+  }) {
     const html =
       suppliedHtml ||
       accountEmailHtml({
@@ -391,6 +399,15 @@ export function createAccountNotificationService(config = {}, options = {}) {
         description: "Use the secure link below to choose a new account password.",
         actionLabel: "Reset password",
         path: `/reset-password?token=${encodeURIComponent(token)}`,
+      }),
+    sendTeamInvitation: ({ email, token, organizationName, role }) =>
+      send({
+        email,
+        subject: `Invitation to join ${organizationName} on PoliSmart Africa AI`,
+        heading: "Join your authorized campaign workspace",
+        description: `You were invited to ${organizationName} as ${String(role).toLowerCase().replaceAll("_", " ")}. This single-use invitation expires in 72 hours. Do not forward it.`,
+        actionLabel: "Accept invitation",
+        path: `/accept-invitation?token=${encodeURIComponent(token)}`,
       }),
     sendPrelaunchLeadNotification: (lead) =>
       send({

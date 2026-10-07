@@ -18,6 +18,8 @@ import { PrelaunchLeadReviewPage } from "./pages/PrelaunchLeadReviewPage";
 import { GeographicManagementPage } from "./pages/GeographicManagementPage";
 import { CampaignGeographyPage } from "./pages/CampaignGeographyPage";
 import { PrivacyOperationsPage } from "./pages/PrivacyOperationsPage";
+import { TeamAdministrationPage } from "./pages/TeamAdministrationPage";
+import { AcceptTeamInvitationPage } from "./pages/AcceptTeamInvitationPage";
 import {
   disabledFeatures,
   loadFeatureAvailability,
@@ -42,6 +44,7 @@ const pageTitles: Record<string, string> = {
   geography: "Geographic Administration",
   "campaign-geography": "Campaign Geography",
   "privacy-operations": "Privacy Operations",
+  team: "Team Administration",
 };
 
 export default function App() {
@@ -73,6 +76,10 @@ export default function App() {
   if (currentUrl.pathname === "/verify-email") {
     document.title = "Verify email | PoliSmart Africa AI";
     return <VerifyEmailPage token={currentUrl.searchParams.get("token") ?? ""} />;
+  }
+  if (currentUrl.pathname === "/accept-invitation") {
+    document.title = "Accept team invitation | PoliSmart Africa AI";
+    return <AcceptTeamInvitationPage token={currentUrl.searchParams.get("token") ?? ""} />;
   }
   return <WorkspaceApp />;
 }
@@ -132,6 +139,7 @@ function WorkspaceApp() {
       canReadFundraising={membership?.canReadFundraising === true}
       canReviewPrelaunchLeads={membership?.canReviewPrelaunchLeads === true}
       canViewCampaignGeography={membership?.canViewCampaignGeography === true}
+      canManageTeam={membership?.canManageTeam === true}
       tenantId={membership?.tenantId || ""}
       features={features}
       onNavigate={setPage}
@@ -193,6 +201,15 @@ function WorkspaceApp() {
           <section className="restricted-state">
             <h1>Restricted access</h1>
             <p>Privacy operations require authorized internal administration.</p>
+          </section>
+        )
+      ) : page === "team" ? (
+        membership?.canManageTeam ? (
+          <TeamAdministrationPage user={user} />
+        ) : (
+          <section className="restricted-state">
+            <h1>Restricted access</h1>
+            <p>Team Administration requires authorized tenant administration.</p>
           </section>
         )
       ) : (

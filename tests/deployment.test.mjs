@@ -237,10 +237,7 @@ test("Vercel routes APIs before the SPA and excludes raw survey data", () => {
 
 test("Vercel and API responses use the aligned enforced browser security policy", () => {
   const config = JSON.parse(fs.readFileSync(path.join(root, "vercel.json"), "utf8"));
-  const serverHeaders = fs.readFileSync(
-    path.join(root, "server", "middleware", "http.js"),
-    "utf8",
-  );
+  const serverHeaders = fs.readFileSync(path.join(root, "server", "middleware", "http.js"), "utf8");
   const globalHeaders = config.headers.find((entry) => entry.source === "/(.*)")?.headers || [];
   const header = (name) => globalHeaders.find((entry) => entry.key === name)?.value;
   const csp = header("Content-Security-Policy");
@@ -269,7 +266,10 @@ test("Vercel and API responses use the aligned enforced browser security policy"
   }
   assert.doesNotMatch(csp, /unsafe-eval|\bhttps:|\bdata:|\bblob:|(?:^|\s)\*(?:\s|;|$)/);
   assert.doesNotMatch(serverHeaders, /connect-src[^;]*(?:ws:|wss:)/);
-  assert.equal(config.headers.some((entry) => entry.source === "/assets/:path*"), true);
+  assert.equal(
+    config.headers.some((entry) => entry.source === "/assets/:path*"),
+    true,
+  );
 });
 
 test("password-reset frontend preserves the email token and submits the backend contract", () => {
@@ -406,7 +406,10 @@ test("public homepage presents accurate V1 marketing while login remains separat
   assert.match(app, /MarketingHomePage/);
   assert.match(homepage, /Grounded Intelligence\./);
   assert.match(homepage, /Free Early Access/);
-  assert.match(homepage, /currently available to approved organizations during our[\s\S]*early-access period/);
+  assert.match(
+    homepage,
+    /currently available to approved organizations during our[\s\S]*early-access period/,
+  );
   assert.match(homepage, /Paid plans will be introduced in a future release/);
   assert.match(homepage, /AI-powered political intelligence built for African realities\./);
   assert.match(homepage, /Request Early Access/);
@@ -423,7 +426,10 @@ test("public homepage presents accurate V1 marketing while login remains separat
   assert.match(homepage, /Observed Data/);
   assert.match(homepage, /AI Interpretation/);
   assert.match(homepage, /Designed for responsible political intelligence/);
-  assert.match(homepage, /No donor scoring, sensitive-trait profiling or personalized political targeting/);
+  assert.match(
+    homepage,
+    /No donor scoring, sensitive-trait profiling or personalized political targeting/,
+  );
   assert.match(homepage, /Built for African political and governance environments\./);
   assert.match(homepage, /not endorsed by, affiliated with or partnered with/);
   assert.match(homepage, /Reports/);
@@ -456,7 +462,10 @@ test("pre-launch public forms collect limited data with consent and privacy acce
   assert.doesNotMatch(page, /card number|CVV|bank account|payment token/i);
   assert.match(route, /response\.status\(202\)/);
   assert.match(route, /createPrelaunchReviewRouter/);
-  assert.match(route, /requireSession, requireMembershipPermission\(PERMISSIONS\.PLATFORM_AUDIT_READ\)/);
+  assert.match(
+    route,
+    /requireSession, requireMembershipPermission\(PERMISSIONS\.PLATFORM_AUDIT_READ\)/,
+  );
   assert.match(
     fs.readFileSync(path.join(root, "server", "config", "rateLimits.js"), "utf8"),
     /prelaunchLead/,
@@ -465,7 +474,10 @@ test("pre-launch public forms collect limited data with consent and privacy acce
 
 test("Stage 4 legal pages accurately describe V1 and remain owner-review drafts", () => {
   const app = fs.readFileSync(path.join(root, "src", "App.tsx"), "utf8");
-  const login = fs.readFileSync(path.join(root, "src", "pages", "LoginPage.tsx"), "utf8");
+  const invitation = fs.readFileSync(
+    path.join(root, "src", "pages", "AcceptTeamInvitationPage.tsx"),
+    "utf8",
+  );
   const shell = fs.readFileSync(
     path.join(root, "src", "components", "layout", "AppShell.tsx"),
     "utf8",
@@ -474,8 +486,8 @@ test("Stage 4 legal pages accurately describe V1 and remain owner-review drafts"
 
   assert.match(app, /currentUrl\.pathname === "\/privacy"/);
   assert.match(app, /currentUrl\.pathname === "\/terms"/);
-  assert.match(login, /acknowledge the <a href="\/privacy">Privacy Policy<\/a>/);
-  assert.match(login, /No consent option is pre-selected/);
+  assert.match(invitation, /acknowledge the <a href="\/privacy">Privacy Policy<\/a>/);
+  assert.match(invitation, /No consent option is pre-selected/);
   assert.match(shell, /href="\/privacy">Privacy<\/a>/);
   assert.match(shell, /href="\/terms">Terms<\/a>/);
   assert.match(legal, /AI-generated content may contain errors/);
@@ -492,7 +504,10 @@ test("Stage 4 legal pages accurately describe V1 and remain owner-review drafts"
   assert.match(legal, /Archived records are removed from active views but\s+remain stored/);
   assert.match(legal, /not\s+established a universal jurisdiction-specific retention period/);
   assert.match(legal, /PoliSmart is not a payment processor/);
-  assert.match(legal, /does not automatically determine whether a contribution is legally\s+permissible/);
+  assert.match(
+    legal,
+    /does not automatically determine whether a contribution is legally\s+permissible/,
+  );
   assert.match(legal, /country setting provides product context such as local-currency defaults/);
   assert.match(legal, /does not determine country-specific contribution limits/);
   assert.match(legal, /campaign-finance\s+requirements, fundraising recordkeeping and reporting/);
@@ -512,21 +527,19 @@ test("Stage 4 legal pages accurately describe V1 and remain owner-review drafts"
   assert.doesNotMatch(legal, /sk-(?:proj-)?[A-Za-z0-9_-]{20,}/);
 });
 
-test("login exposes safe password-reset requests and public registration", () => {
+test("login exposes safe recovery while public registration is disabled", () => {
   const pageSource = fs.readFileSync(path.join(root, "src", "pages", "LoginPage.tsx"), "utf8");
   const authSource = fs.readFileSync(path.join(root, "src", "lib", "auth.ts"), "utf8");
   assert.match(pageSource, /onClick=\{\(\) => changeMode\("forgot"\)\}/);
   assert.doesNotMatch(pageSource, /Forgot password\?<\/button>\s*\n?\s*<\/div>/);
   assert.match(pageSource, /If the account exists, reset instructions will be sent\./);
   assert.match(authSource, /\/api\/auth\/password-reset\/request/);
-  assert.match(authSource, /\/api\/auth\/register/);
-  assert.match(authSource, /REGISTRATION_NEUTRAL_MESSAGE/);
-  assert.match(pageSource, /setConfirmation\(REGISTRATION_NEUTRAL_MESSAGE\)/);
-  assert.doesNotMatch(pageSource, /setConfirmation\(result\.message\)/);
-  assert.match(pageSource, /Create a new organization account/);
+  assert.doesNotMatch(authSource, /\/api\/auth\/register/);
+  assert.doesNotMatch(pageSource, /Create a new organization account|changeMode\("register"\)/);
+  assert.match(pageSource, /Team invitations are managed by your organization administrator/);
 });
 
-test("Stage 2 onboarding guides a new organization without changing security boundaries", () => {
+test("Stage 2 onboarding guides invited users without changing security boundaries", () => {
   const app = fs.readFileSync(path.join(root, "src", "App.tsx"), "utf8");
   const login = fs.readFileSync(path.join(root, "src", "pages", "LoginPage.tsx"), "utf8");
   const dashboard = fs.readFileSync(path.join(root, "src", "pages", "DashboardPage.tsx"), "utf8");
@@ -538,9 +551,8 @@ test("Stage 2 onboarding guides a new organization without changing security bou
   );
   const navigation = fs.readFileSync(path.join(root, "src", "config", "navigation.ts"), "utf8");
 
-  assert.match(login, /Authorized account owner/);
-  assert.match(login, /12–128 characters with an uppercase letter, lowercase letter, and number/);
-  assert.match(login, /open the time-limited link/);
+  assert.doesNotMatch(login, /Authorized account owner|Create a new organization account/);
+  assert.match(app, /AcceptTeamInvitationPage/);
   assert.match(login, /Resend verification email/);
   assert.match(dashboard, /Create or select a campaign/);
   assert.match(dashboard, /campaign-scoped intelligence/);
@@ -668,10 +680,7 @@ async function capturePrismaError({ isProduction, includePrismaDiagnostics }) {
     app.get("/api/test", () => {
       throw error;
     });
-    app.use(
-      "/api",
-      createApiErrorHandler({ isProduction, includePrismaDiagnostics }),
-    );
+    app.use("/api", createApiErrorHandler({ isProduction, includePrismaDiagnostics }));
     const response = await request(app).get("/api/test").expect(500);
     return { response, entry: JSON.parse(entries.at(-1)) };
   } finally {

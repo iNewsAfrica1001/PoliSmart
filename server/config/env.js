@@ -51,6 +51,8 @@ export function loadConfig(rootDir) {
     authSecret ||
     jwtSecret ||
     (isProduction ? "" : "development-only-session-secret-change-me");
+  const teamInvitationSecret =
+    process.env.TEAM_INVITATION_SECRET || authSecret || sessionSecret;
   const clientOrigins = parseList(process.env.CLIENT_ORIGIN, defaultOrigins);
   const productionWarnings = [];
 
@@ -58,6 +60,8 @@ export function loadConfig(rootDir) {
     productionWarnings.push("JWT_SECRET must be at least 32 characters.");
   if (isProduction && sessionSecret.length < 32)
     productionWarnings.push("SESSION_SECRET must be at least 32 characters.");
+  if (isProduction && teamInvitationSecret.length < 32)
+    productionWarnings.push("TEAM_INVITATION_SECRET must be at least 32 characters.");
   if (isProduction && publicUrl.startsWith("http://"))
     productionWarnings.push("PUBLIC_APP_URL should use HTTPS in production.");
   if (isProduction && !process.env.OPENAI_API_KEY)
@@ -86,6 +90,7 @@ export function loadConfig(rootDir) {
     jwtSecret,
     authSecret: authSecret || sessionSecret,
     sessionSecret,
+    teamInvitationSecret,
     databaseUrl: process.env.DATABASE_URL || "",
     redisUrl: process.env.REDIS_URL || "",
     rateLimitRestUrl: process.env.RATE_LIMIT_KV_REST_API_URL || "",
@@ -137,6 +142,8 @@ export function validateProductionEnvironment(config) {
   if (!config.openAiApiKey) errors.push("OPENAI_API_KEY is required.");
   if (!config.openAiModel.trim()) errors.push("OPENAI_MODEL is required.");
   if (config.authSecret.length < 32) errors.push("AUTH_SECRET must be at least 32 characters.");
+  if (config.teamInvitationSecret.length < 32)
+    errors.push("TEAM_INVITATION_SECRET must be at least 32 characters.");
   if (!config.publicUrl.startsWith("https://")) errors.push("APP_URL must use HTTPS.");
   if (config.storageProvider !== "vercel-blob")
     errors.push("STORAGE_PROVIDER must be vercel-blob on Vercel.");

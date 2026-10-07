@@ -69,20 +69,5 @@ export function createGovernanceRepository(db) {
       }),
     listErrors: (tenantId) =>
       db.aiErrorReport.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 250 }),
-    updateMembershipRole: (tenantId, id, role) =>
-      db.membership.updateMany({ where: { id, tenantId }, data: { role } }),
-    findMembership: (tenantId, id) =>
-      db.membership.findFirst({ where: { id, tenantId }, select: { id: true, role: true } }),
-    async inviteMembership(tenantId, email, role) {
-      const user = await db.authUser.findUnique({ where: { email } });
-      if (!user) return null;
-      return db.membership.upsert({
-        where: { tenantId_userId: { tenantId, userId: user.id } },
-        create: { tenantId, userId: user.id, role, status: "INVITED" },
-        update: { role, status: "INVITED" },
-      });
-    },
-    activateMembershipRole: (tenantId, id, role) =>
-      db.membership.updateMany({ where: { id, tenantId }, data: { role, status: "ACTIVE" } }),
   };
 }

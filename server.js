@@ -29,6 +29,7 @@ import {
 import { createPrelaunchReviewRouter, createPrelaunchRouter } from "./server/routes/prelaunch.js";
 import { createPrivacyOperationsRouter } from "./server/routes/privacyOperations.js";
 import { createCampaignGeographyRouter } from "./server/routes/campaignGeography.js";
+import { createTeamAdministrationRouter } from "./server/routes/teamAdministration.js";
 import {
   authenticateRequests,
   requireSession,
@@ -48,6 +49,7 @@ import { createFundraisingRepository } from "./server/repositories/fundraisingRe
 import { createPrelaunchLeadRepository } from "./server/repositories/prelaunchLeadRepository.js";
 import { createPrivacyOperationsRepository } from "./server/repositories/privacyOperationsRepository.js";
 import { createCampaignGeographyRepository } from "./server/repositories/campaignGeographyRepository.js";
+import { createTeamAdministrationRepository } from "./server/repositories/teamAdministrationRepository.js";
 import { createAuthenticationService } from "./server/services/authentication.js";
 import { createAccountNotificationService } from "./server/services/accountNotifications.js";
 import { createKnowledgeBaseService } from "./server/services/knowledgeBase.js";
@@ -55,6 +57,7 @@ import { createAiProvider } from "./server/services/aiProvider.js";
 import { createAiAssistantService } from "./server/services/aiAssistant.js";
 import { createIntelligenceWorkflowService } from "./server/services/intelligenceWorkflows.js";
 import { createCampaignGeographyService } from "./server/services/campaignGeography.js";
+import { createTeamAdministrationService } from "./server/services/teamAdministration.js";
 import { GEOGRAPHIC_IMPORT_LIMITS } from "./server/services/geographicManagement.js";
 import { createGovernanceService } from "./server/services/governance.js";
 import { createDocumentStorage } from "./server/services/documentStorage.js";
@@ -120,6 +123,13 @@ const governanceRepository = createGovernanceRepository(prisma);
 const governanceService = createGovernanceService(governanceRepository);
 const aiProvider = createAiProvider(config);
 const campaignGeographyRepository = createCampaignGeographyRepository(prisma);
+const teamAdministrationService = createTeamAdministrationService(
+  createTeamAdministrationRepository(prisma),
+  {
+  tokenSecret: config.teamInvitationSecret,
+    notifications,
+  },
+);
 const aiService = createAiAssistantService({
   repository: createAiRepository(prisma),
   geographyRepository: campaignGeographyRepository,
@@ -269,6 +279,33 @@ app.use("/api/campaigns", createCampaignRouter(createCampaignRepository(prisma))
 app.use(
   "/api/campaign-geography",
   createCampaignGeographyRouter(createCampaignGeographyService(campaignGeographyRepository)),
+);
+app.use(
+  "/api/team",
+  createTeamAdministrationRouter(teamAdministrationService, {
+    origins: config.clientOrigins,
+    rateLimiters: {
+      create: sharedLimiter({
+        purpose: "team-invitation-create",
+        policy: RATE_LIMIT_POLICIES.teamInvitationCreate,
+        identifiers: (request) => [
+          request.auth?.user.id,
+          request.tenant?.id,
+          rateLimitService.hash(normalizeEmail(request.body?.email)),
+        ],
+      }),
+      resend: sharedLimiter({
+        purpose: "team-invitation-resend",
+        policy: RATE_LIMIT_POLICIES.teamInvitationResend,
+        identifiers: (request) => [request.auth?.user.id, request.tenant?.id, request.params.id],
+      }),
+      accept: sharedLimiter({
+        purpose: "team-invitation-accept",
+        policy: RATE_LIMIT_POLICIES.teamInvitationAccept,
+        identifiers: (request) => [request.ip, rateLimitService.hash(request.body?.token)],
+      }),
+    },
+  }),
 );
 app.use(
   "/api/search",

@@ -132,34 +132,10 @@ test("database migration makes security and AI governance logs append-only", () 
   assert.match(migration, /BEFORE UPDATE OR DELETE/);
 });
 
-test("permission changes are always tenant scoped", async () => {
-  let query;
-  const repository = createGovernanceRepository({
-    membership: {
-      updateMany: async (value) => {
-        query = value;
-        return { count: 1 };
-      },
-    },
-  });
-  await repository.updateMembershipRole("tenant-a", "membership-a", "ANALYST");
-  assert.deepEqual(query.where, { id: "membership-a", tenantId: "tenant-a" });
-});
-
-test("organization invitations create an invited tenant membership for a registered user", async () => {
-  let upsert;
-  const repository = createGovernanceRepository({
-    authUser: { findUnique: async () => ({ id: "user-b" }) },
-    membership: {
-      upsert: async (query) => {
-        upsert = query;
-        return { id: "membership-b" };
-      },
-    },
-  });
-  const result = await repository.inviteMembership("tenant-a", "new@example.test", "ANALYST");
-  assert.equal(result.id, "membership-b");
-  assert.equal(upsert.create.tenantId, "tenant-a");
-  assert.equal(upsert.create.status, "INVITED");
-  assert.equal(upsert.create.role, "ANALYST");
+test("legacy governance membership mutations are absent", () => {
+  const repository = createGovernanceRepository({});
+  assert.equal("updateMembershipRole" in repository, false);
+  assert.equal("inviteMembership" in repository, false);
+  const route = readFileSync("server/routes/governance.js", "utf8");
+  assert.doesNotMatch(route, /memberships\/(?:invite|:id\/role)/);
 });

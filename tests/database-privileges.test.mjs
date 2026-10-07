@@ -75,12 +75,12 @@ test("runtime geographic updates allow required fields and prohibit provenance m
     );
 });
 
-test("migrations 0015-0020 exactly implement the reviewed table and column policy", () => {
+test("migrations 0015-0022 exactly implement the reviewed table and column policy", () => {
   const sql = readFileSync(
     "prisma/migrations/0015_runtime_privilege_catalog/migration.sql",
     "utf8",
   );
-  const grantsSql = `${sql}\n${readFileSync("prisma/migrations/0016_geographic_management/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0017_geographic_provenance_retrieval_date/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0018_command_center_reference_table_read_privileges/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0019_privacy_operations_controls/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0020_campaign_geography_master_assignment_schema/migration.sql", "utf8")}`;
+  const grantsSql = `${sql}\n${readFileSync("prisma/migrations/0016_geographic_management/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0017_geographic_provenance_retrieval_date/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0018_command_center_reference_table_read_privileges/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0019_privacy_operations_controls/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0020_campaign_geography_master_assignment_schema/migration.sql", "utf8")}\n${readFileSync("prisma/migrations/0022_team_invitations/migration.sql", "utf8")}`;
   const revokedTables = [
     ...grantsSql.matchAll(/REVOKE ALL PRIVILEGES ON TABLE([\s\S]*?)FROM "polismart_runtime";/g),
   ].flatMap((match) => identifiers(match[1]));
@@ -193,7 +193,12 @@ test("runtime function validator accepts exact policy and fails closed on owner,
   assert.deepEqual(validateRuntimeFunctions(rows, RUNTIME_FUNCTION_PRIVILEGES), []);
   const drifted = rows.map((row, index) =>
     index === 0
-      ? { ...row, owner: "polismart_runtime", public_execute: true, unexpected_execute_roles: ["analyst"] }
+      ? {
+          ...row,
+          owner: "polismart_runtime",
+          public_execute: true,
+          unexpected_execute_roles: ["analyst"],
+        }
       : { ...row, runtime_execute: false, security_definer: false, configuration: [] },
   );
   assert.deepEqual(validateRuntimeFunctions(drifted, RUNTIME_FUNCTION_PRIVILEGES), [
@@ -223,18 +228,20 @@ test("runtime function validator accepts exact policy and fails closed on owner,
 });
 
 test("protected geography table validator checks ownership and every effective write privilege", () => {
-  const rows = ["master_geographic_levels", "master_geographic_areas", "campaign_geographic_assignments"].map(
-    (table_name) => ({
-      table_name,
-      owner: "polismart_migrator",
-      runtime_owner: false,
-      select_privilege: true,
-      insert_privilege: false,
-      update_privilege: false,
-      delete_privilege: false,
-      truncate_privilege: false,
-    }),
-  );
+  const rows = [
+    "master_geographic_levels",
+    "master_geographic_areas",
+    "campaign_geographic_assignments",
+  ].map((table_name) => ({
+    table_name,
+    owner: "polismart_migrator",
+    runtime_owner: false,
+    select_privilege: true,
+    insert_privilege: false,
+    update_privilege: false,
+    delete_privilege: false,
+    truncate_privilege: false,
+  }));
   assert.deepEqual(validateProtectedGeographyTables(rows), []);
   const drift = rows.map((row, index) =>
     index === 0

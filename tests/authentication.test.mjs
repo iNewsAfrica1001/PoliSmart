@@ -215,6 +215,7 @@ function registrationTestApp(authService, registrationTiming = {}) {
       authService,
       config: { sessionSecret: "test-only-session-secret-that-is-long-enough" },
       registrationTiming,
+      allowPublicRegistration: true,
     }),
   );
   app.use(createApiErrorHandler({ isProduction: true }));
@@ -542,7 +543,9 @@ test("registration suppresses unique details but preserves validation errors", a
   const invalidApp = registrationTestApp(
     {
       register: async () =>
-        Promise.reject(Object.assign(new Error("A valid email address is required."), { status: 400 })),
+        Promise.reject(
+          Object.assign(new Error("A valid email address is required."), { status: 400 }),
+        ),
     },
     { minimumMs: 0, jitterMs: 0 },
   );

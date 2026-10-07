@@ -45,6 +45,7 @@ function publicUser(user) {
         canApproveKnowledge: hasPermission({ role }, PERMISSIONS.KNOWLEDGE_APPROVE),
         canViewCampaignGeography: hasPermission({ role }, PERMISSIONS.CAMPAIGN_GEOGRAPHY_VIEW),
         canManageCampaignGeography: hasPermission({ role }, PERMISSIONS.CAMPAIGN_GEOGRAPHY_MANAGE),
+        canManageTeam: hasPermission({ role }, PERMISSIONS.ORGANIZATION_USERS_MANAGE),
         canReadFundraising: hasPermission({ role }, PERMISSIONS.FUNDRAISING_READ),
         canManageFundraising: hasPermission({ role }, PERMISSIONS.FUNDRAISING_MANAGE),
         canArchiveFundraising: hasPermission({ role }, PERMISSIONS.FUNDRAISING_ARCHIVE),
@@ -65,6 +66,7 @@ export function createAuthRouter({
   governance,
   registrationTiming,
   rateLimiters = {},
+  allowPublicRegistration = false,
 }) {
   const router = Router();
   const limited = (name) => rateLimiters[name] || noRateLimit;
@@ -73,23 +75,18 @@ export function createAuthRouter({
     limited("registration"),
     asyncRoute(async (request, response) => {
       const startedAt = Date.now();
-      try {
-        await authService.register(request.body);
-      } catch (error) {
-        if (error.code !== "P2002") throw error;
-        console.info(
-          JSON.stringify({
-            at: new Date().toISOString(),
-            level: "info",
-            event: "registration",
-            code: "UNIQUE_CONSTRAINT_SUPPRESSED",
-            requestId: request.id,
-          }),
-        );
+      if (allowPublicRegistration) {
+        try {
+          await authService.register(request.body);
+        } catch (error) {
+          if (error.code !== "P2002") throw error;
+        }
       }
       await normalizeRegistrationTiming(startedAt, registrationTiming);
       response.status(202).json({
-        message: REGISTRATION_NEUTRAL_MESSAGE,
+        message: allowPublicRegistration
+          ? REGISTRATION_NEUTRAL_MESSAGE
+          : "Workspace access is available by authorized team invitation only.",
       });
     }),
   );

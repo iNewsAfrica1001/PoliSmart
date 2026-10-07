@@ -1902,6 +1902,13 @@ textarea:focus-visible {
   color: var(--green);
   font-weight: 700;
 }
+
+.team-admin { padding: 2rem; display: grid; gap: 1.5rem; }
+.team-invite-form, .team-card { background: var(--surface, #fff); border: 1px solid #d9e0e8; border-radius: .75rem; padding: 1rem; display: grid; gap: .65rem; }
+.team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; }
+.team-card button, .team-invite-form button { min-height: 2.75rem; }
+.team-card select, .team-invite-form select, .team-invite-form input { min-height: 2.75rem; width: 100%; }
+@media (max-width: 640px) { .team-admin { padding: 1rem; } .team-grid { grid-template-columns: 1fr; } }
 .reset-success {
   width: min(420px, 100%);
 }

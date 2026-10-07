@@ -16,6 +16,7 @@ type AppShellProps = {
   canReadFundraising?: boolean;
   canReviewPrelaunchLeads?: boolean;
   canViewCampaignGeography?: boolean;
+  canManageTeam?: boolean;
   tenantId: string;
   features: FeatureAvailability;
 };
@@ -38,6 +39,7 @@ export function AppShell({
   canReadFundraising = false,
   canReviewPrelaunchLeads = false,
   canViewCampaignGeography = false,
+  canManageTeam = false,
   tenantId,
   features,
 }: AppShellProps) {
@@ -80,6 +82,7 @@ export function AppShell({
                 (item.page !== "fundraising" || canReadFundraising) &&
                 (item.page !== "prelaunch-leads" || canReviewPrelaunchLeads) &&
                 (item.page !== "campaign-geography" || canViewCampaignGeography) &&
+                (item.page !== "team" || canManageTeam) &&
                 (item.page !== "geography" || role === "SUPER_ADMINISTRATOR") &&
                 (item.page !== "privacy-operations" || role === "SUPER_ADMINISTRATOR") &&
                 (!item.feature || features[item.feature] === true),

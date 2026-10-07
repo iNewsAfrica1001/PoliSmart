@@ -65,16 +65,30 @@ these controls through database edits, alternate endpoints, or client-side manip
 
 ## 3. User administration
 
-### Registration and verification
+### Invitation, account creation, and verification
 
-1. From the public sign-in page, select **Create a new organization account**.
-2. Enter the authorized account owner's full name, organization name, country, work email, and a
-   password that meets the displayed requirements.
-3. Registration creates an isolated organization and a Campaign Administrator membership.
-4. The account remains unable to sign in until the time-limited, single-use email-verification link
-   is confirmed at `/verify-email`.
-5. If needed, use **Resend verification email**. The response is deliberately neutral and must not
-   reveal whether an address is registered.
+Public workspace self-registration is disabled. Authorized Campaign Administrators and Super
+Administrators use **Team Administration** to invite members within the selected organization.
+Campaign Administrators may assign only the subordinate roles displayed by the server; only a Super
+Administrator may assign Campaign Administrator, and Team Administration never manages the Super
+Administrator role.
+
+1. Enter the intended recipient's work email and an allowed role.
+2. The recipient receives a single-use invitation that expires after 72 hours. Resending replaces
+   and invalidates the previous link; administrators may also revoke a pending invitation.
+3. A new invitee establishes a policy-compliant password through the invitation. An existing user
+   signs in with the exact invited address and accepts without creating a duplicate identity.
+4. Invitation acceptance creates an active membership in the inviting organization. It never
+   creates another organization or campaign.
+5. Use the Team Administration member list for authorized role changes, suspension, and
+   reactivation. These changes sign the affected member out so new authorization takes effect.
+
+Never share or request an invitation token. Expired, revoked, replaced, used, wrong-recipient, and
+cross-tenant invitations fail closed. The last required Campaign Administrator and an
+administrator's own membership cannot be suspended or demoted through the normal workflow.
+
+**Resend verification email** remains available for pre-existing unverified accounts. Its response
+is deliberately neutral and must not reveal whether an address is registered.
 
 Invalid, expired, reused, and missing verification tokens fail safely. Never mark an account
 verified manually merely to resolve a support request.
