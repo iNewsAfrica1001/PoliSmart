@@ -32,6 +32,8 @@ export type SessionUser = {
     role: string;
     canCreateEvents?: boolean;
     canCreateVolunteers?: boolean;
+    canManageField?: boolean;
+    canManageVolunteers?: boolean;
     canReadCompliance?: boolean;
     canReviewPrelaunchLeads?: boolean;
     canManagePolicy?: boolean;

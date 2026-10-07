@@ -34,6 +34,32 @@ export type OperationsItem = {
   dueAt?: string;
   type?: string;
   venue?: string;
+  ownerId?: string;
+  owner?: { displayName: string };
+  geographicAreaId?: string;
+  geographicArea?: { name: string };
+};
+export type VolunteerRecord = {
+  id: string;
+  displayName: string;
+  contactAuthorized: boolean;
+  email?: string;
+  phone?: string;
+  availability: Record<string, unknown>;
+  trainingStatus: string;
+  languages: string[];
+  skills: string[];
+};
+export type ManagementOptions = {
+  members: Array<{ id: string; displayName: string }>;
+  tasks: Array<{ id: string; title: string }>;
+  events: Array<{ id: string; title: string }>;
+};
+export type EventGeographyOption = {
+  id: string;
+  name: string;
+  level: string;
+  parentId: string | null;
 };
 export const activeTenant = (user: SessionUser) => user.memberships[0]?.tenantId ?? "";
 export const operationsApi = {
@@ -55,16 +81,60 @@ export const operationsApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  update: (
+    tenantId: string,
+    campaignId: string,
+    kind: string,
+    id: string,
+    data: Record<string, unknown>,
+  ) =>
+    request<{ updated: true }>(tenantId, `/api/operations/${campaignId}/${kind}/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  addDependency: (tenantId: string, campaignId: string, taskId: string, dependsOnTaskId: string) =>
+    request(tenantId, `/api/operations/${campaignId}/tasks/${taskId}/dependencies`, {
+      method: "POST",
+      body: JSON.stringify({ dependsOnTaskId }),
+    }),
   volunteers: (tenantId: string) =>
     request<{
-      volunteers: Array<{
-        id: string;
-        displayName: string;
-        trainingStatus: string;
-        languages: string[];
-        skills: string[];
-      }>;
+      volunteers: VolunteerRecord[];
     }>(tenantId, "/api/operations/volunteers/list"),
   createVolunteer: (tenantId: string, data: Record<string, unknown>) =>
     request(tenantId, "/api/operations/volunteers", { method: "POST", body: JSON.stringify(data) }),
+  updateVolunteer: (tenantId: string, id: string, data: Record<string, unknown>) =>
+    request<{ updated: true }>(tenantId, `/api/operations/volunteers/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  managementOptions: (tenantId: string, campaignId: string) =>
+    request<ManagementOptions>(tenantId, `/api/operations/${campaignId}/management-options`),
+  assignVolunteer: (
+    tenantId: string,
+    campaignId: string,
+    data: { volunteerId: string; taskId?: string; title: string; status: string },
+  ) =>
+    request(tenantId, `/api/operations/${campaignId}/assignments`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  addEventParticipant: (
+    tenantId: string,
+    campaignId: string,
+    eventId: string,
+    data: { volunteerId: string; status: string },
+  ) =>
+    request(tenantId, `/api/operations/${campaignId}/events/${eventId}/participants`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  eventGeography: (tenantId: string, campaignId: string, search = "") => {
+    const query = new URLSearchParams();
+    if (search) query.set("search", search);
+    return request<{ items: EventGeographyOption[] }>(
+      tenantId,
+      `/api/operations/${campaignId}/event-geography?${query}`,
+    );
+  },
 };

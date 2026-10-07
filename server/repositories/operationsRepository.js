@@ -28,7 +28,12 @@ export function createOperationsRepository(database, campaignGeographyRepository
       { status: 400 },
     );
   };
+  async function assertCampaign(tenantId, campaignId) {
+    if ((await database.campaign.count({ where: { id: campaignId, tenantId } })) !== 1)
+      rejectReference();
+  }
   async function assertReferences(tenantId, campaignId, kind, data) {
+    await assertCampaign(tenantId, campaignId);
     if (
       data.ownerId &&
       (await database.membership.count({
@@ -102,6 +107,11 @@ export function createOperationsRepository(database, campaignGeographyRepository
     list(tenantId, campaignId, kind) {
       return scoped(kind).findMany({
         where: { tenantId, campaignId },
+        ...(kind === "tasks"
+          ? { include: { owner: { select: { displayName: true } } } }
+          : kind === "events"
+            ? { include: { geographicArea: { select: { name: true } } } }
+            : {}),
         orderBy: { createdAt: "desc" },
       });
     },
@@ -145,7 +155,8 @@ export function createOperationsRepository(database, campaignGeographyRepository
         );
       return scoped(kind).create({ data: { ...data, tenantId, campaignId } });
     },
-    update(tenantId, campaignId, kind, id, data) {
+    async update(tenantId, campaignId, kind, id, data) {
+      await assertReferences(tenantId, campaignId, kind, data);
       return scoped(kind).updateMany({ where: { id, tenantId, campaignId }, data });
     },
     dashboard(tenantId, campaignId) {
@@ -493,6 +504,7 @@ export function createOperationsRepository(database, campaignGeographyRepository
       return database.campaignLeader.create({ data: { ...data, tenantId, campaignId } });
     },
     async addDependency(tenantId, campaignId, taskId, dependsOnTaskId) {
+      await assertCampaign(tenantId, campaignId);
       const count = await database.campaignTask.count({
         where: { id: { in: [taskId, dependsOnTaskId] }, tenantId, campaignId },
       });
@@ -503,6 +515,7 @@ export function createOperationsRepository(database, campaignGeographyRepository
       return database.taskDependency.create({ data: { tenantId, taskId, dependsOnTaskId } });
     },
     async assignVolunteer(tenantId, campaignId, data) {
+      await assertCampaign(tenantId, campaignId);
       if ((await database.volunteer.count({ where: { id: data.volunteerId, tenantId } })) !== 1)
         rejectReference();
       if (
@@ -514,13 +527,68 @@ export function createOperationsRepository(database, campaignGeographyRepository
         rejectReference();
       return database.volunteerAssignment.create({ data: { ...data, tenantId, campaignId } });
     },
-    async addParticipant(tenantId, data) {
+    async addParticipant(tenantId, campaignId, data) {
+      await assertCampaign(tenantId, campaignId);
       if (
-        (await database.campaignEvent.count({ where: { id: data.eventId, tenantId } })) !== 1 ||
+        (await database.campaignEvent.count({
+          where: { id: data.eventId, tenantId, campaignId },
+        })) !== 1 ||
         (await database.volunteer.count({ where: { id: data.volunteerId, tenantId } })) !== 1
       )
         rejectReference();
       return database.eventParticipation.create({ data: { ...data, tenantId } });
+    },
+    async managementOptions(tenantId, campaignId) {
+      await assertCampaign(tenantId, campaignId);
+      const [members, tasks, events] = await Promise.all([
+        database.membership.findMany({
+          where: { tenantId, status: "ACTIVE" },
+          select: { user: { select: { id: true, displayName: true } } },
+          orderBy: { user: { displayName: "asc" } },
+          take: 500,
+        }),
+        database.campaignTask.findMany({
+          where: { tenantId, campaignId },
+          select: { id: true, title: true },
+          orderBy: { title: "asc" },
+          take: 500,
+        }),
+        database.campaignEvent.findMany({
+          where: { tenantId, campaignId },
+          select: { id: true, title: true },
+          orderBy: { startsAt: "desc" },
+          take: 100,
+        }),
+      ]);
+      return { members: members.map((item) => item.user), tasks, events };
+    },
+    async eventGeographyOptions(tenantId, campaignId, search) {
+      await assertCampaign(tenantId, campaignId);
+      if (!campaignGeographyRepository) rejectReference();
+      const campaign = await campaignGeographyRepository.findCampaign(tenantId, campaignId);
+      const countryCode = campaignCountryCode(campaign?.country);
+      if (!campaign || !countryCode) return [];
+      const result = await campaignGeographyRepository.hierarchy(
+        tenantId,
+        campaignId,
+        countryCode,
+        { search, assigned: true, page: 1, pageSize: 100 },
+      );
+      const ids = result?.items.map((item) => item.id) || [];
+      if (!ids.length) return [];
+      const operational = await database.geographicArea.findMany({
+        where: { id: { in: ids }, tenantId, campaignId, isActive: true },
+        select: { id: true },
+      });
+      const allowed = new Set(operational.map((item) => item.id));
+      return result.items
+        .filter((item) => allowed.has(item.id))
+        .map((item) => ({
+          id: item.id,
+          name: item.name,
+          level: item.level.name,
+          parentId: item.parentId,
+        }));
     },
   };
 }

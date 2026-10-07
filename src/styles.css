@@ -3066,13 +3066,20 @@ textarea:focus-visible {
 }
 .campaign-picker select,
 .ops-form input,
-.ops-form select {
+.ops-form select,
+.ops-form textarea {
   border: 1px solid #cad5d0;
   background: #fff;
   border-radius: 4px;
   padding: 10px;
   min-height: 42px;
 }
+.ops-form textarea { min-height: 88px; resize: vertical; }
+.ops-geography-search { display: flex; align-items: end; gap: 10px; }
+.ops-geography-search label { flex: 1; }
+.ops-geography-search button,
+.ops-list > article > button { min-height: 42px; border: 1px solid var(--line); background: #fff; border-radius: 4px; padding: 9px 14px; color: var(--forest); font: inherit; font-weight: 800; }
+.volunteer-management { display: grid; gap: 16px; margin-bottom: 24px; }
 .ops-form {
   background: #fff;
   border: 1px solid var(--line);
@@ -3298,6 +3305,7 @@ textarea:focus-visible {
   .ops-form > div {
     grid-column: auto;
   }
+  .ops-geography-search { align-items: stretch; flex-direction: column; }
   .campaign-geography-controls { grid-template-columns: 1fr; }
   .campaign-geography-controls form { grid-template-columns: 1fr 1fr; }
   .campaign-geography-controls form label { grid-column: 1 / -1; }

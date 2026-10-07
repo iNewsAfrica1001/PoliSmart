@@ -52,6 +52,24 @@ export function requireTenantPermission(permission) {
   };
 }
 
+export function requireTenantAnyPermission(...permissions) {
+  return (request, _response, next) => {
+    const tenantId = request.headers["x-organization-id"];
+    const membership = request.auth?.user.memberships.find((item) => item.tenantId === tenantId);
+    if (
+      !membership ||
+      !permissions.some((permission) => hasPermission({ role: membership.role }, permission))
+    )
+      return next(
+        Object.assign(new Error("You do not have permission to access this organization."), {
+          status: 403,
+        }),
+      );
+    request.tenant = { id: tenantId, membership };
+    next();
+  };
+}
+
 export function requireMembershipPermission(permission) {
   return (request, _response, next) => {
     const authorized = request.auth?.user.memberships.some((membership) =>

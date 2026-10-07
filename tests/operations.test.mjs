@@ -35,6 +35,12 @@ function eventApp(role, calls) {
         calls.push({ tenantId, campaignId, kind, data });
         return { id: "event-a", tenantId, campaignId, ...data };
       },
+      update: async (tenantId, campaignId, kind, id, data) => {
+        calls.push({ operation: "update", tenantId, campaignId, kind, id, data });
+        return { count: 1 };
+      },
+      managementOptions: async () => ({ members: [], tasks: [], events: [] }),
+      eventGeographyOptions: async () => [],
     }),
   );
   app.use((error, _req, res, _next) =>
@@ -85,6 +91,87 @@ test("event permission does not grant Campaign Administrator field-management po
   assert.equal(hasPermission(actor, PERMISSIONS.PLATFORM_USERS_MANAGE), false);
 });
 
+test("field mutations accept campaign:manage or field:manage and deny all other roles", async () => {
+  const allowed = new Set([
+    ROLES.SUPER_ADMINISTRATOR,
+    ROLES.CAMPAIGN_ADMINISTRATOR,
+    ROLES.CAMPAIGN_MANAGER,
+    ROLES.FIELD_DIRECTOR,
+    ROLES.VOLUNTEER_COORDINATOR,
+  ]);
+  for (const role of [...new Set(Object.values(ROLES)), "UNKNOWN", null]) {
+    const calls = [];
+    const app = eventApp(role, calls);
+    await request(app)
+      .post("/operations/campaign-a/tasks")
+      .set("X-Organization-Id", "org-a")
+      .send({ title: "Field task", priority: "NORMAL", status: "PLANNED" })
+      .expect(role === null ? 401 : allowed.has(role) ? 201 : 403);
+    await request(app)
+      .patch("/operations/campaign-a/tasks/task-a")
+      .set("X-Organization-Id", "org-a")
+      .send({ status: "ACTIVE" })
+      .expect(role === null ? 401 : allowed.has(role) ? 200 : 403);
+    assert.equal(calls.length, allowed.has(role) ? 2 : 0, String(role));
+  }
+});
+
+test("management and event geography option routes are permission scoped and non-cacheable", async () => {
+  const fieldResponse = await request(eventApp(ROLES.FIELD_DIRECTOR, []))
+    .get("/operations/campaign-a/management-options")
+    .set("X-Organization-Id", "org-a")
+    .expect(200);
+  assert.equal(fieldResponse.headers["cache-control"], "private, no-store");
+  const geographyResponse = await request(eventApp(ROLES.FIELD_DIRECTOR, []))
+    .get("/operations/campaign-a/event-geography?search=Abuja")
+    .set("X-Organization-Id", "org-a")
+    .expect(200);
+  assert.equal(geographyResponse.headers["cache-control"], "private, no-store");
+  await request(eventApp(ROLES.ANALYST, []))
+    .get("/operations/campaign-a/management-options")
+    .set("X-Organization-Id", "org-a")
+    .expect(403);
+  await request(eventApp(ROLES.ANALYST, []))
+    .get("/operations/campaign-a/event-geography")
+    .set("X-Organization-Id", "org-a")
+    .expect(403);
+  await request(eventApp(ROLES.FIELD_DIRECTOR, []))
+    .get("/operations/campaign-a/event-geography?unknown=true")
+    .set("X-Organization-Id", "org-a")
+    .expect(400);
+});
+
+test("authenticated session derives field and volunteer management capabilities from policy", async () => {
+  for (const role of Object.values(ROLES)) {
+    const app = express();
+    app.use((req, _res, next) => {
+      req.auth = {
+        user: {
+          memberships: [
+            {
+              tenantId: "org-a",
+              role,
+              organization: { id: "org-a", name: "Test", country: "Nigeria", isDemo: false },
+            },
+          ],
+        },
+      };
+      next();
+    });
+    app.use(createAuthRouter({ authService: {}, config: {} }));
+    const membership = (await request(app).get("/me").expect(200)).body.user.memberships[0];
+    assert.equal(
+      membership.canManageField,
+      hasPermission({ role }, PERMISSIONS.CAMPAIGN_MANAGE) ||
+        hasPermission({ role }, PERMISSIONS.FIELD_MANAGE),
+    );
+    assert.equal(
+      membership.canManageVolunteers,
+      hasPermission({ role }, PERMISSIONS.VOLUNTEERS_MANAGE),
+    );
+  }
+});
+
 test("event UI capability comes from the server policy and guards form submission", async () => {
   for (const role of [...new Set(Object.values(ROLES)), "UNKNOWN"]) {
     const app = express();
@@ -108,11 +195,11 @@ test("event UI capability comes from the server policy and guards form submissio
   }
   const source = readFileSync(new URL("../src/pages/OperationsPage.tsx", import.meta.url), "utf8");
   assert.match(source, /\?\.canCreateEvents\s*===\s*true/);
-  assert.ok(source.includes('if (section === "events" && !canCreateEvent) return;'));
-  assert.match(source, /showForm\s*&&\s*\(section !== "events" \|\| canCreateEvent\)/);
+  assert.match(source, /section === "events" && !canCreateEvent/);
+  assert.match(source, /creationAllowed =[\s\S]*section === "events"[\s\S]*canCreateEvent/);
   assert.match(source, /\?\.canCreateVolunteers\s*===\s*true/);
-  assert.ok(source.includes('if (section === "volunteers" && !canCreateVolunteer) return;'));
-  assert.ok(source.includes('(section !== "volunteers" || canCreateVolunteer)'));
+  assert.match(source, /section === "volunteers" && !canCreateVolunteer/);
+  assert.match(source, /creationAllowed =[\s\S]*section === "volunteers"[\s\S]*canCreateVolunteer/);
 });
 
 test("volunteer creation enforces the full role matrix and ignores caller tenant overrides", async () => {
@@ -203,7 +290,10 @@ test("volunteer contact data requires explicit authorization", () => {
 });
 
 test("operations repository injects tenant and campaign ids server-side", async () => {
-  const db = { initiative: { create: async ({ data }) => data } };
+  const db = {
+    campaign: { count: async () => 1 },
+    initiative: { create: async ({ data }) => data },
+  };
   const repository = createOperationsRepository(db);
   const created = await repository.create("org-a", "campaign-a", "initiatives", {
     title: "Launch",
@@ -217,6 +307,7 @@ test("operations repository injects tenant and campaign ids server-side", async 
 test("cross-tenant owners are rejected before an operational record is created", async () => {
   let created = false;
   const repository = createOperationsRepository({
+    campaign: { count: async () => 1 },
     membership: { count: async () => 0 },
     initiative: {
       create: async () => {
@@ -234,9 +325,23 @@ test("cross-tenant owners are rejected before an operational record is created",
   assert.equal(created, false);
 });
 
+test("operational creation rejects a campaign outside the authenticated tenant", async () => {
+  let created = false;
+  const repository = createOperationsRepository({
+    campaign: { count: async ({ where }) => (where.tenantId === "org-b" ? 1 : 0) },
+    campaignTask: { create: async () => (created = true) },
+  });
+  await assert.rejects(
+    repository.create("org-a", "campaign-b", "tasks", { title: "Cross tenant" }),
+    /not available/,
+  );
+  assert.equal(created, false);
+});
+
 test("event geography requires the active operational area and accepted assignment authority", async () => {
   const authorityCalls = [];
   const database = {
+    campaign: { count: async () => 1 },
     geographicArea: { count: async () => 1 },
     campaignEvent: { create: async ({ data }) => data },
   };
@@ -279,6 +384,7 @@ test("event geography fails closed for inactive, unassigned, foreign, cross-camp
     let created = false;
     const repository = createOperationsRepository(
       {
+        campaign: { count: async () => 1 },
         geographicArea: { count: async () => scenario.legacyCount },
         campaignEvent: { create: async () => (created = true) },
       },
@@ -303,7 +409,10 @@ test("event geography fails closed for inactive, unassigned, foreign, cross-camp
 test("event creation without geography remains unchanged and does not consult geography authority", async () => {
   let consulted = false;
   const repository = createOperationsRepository(
-    { campaignEvent: { create: async ({ data }) => data } },
+    {
+      campaign: { count: async () => 1 },
+      campaignEvent: { create: async ({ data }) => data },
+    },
     {
       findCampaign: async () => (consulted = true),
       findActiveAssignedContext: async () => (consulted = true),
@@ -314,6 +423,52 @@ test("event creation without geography remains unchanged and does not consult ge
   });
   assert.equal(created.geographicAreaId, undefined);
   assert.equal(consulted, false);
+});
+
+test("event geography options contain only active assigned operational areas in campaign scope", async () => {
+  const repository = createOperationsRepository(
+    {
+      campaign: { count: async () => 1 },
+      geographicArea: {
+        findMany: async ({ where }) => [{ id: where.id.in[0] }],
+      },
+    },
+    {
+      findCampaign: async () => ({ country: "Nigeria" }),
+      hierarchy: async (_tenantId, _campaignId, countryCode, filters) => {
+        assert.equal(countryCode, "NG");
+        assert.equal(filters.assigned, true);
+        assert.equal(filters.search, "Abuja");
+        return {
+          items: [
+            { id: "assigned-active", name: "Abuja", parentId: null, level: { name: "State" } },
+            { id: "not-operational", name: "Other", parentId: null, level: { name: "State" } },
+          ],
+        };
+      },
+    },
+  );
+  assert.deepEqual(await repository.eventGeographyOptions("org-a", "campaign-a", "Abuja"), [
+    { id: "assigned-active", name: "Abuja", parentId: null, level: "State" },
+  ]);
+});
+
+test("event participation cannot cross the selected campaign", async () => {
+  let created = false;
+  const repository = createOperationsRepository({
+    campaign: { count: async () => 1 },
+    campaignEvent: { count: async () => 0 },
+    volunteer: { count: async () => 1 },
+    eventParticipation: { create: async () => (created = true) },
+  });
+  await assert.rejects(
+    repository.addParticipant("org-a", "campaign-a", {
+      eventId: "event-from-campaign-b",
+      volunteerId: "volunteer-a",
+    }),
+    /not available/,
+  );
+  assert.equal(created, false);
 });
 
 test("existing event and volunteer records remain readable", async () => {

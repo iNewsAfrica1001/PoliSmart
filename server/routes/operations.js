@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { PERMISSIONS } from "../config/authorization.js";
-import { requireSession, requireTenantPermission } from "../middleware/authentication.js";
+import {
+  requireSession,
+  requireTenantAnyPermission,
+  requireTenantPermission,
+} from "../middleware/authentication.js";
 import { asyncRoute } from "../middleware/http.js";
 import {
   eventType,
@@ -34,8 +38,10 @@ function workData(body) {
 }
 function patchData(body) {
   const data = {};
-  for (const key of ["title", "description", "ownerId"])
-    if (body?.[key] !== undefined) data[key] = body[key] || null;
+  if (body?.title !== undefined) data.title = requireString(body, "title", { min: 2, max: 160 });
+  if (body?.description !== undefined)
+    data.description = body.description ? String(body.description).slice(0, 3000) : null;
+  if (body?.ownerId !== undefined) data.ownerId = body.ownerId || null;
   if (body?.priority !== undefined) data.priority = priority(body.priority);
   if (body?.status !== undefined) data.status = workStatus(body.status);
   if (body?.dueAt !== undefined) data.dueAt = optionalDate(body.dueAt, "dueAt") ?? null;
@@ -75,6 +81,10 @@ function geographicActivationDiagnostic(error, campaignId, startedAt) {
 export function createOperationsRouter(repository) {
   const router = Router();
   router.use(requireSession);
+  const requireFieldManagement = requireTenantAnyPermission(
+    PERMISSIONS.CAMPAIGN_MANAGE,
+    PERMISSIONS.FIELD_MANAGE,
+  );
   for (const kind of ["initiatives", "activities", "tasks"]) {
     router.get(
       `/:campaignId/${kind}`,
@@ -87,7 +97,7 @@ export function createOperationsRouter(repository) {
     );
     router.post(
       `/:campaignId/${kind}`,
-      requireTenantPermission(PERMISSIONS.CAMPAIGN_MANAGE),
+      requireFieldManagement,
       asyncRoute(async (request, response) => {
         const data = workData(request.body);
         if (kind === "activities") data.initiativeId = request.body?.initiativeId || undefined;
@@ -102,7 +112,7 @@ export function createOperationsRouter(repository) {
     );
     router.patch(
       `/:campaignId/${kind}/:id`,
-      requireTenantPermission(PERMISSIONS.CAMPAIGN_MANAGE),
+      requireFieldManagement,
       asyncRoute(async (request, response) => {
         const result = await repository.update(
           request.tenant.id,
@@ -156,7 +166,7 @@ export function createOperationsRouter(repository) {
   );
   router.post(
     "/:campaignId/tasks/:id/dependencies",
-    requireTenantPermission(PERMISSIONS.CAMPAIGN_MANAGE),
+    requireFieldManagement,
     asyncRoute(async (request, response) =>
       response.status(201).json({
         dependency: await repository.addDependency(
@@ -187,13 +197,53 @@ export function createOperationsRouter(repository) {
     requireTenantPermission(PERMISSIONS.VOLUNTEERS_MANAGE),
     asyncRoute(async (request, response) =>
       response.status(201).json({
-        participation: await repository.addParticipant(request.tenant.id, {
-          eventId: request.params.eventId,
-          volunteerId: requireString(request.body, "volunteerId", { min: 36, max: 36 }),
-          status: request.body?.status || "REGISTERED",
-        }),
+        participation: await repository.addParticipant(
+          request.tenant.id,
+          request.params.campaignId,
+          {
+            eventId: request.params.eventId,
+            volunteerId: requireString(request.body, "volunteerId", { min: 36, max: 36 }),
+            status: (() => {
+              const status = request.body?.status || "REGISTERED";
+              if (!["INVITED", "REGISTERED", "ATTENDED", "CANCELLED", "NO_SHOW"].includes(status))
+                throw Object.assign(new Error("Participation status is invalid."), { status: 400 });
+              return status;
+            })(),
+          },
+        ),
       }),
     ),
+  );
+  router.get(
+    "/:campaignId/management-options",
+    requireTenantAnyPermission(
+      PERMISSIONS.CAMPAIGN_MANAGE,
+      PERMISSIONS.FIELD_MANAGE,
+      PERMISSIONS.VOLUNTEERS_MANAGE,
+    ),
+    asyncRoute(async (request, response) =>
+      response
+        .set("Cache-Control", "private, no-store")
+        .json(await repository.managementOptions(request.tenant.id, request.params.campaignId)),
+    ),
+  );
+  router.get(
+    "/:campaignId/event-geography",
+    requireTenantPermission(PERMISSIONS.EVENTS_CREATE),
+    asyncRoute(async (request, response) => {
+      if (Object.keys(request.query).some((key) => key !== "search"))
+        throw Object.assign(new Error("Unknown event geography query field."), { status: 400 });
+      const search = String(request.query.search || "").trim();
+      if (search && (search.length < 2 || search.length > 120))
+        throw Object.assign(new Error("Geography search is invalid."), { status: 400 });
+      response.set("Cache-Control", "private, no-store").json({
+        items: await repository.eventGeographyOptions(
+          request.tenant.id,
+          request.params.campaignId,
+          search || undefined,
+        ),
+      });
+    }),
   );
   router.get(
     "/:campaignId/summary",
