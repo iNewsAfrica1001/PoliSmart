@@ -174,6 +174,112 @@ test("team mutations reject untrusted browser origins", async () => {
     .expect(403);
 });
 
+function originTestApp({ authenticated = true, tenantId = "tenant-a" } = {}) {
+  const calls = [];
+  const app = express();
+  app.use(express.json());
+  if (authenticated)
+    app.use((req, _res, next) => {
+      req.auth = {
+        user: {
+          id: "actor",
+          memberships: [{ tenantId, role: "CAMPAIGN_ADMINISTRATOR" }],
+        },
+      };
+      next();
+    });
+  app.use(
+    "/team",
+    createTeamAdministrationRouter(
+      {
+        invite: async (input) => {
+          calls.push(input);
+          return { delivered: true, invitation: { id: "invite" } };
+        },
+      },
+      {
+        origins: [
+          "https://polismartafrica.ai/",
+          "https://www.polismartafrica.ai",
+        ],
+      },
+    ),
+  );
+  app.use((error, _req, res, _next) =>
+    res.status(error.status || 500).json({ message: error.message }),
+  );
+  return { app, calls };
+}
+
+test("Team Administration accepts only the two normalized first-party Production origins", async () => {
+  for (const origin of ["https://polismartafrica.ai", "https://www.polismartafrica.ai"]) {
+    const { app, calls } = originTestApp();
+    await request(app)
+      .post("/team/invitations")
+      .set("Origin", origin)
+      .set("X-Organization-Id", "tenant-a")
+      .send({ email: "person@example.test", role: "ANALYST" })
+      .expect(201);
+    assert.equal(calls.length, 1);
+  }
+});
+
+test("Team Administration rejects unrelated, look-alike, malformed and opaque origins", async () => {
+  for (const origin of [
+    "https://evil.example",
+    "https://polismartafrica.ai.evil.example",
+    "https://www.polismartafrica.ai@evil.example",
+    "https://polismartafrica.ai/path",
+    "not-an-origin",
+    "null",
+    "http://polismartafrica.ai",
+  ]) {
+    const { app, calls } = originTestApp();
+    await request(app)
+      .post("/team/invitations")
+      .set("Origin", origin)
+      .set("X-Organization-Id", "tenant-a")
+      .send({ email: "person@example.test", role: "ANALYST" })
+      .expect(403);
+    assert.equal(calls.length, 0);
+  }
+});
+
+test("forwarded host spoofing cannot bypass Team Administration origin validation", async () => {
+  const { app, calls } = originTestApp();
+  await request(app)
+    .post("/team/invitations")
+    .set("Origin", "https://evil.example")
+    .set("Host", "www.polismartafrica.ai")
+    .set("Forwarded", "host=www.polismartafrica.ai;proto=https")
+    .set("X-Forwarded-Host", "www.polismartafrica.ai")
+    .set("X-Forwarded-Proto", "https")
+    .set("X-Organization-Id", "tenant-a")
+    .send({ email: "person@example.test", role: "ANALYST" })
+    .expect(403);
+  assert.equal(calls.length, 0);
+});
+
+test("Team Administration mutations still require authentication and tenant membership", async () => {
+  const unauthenticated = originTestApp({ authenticated: false });
+  await request(unauthenticated.app)
+    .post("/team/invitations")
+    .set("Origin", "https://www.polismartafrica.ai")
+    .set("X-Organization-Id", "tenant-a")
+    .send({ email: "person@example.test", role: "ANALYST" })
+    .expect(401);
+  assert.equal(unauthenticated.calls.length, 0);
+
+  const crossTenant = originTestApp();
+  await request(crossTenant.app)
+    .post("/team/invitations")
+    .set("Origin", "https://www.polismartafrica.ai")
+    .set("X-Organization-Id", "tenant-b")
+    .send({ email: "person@example.test", role: "ANALYST" })
+    .expect(403);
+  assert.equal(crossTenant.calls.length, 0);
+});
+
 test("migration is additive, indexed, normalized, and grants least privilege", () => {
   const sql = readFileSync("prisma/migrations/0022_team_invitations/migration.sql", "utf8");
   assert.match(sql, /CREATE TABLE "team_invitations"/);

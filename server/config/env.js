@@ -34,8 +34,12 @@ export function loadConfig(rootDir) {
   const isProduction = nodeEnv === "production";
   const publicUrl = process.env.APP_URL || process.env.PUBLIC_APP_URL || "http://127.0.0.1:4000";
   const mobileOrigins = ["capacitor://localhost", "ionic://localhost", "https://localhost"];
+  const productionWebOrigins = [
+    "https://polismartafrica.ai",
+    "https://www.polismartafrica.ai",
+  ];
   const defaultOrigins = isProduction
-    ? [publicUrl, ...mobileOrigins]
+    ? [publicUrl, ...productionWebOrigins, ...mobileOrigins]
     : [
         "http://127.0.0.1:5173",
         "http://localhost:5173",
