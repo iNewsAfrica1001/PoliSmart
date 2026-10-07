@@ -10,7 +10,11 @@ import {
   validatePassword,
   verifyPassword,
 } from "../server/services/authentication.js";
-import { expiredSessionCookie, sessionCookie } from "../server/middleware/authentication.js";
+import {
+  expiredSessionCookie,
+  hashIp,
+  sessionCookie,
+} from "../server/middleware/authentication.js";
 import { createAuthRouter } from "../server/routes/auth.js";
 import { assignRequestId, createApiErrorHandler } from "../server/middleware/http.js";
 
@@ -216,6 +220,43 @@ function registrationTestApp(authService, registrationTiming = {}) {
   app.use(createApiErrorHandler({ isProduction: true }));
   return app;
 }
+
+test("login rate identity and failure audit use the trusted client address", async () => {
+  const sessionSecret = "test-only-session-secret-that-is-long-enough";
+  const audits = [];
+  let loginPayload;
+  const app = express();
+  app.set("trust proxy", 1);
+  app.use(express.json());
+  app.use(assignRequestId);
+  app.use(
+    "/api/auth",
+    createAuthRouter({
+      authService: {
+        login: async (payload) => {
+          loginPayload = payload;
+          throw Object.assign(new Error("Invalid email or password."), { status: 401 });
+        },
+      },
+      config: { sessionSecret },
+      governance: { audit: async (entry) => audits.push(entry) },
+    }),
+  );
+  app.use(createApiErrorHandler({ isProduction: true }));
+
+  const response = await request(app)
+    .post("/api/auth/login")
+    .set("X-Forwarded-For", "198.51.100.7, 203.0.113.9")
+    .send({ email: "person@example.test", password: "incorrect" });
+
+  const expectedHash = hashIp("203.0.113.9", sessionSecret);
+  assert.equal(response.status, 401);
+  assert.equal(loginPayload.ipHash, expectedHash);
+  assert.equal(audits.length, 1);
+  assert.equal(audits[0].action, "LOGIN_FAILED");
+  assert.equal(audits[0].metadata.ipHash, expectedHash);
+  assert.notEqual(audits[0].metadata.ipHash, hashIp("198.51.100.7", sessionSecret));
+});
 
 for (const failingOperation of [
   "authUser.findUnique",

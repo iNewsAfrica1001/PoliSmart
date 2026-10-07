@@ -3,6 +3,9 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import express from "express";
+import proxyaddr from "proxy-addr";
+import request from "supertest";
 import {
   createLocalFallbackStore,
   createRateLimitMiddleware,
@@ -41,6 +44,43 @@ function service(sharedStore, options = {}) {
     logger: options.logger || { warn: () => undefined },
   });
 }
+
+test("trusted proxy handling derives a stable client identity without trusting a spoofed chain", async () => {
+  const app = express();
+  app.set("trust proxy", 1);
+  app.get("/identity", (req, res) => res.json({ ip: req.ip, ips: req.ips }));
+
+  const direct = await request(app).get("/identity");
+  assert.equal(direct.status, 200);
+  assert.match(direct.body.ip, /^(::ffff:)?127\.0\.0\.1$/);
+  assert.deepEqual(direct.body.ips, []);
+
+  const forwarded = await request(app)
+    .get("/identity")
+    .set("X-Forwarded-For", "198.51.100.7, 203.0.113.9");
+  assert.equal(forwarded.status, 200);
+  assert.equal(forwarded.body.ip, "203.0.113.9");
+  assert.deepEqual(forwarded.body.ips, ["203.0.113.9"]);
+
+  const single = await request(app).get("/identity").set("X-Forwarded-For", "198.51.100.7");
+  assert.equal(single.status, 200);
+  assert.equal(single.body.ip, "198.51.100.7");
+  assert.deepEqual(single.body.ips, ["198.51.100.7"]);
+});
+
+test("patched proxy address matching rejects cross-family trust confusion", () => {
+  const loopback = proxyaddr.compile("127.0.0.0/8");
+  const ipv6Loopback = proxyaddr.compile("::1/128");
+  const explicitlyMapped = proxyaddr.compile("::ffff:127.0.0.0/120");
+
+  assert.equal(loopback("127.0.0.1"), true);
+  assert.equal(loopback("::ffff:127.0.0.1"), true);
+  assert.equal(loopback("198.51.100.7"), false);
+  assert.equal(ipv6Loopback("::1"), true);
+  assert.equal(ipv6Loopback("0.0.0.1"), false);
+  assert.equal(explicitlyMapped("127.0.0.1"), true);
+  assert.equal(explicitlyMapped("::1"), false);
+});
 
 test("shared atomic counters enforce limits across independent service instances", async () => {
   const sharedStore = atomicMemoryStore();

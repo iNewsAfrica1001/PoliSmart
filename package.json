@@ -4,6 +4,9 @@
   "description": "AI-powered political campaign intelligence and management platform designed for African political and governance environments.",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "client": "vite --host 127.0.0.1 --port 5173",
@@ -56,8 +59,8 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^1.16.0",
     "mammoth": "^1.12.1",
-    "multer": "2.3.0",
-    "nodemailer": "9.1.1",
+    "multer": "2.4.0",
+    "nodemailer": "10.0.15",
     "openai": "^7.5.0",
     "pdf-parse": "^1.1.1",
     "react": "^19.1.1",
@@ -91,7 +94,12 @@
   },
   "overrides": {
     "@xmldom/xmldom": "0.9.12",
-    "qs": "6.16.0"
+    "proxy-addr": "2.0.8",
+    "qs": "6.16.0",
+    "shell-quote": "1.12.0",
+    "source-map-js": "1.2.2",
+    "undici": "6.29.0",
+    "uuid": "11.1.1"
   },
   "allowScripts": {
     "@prisma/client@6.12.0": true,
