@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import express from "express";
 import request from "supertest";
 import { createCampaignGeographyRepository } from "../server/repositories/campaignGeographyRepository.js";
-import { createOperationsRepository } from "../server/repositories/operationsRepository.js";
 import {
   buildTrustedGeographicContext,
   createAiAssistantService,
@@ -407,26 +406,6 @@ test("chat validates optional geographic ID and does not require geography:manag
     .expect(200);
   assert.equal(received.geographicAreaId, valid);
   assert.equal(received.geographyName, undefined);
-});
-
-test("progressive selector query is active-only, parent-scoped and bounded", async () => {
-  let query;
-  const repository = createOperationsRepository({
-    geographicArea: {
-      count: async () => 1,
-      findMany: async (value) => {
-        query = value;
-        return [];
-      },
-    },
-  });
-  await repository.listActiveGeographicOptions(tenantId, campaignId, {
-    parentId: "parent",
-    rootOnly: false,
-  });
-  assert.deepEqual(query.where, { tenantId, campaignId, isActive: true, parentId: "parent" });
-  assert.equal(query.take, 100);
-  assert.equal(query.select.parent, undefined);
 });
 
 test("AI geography options retain AI plus campaign-read authorization and disable caching", async () => {

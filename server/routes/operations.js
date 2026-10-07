@@ -217,13 +217,17 @@ export function createOperationsRouter(repository) {
     "/volunteers",
     requireTenantPermission(PERMISSIONS.VOLUNTEERS_CREATE),
     asyncRoute(async (request, response) => {
+      if (Object.hasOwn(request.body || {}, "preferredAreaId"))
+        throw Object.assign(
+          new Error("Volunteer preferred geography is not available for new records."),
+          { status: 400 },
+        );
       const data = {
         displayName: requireString(request.body, "displayName", { min: 2, max: 120 }),
         contactAuthorized: request.body?.contactAuthorized === true,
         email: request.body?.email || undefined,
         phone: request.body?.phone || undefined,
         availability: request.body?.availability ?? {},
-        preferredAreaId: request.body?.preferredAreaId || undefined,
         languages: stringList(request.body?.languages ?? [], "languages"),
         skills: stringList(request.body?.skills ?? [], "skills"),
         trainingStatus: trainingStatus(request.body?.trainingStatus),
@@ -328,20 +332,6 @@ export function createOperationsRouter(repository) {
         items: await repository.listAreas(request.tenant.id, request.params.campaignId),
       }),
     ),
-  );
-  router.get(
-    "/:campaignId/geography/context-options",
-    requireTenantPermission(PERMISSIONS.CAMPAIGN_READ),
-    asyncRoute(async (request, response) => {
-      const parentId = request.query.parentId ? String(request.query.parentId) : undefined;
-      response.json({
-        items: await repository.listActiveGeographicOptions(
-          request.tenant.id,
-          request.params.campaignId,
-          { parentId, rootOnly: !parentId },
-        ),
-      });
-    }),
   );
   router.get(
     "/:campaignId/geography/admin-areas",

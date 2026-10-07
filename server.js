@@ -282,7 +282,10 @@ app.use(
     enabled: config.features.fundraising,
   }),
 );
-app.use("/api/operations", createOperationsRouter(createOperationsRepository(prisma)));
+app.use(
+  "/api/operations",
+  createOperationsRouter(createOperationsRepository(prisma, campaignGeographyRepository)),
+);
 app.use("/api/command-center", createCommandCenterRouter(createCommandCenterRepository(prisma)));
 app.use(
   "/api/workflows",

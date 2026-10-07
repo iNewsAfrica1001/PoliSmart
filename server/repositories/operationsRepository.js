@@ -2,6 +2,7 @@ import {
   assertNoAreaCycle,
   validateFullGeographicActivation,
 } from "../services/geographicManagement.js";
+import { campaignCountryCode } from "../services/campaignGeography.js";
 
 const GEOGRAPHIC_IMPORT_TRANSACTION_OPTIONS = Object.freeze({
   maxWait: 10_000,
@@ -15,7 +16,7 @@ const MODELS = Object.freeze({
   events: "campaignEvent",
   areas: "geographicArea",
 });
-export function createOperationsRepository(database) {
+export function createOperationsRepository(database, campaignGeographyRepository) {
   const scoped = (kind) => {
     const model = database[MODELS[kind]];
     if (!model) throw new TypeError("Unsupported operation kind");
@@ -50,14 +51,30 @@ export function createOperationsRepository(database) {
         1
     )
       rejectReference();
-    if (
-      (kind === "events" || kind === "areas") &&
-      data.geographicAreaId &&
-      (await database.geographicArea.count({
-        where: { id: data.geographicAreaId, tenantId, campaignId, isActive: true },
-      })) !== 1
-    )
-      rejectReference();
+    if ((kind === "events" || kind === "areas") && data.geographicAreaId) {
+      if (
+        (await database.geographicArea.count({
+          where: { id: data.geographicAreaId, tenantId, campaignId, isActive: true },
+        })) !== 1
+      )
+        rejectReference();
+      if (kind === "events") {
+        if (!campaignGeographyRepository) rejectReference();
+        const campaign = await campaignGeographyRepository.findCampaign(tenantId, campaignId);
+        const countryCode = campaignCountryCode(campaign?.country);
+        if (
+          !campaign ||
+          !countryCode ||
+          !(await campaignGeographyRepository.findActiveAssignedContext({
+            tenantId,
+            campaignId,
+            countryCode,
+            masterAreaId: data.geographicAreaId,
+          }))
+        )
+          rejectReference();
+      }
+    }
     if (
       kind === "areas" &&
       data.levelId &&
@@ -214,34 +231,6 @@ export function createOperationsRepository(database) {
         total,
         totalPages: Math.ceil(total / filters.pageSize),
       };
-    },
-    async listActiveGeographicOptions(tenantId, campaignId, { parentId, rootOnly }) {
-      if (
-        parentId &&
-        (await database.geographicArea.count({
-          where: { id: parentId, tenantId, campaignId, isActive: true },
-        })) !== 1
-      )
-        throw Object.assign(new Error("Geographic parent is not available in this campaign."), {
-          status: 404,
-        });
-      return database.geographicArea.findMany({
-        where: {
-          tenantId,
-          campaignId,
-          isActive: true,
-          ...(rootOnly ? { parentId: null } : { parentId }),
-        },
-        select: {
-          id: true,
-          name: true,
-          code: true,
-          isActive: true,
-          level: { select: { id: true, name: true, orderIndex: true } },
-        },
-        orderBy: [{ level: { orderIndex: "asc" } }, { name: "asc" }, { id: "asc" }],
-        take: 100,
-      });
     },
     createLevel(tenantId, data) {
       return database.geographicLevel.create({ data: { ...data, tenantId } });

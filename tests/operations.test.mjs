@@ -153,6 +153,22 @@ test("volunteer creation rejects foreign or absent tenant and unauthorized conta
   }
 });
 
+test("volunteer creation rejects every preferredAreaId input before persistence", async () => {
+  for (const preferredAreaId of ["area-a", null, ""]) {
+    const calls = [];
+    await request(eventApp("CAMPAIGN_ADMINISTRATOR", calls))
+      .post("/operations/volunteers")
+      .set("X-Organization-Id", "org-a")
+      .send({
+        displayName: "Fictional volunteer",
+        contactAuthorized: true,
+        preferredAreaId,
+      })
+      .expect(400);
+    assert.equal(calls.length, 0);
+  }
+});
+
 test("volunteer creation does not authorize administrator edits or assignments", async () => {
   const actor = { role: ROLES.CAMPAIGN_ADMINISTRATOR };
   assert.equal(hasPermission(actor, PERMISSIONS.VOLUNTEERS_CREATE), true);
@@ -216,6 +232,127 @@ test("cross-tenant owners are rejected before an operational record is created",
     /not available/,
   );
   assert.equal(created, false);
+});
+
+test("event geography requires the active operational area and accepted assignment authority", async () => {
+  const authorityCalls = [];
+  const database = {
+    geographicArea: { count: async () => 1 },
+    campaignEvent: { create: async ({ data }) => data },
+  };
+  const authority = {
+    findCampaign: async (tenantId, campaignId) => ({
+      tenantId,
+      id: campaignId,
+      country: "Nigeria",
+    }),
+    findActiveAssignedContext: async (input) => {
+      authorityCalls.push(input);
+      return { selected: { id: input.masterAreaId }, ancestry: [] };
+    },
+  };
+  const repository = createOperationsRepository(database, authority);
+  const created = await repository.create("org-a", "campaign-a", "events", {
+    title: "Assigned-area meeting",
+    geographicAreaId: "area-a",
+  });
+  assert.equal(created.geographicAreaId, "area-a");
+  assert.deepEqual(authorityCalls, [
+    {
+      tenantId: "org-a",
+      campaignId: "campaign-a",
+      countryCode: "NG",
+      masterAreaId: "area-a",
+    },
+  ]);
+});
+
+test("event geography fails closed for inactive, unassigned, foreign, cross-campaign, and cross-tenant areas", async () => {
+  const scenarios = [
+    { name: "inactive", legacyCount: 0, context: true },
+    { name: "cross-campaign", legacyCount: 0, context: true },
+    { name: "cross-tenant", legacyCount: 0, context: true },
+    { name: "unassigned", legacyCount: 1, context: false },
+    { name: "foreign-country", legacyCount: 1, context: false },
+  ];
+  for (const scenario of scenarios) {
+    let created = false;
+    const repository = createOperationsRepository(
+      {
+        geographicArea: { count: async () => scenario.legacyCount },
+        campaignEvent: { create: async () => (created = true) },
+      },
+      {
+        findCampaign: async () => ({ country: "Nigeria" }),
+        findActiveAssignedContext: async () =>
+          scenario.context ? { selected: { id: "area-a" }, ancestry: [] } : null,
+      },
+    );
+    await assert.rejects(
+      repository.create("org-a", "campaign-a", "events", {
+        title: scenario.name,
+        geographicAreaId: "area-a",
+      }),
+      /not available/,
+      scenario.name,
+    );
+    assert.equal(created, false, scenario.name);
+  }
+});
+
+test("event creation without geography remains unchanged and does not consult geography authority", async () => {
+  let consulted = false;
+  const repository = createOperationsRepository(
+    { campaignEvent: { create: async ({ data }) => data } },
+    {
+      findCampaign: async () => (consulted = true),
+      findActiveAssignedContext: async () => (consulted = true),
+    },
+  );
+  const created = await repository.create("org-a", "campaign-a", "events", {
+    title: "No-area meeting",
+  });
+  assert.equal(created.geographicAreaId, undefined);
+  assert.equal(consulted, false);
+});
+
+test("existing event and volunteer records remain readable", async () => {
+  const repository = createOperationsRepository({
+    campaignEvent: { findMany: async () => [{ id: "event-a", geographicAreaId: "legacy-area" }] },
+    volunteer: {
+      findMany: async () => [{ id: "volunteer-a", preferredAreaId: "legacy-area" }],
+    },
+  });
+  assert.equal(
+    (await repository.list("org-a", "campaign-a", "events"))[0].geographicAreaId,
+    "legacy-area",
+  );
+  assert.equal((await repository.listVolunteers("org-a"))[0].preferredAreaId, "legacy-area");
+});
+
+test("obsolete operations context-options route and client are removed without changing geography administration", async () => {
+  const calls = [];
+  const app = eventApp("CAMPAIGN_ADMINISTRATOR", calls);
+  await request(app)
+    .get("/operations/campaign-a/geography/context-options")
+    .set("X-Organization-Id", "org-a")
+    .expect(404);
+  const routeSource = readFileSync(
+    new URL("../server/routes/operations.js", import.meta.url),
+    "utf8",
+  );
+  const clientSource = readFileSync(new URL("../src/lib/geography.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(routeSource, /geography\/context-options|listActiveGeographicOptions/);
+  assert.doesNotMatch(clientSource, /contextOptions|geography\/context-options/);
+  assert.match(routeSource, /geography\/admin-areas/);
+  assert.match(routeSource, /GEOGRAPHY_MANAGE/);
+});
+
+test("operational creation permissions do not grant Campaign Geography management", () => {
+  for (const role of [ROLES.FIELD_DIRECTOR, ROLES.VOLUNTEER_COORDINATOR]) {
+    assert.equal(hasPermission({ role }, PERMISSIONS.EVENTS_CREATE), true);
+    assert.equal(hasPermission({ role }, PERMISSIONS.CAMPAIGN_GEOGRAPHY_MANAGE), false);
+  }
 });
 
 test("operations HTTP API rejects a valid user from another organization", async () => {
