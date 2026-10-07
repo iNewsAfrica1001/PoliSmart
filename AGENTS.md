@@ -85,7 +85,7 @@ Never rely solely on a connection string, environment-variable name, or human-re
 
 Current accepted Production application commit:
 
-cc79cb8db54ce8ce46bd1a589a3a0adaea8000eb
+54b73c1353fe0cececf12f8c03f068d6830c97ce
 
 Campaign Geography migrations:
 
@@ -565,35 +565,25 @@ Do not expose secrets.
 
 ## 30. Current Campaign Geography Roadmap
 
-Increment 3A:
-Production COMPLETE and ACCEPTED.
+Campaign Geography Increments 3A through 3E are Production COMPLETE and ACCEPTED.
 
-Increment 3A delivered:
+- 3A delivered permissions, authorization, controlled database mutation functions, service/API
+  boundaries, trusted actor handling, tenant/campaign isolation, audit behavior, and concurrency
+  controls.
+- 3B delivered the dedicated Campaign Geography assignment workspace and the reviewed Vercel
+  routing-metadata normalization.
+- 3C made Command Center geography assignment governed with server-authoritative country and
+  exact-area filtering.
+- 3D made AI Geographic Grounding assignment governed, bounded, minimized, and subject to
+  deterministic political-safety controls.
+- 3E hardened Event geography ingress, made new Volunteer preferred geography fail closed, and
+  removed the obsolete Operations context-options path.
 
-- permissions
-- authorization
-- controlled database mutation functions
-- service/API layer
-- trusted actor handling
-- tenant/campaign isolation
-- audit behavior
-- concurrency controls
+The durable closure record is `docs/CAMPAIGN_GEOGRAPHY_3A_3E_PROGRAM_CLOSURE.md`.
 
-Next planned increment:
-
-Increment 3B — Campaign Geography user interface.
-
-3B must consume the accepted 3A architecture.
-
-Do not redesign 3A unless a concrete defect requires a separately reviewed remediation.
-
-Future increments may include:
-
-3C — Command Center consumer migration
-3D — AI Geographic Grounding consumer migration
-3E — other approved consumers
-
-Each is a separate controlled change.
+Do not begin or infer another geography increment merely to remove intentional legacy references.
+Do not redesign the accepted 3A–3E architecture unless a concrete defect or separately authorized
+business requirement receives bounded design, security review, and owner approval.
 
 ---
 
