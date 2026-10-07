@@ -3,6 +3,7 @@ import { PERMISSIONS } from "../config/authorization.js";
 import { requireMembershipPermission, requireSession } from "../middleware/authentication.js";
 import { asyncRoute } from "../middleware/http.js";
 import { requireString } from "../services/validation.js";
+import { trustedBrowserOrigin } from "../middleware/origin.js";
 import {
   isPermittedPrelaunchLeadTransition,
   PRELAUNCH_LEAD_STATUSES,
@@ -48,6 +49,18 @@ const RFC_3339 =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?(Z|[+-]\d{2}:\d{2})$/;
 // Permit only a small client/server clock skew around an otherwise future timestamp.
 const FOLLOW_UP_CLOCK_SKEW_MS = 5_000;
+const COMMON_FIELDS = Object.freeze(["name", "email", "organization", "country", "interest", "note"]);
+
+function requireExactPublicFields(body, requestType) {
+  if (!body || typeof body !== "object" || Array.isArray(body))
+    throw Object.assign(new Error("Request body is invalid."), { status: 400 });
+  const allowed =
+    requestType === "DEMO"
+      ? [...COMMON_FIELDS, "organizationType", "timing"]
+      : [...COMMON_FIELDS, "role"];
+  if (Object.keys(body).some((field) => !allowed.includes(field)))
+    throw Object.assign(new Error("Request contains unsupported fields."), { status: 400 });
+}
 
 function optionalString(body, field, max) {
   const value = String(body?.[field] ?? "").trim();
@@ -65,7 +78,7 @@ function choice(body, field, options) {
   return value;
 }
 
-function validatedCommon(body) {
+function validatedCommon(body, { collectRole = true } = {}) {
   const email = requireString(body, "email", { min: 5, max: 254 }).toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     throw Object.assign(new Error("email must be valid."), { status: 400 });
@@ -74,13 +87,15 @@ function validatedCommon(body) {
     email,
     organization: requireString(body, "organization", { min: 2, max: 160 }),
     country: requireString(body, "country", { min: 2, max: 100 }),
-    role: requireString(body, "role", { min: 2, max: 120 }),
+    role: collectRole
+      ? requireString(body, "role", { min: 2, max: 120 })
+      : "Not collected",
     note: optionalString(body, "note", 500),
   };
 }
 
 function leadData(requestType, body) {
-  const common = validatedCommon(body);
+  const common = validatedCommon(body, { collectRole: requestType !== "DEMO" });
   if (requestType === "EARLY_ACCESS")
     return {
       requestType,
@@ -90,20 +105,23 @@ function leadData(requestType, body) {
   return {
     requestType,
     ...common,
+    interest: choice(body, "interest", EARLY_ACCESS_INTERESTS),
     organizationType: choice(body, "organizationType", ORGANIZATION_TYPES),
     timing: choice(body, "timing", DEMO_TIMINGS),
   };
 }
 
-export function createPrelaunchRouter({ repository, notifications, rateLimiter }) {
+export function createPrelaunchRouter({ repository, notifications, rateLimiter, origins = [] }) {
   const router = Router();
   router.post(
     "/:requestType",
+    trustedBrowserOrigin(origins),
     rateLimiter,
     asyncRoute(async (request, response) => {
       const requestType = String(request.params.requestType || "").toUpperCase();
       if (!Object.hasOwn(CONFIRMATIONS, requestType))
         throw Object.assign(new Error("Request type is invalid."), { status: 404 });
+      requireExactPublicFields(request.body, requestType);
       const lead = await repository.create(leadData(requestType, request.body));
       try {
         await notifications?.sendPrelaunchLeadNotification?.(lead);
@@ -117,6 +135,7 @@ export function createPrelaunchRouter({ repository, notifications, rateLimiter }
           }),
         );
       }
+      response.setHeader("Cache-Control", "no-store");
       response.status(202).json({ message: CONFIRMATIONS[requestType] });
     }),
   );

@@ -258,6 +258,7 @@ app.use(
   createPrelaunchRouter({
     repository: createPrelaunchLeadRepository(prisma),
     notifications,
+    origins: config.clientOrigins,
     rateLimiter: sharedLimiter({
       purpose: "prelaunch-lead",
       policy: RATE_LIMIT_POLICIES.prelaunchLead,

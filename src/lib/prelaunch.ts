@@ -18,11 +18,23 @@ export async function submitPrelaunchRequest(
   requestType: PrelaunchRequestType,
   input: PrelaunchRequest,
 ) {
+  const common = {
+    name: input.name,
+    email: input.email,
+    organization: input.organization,
+    country: input.country,
+    interest: input.interest,
+    note: input.note,
+  };
+  const body =
+    requestType === "DEMO"
+      ? { ...common, organizationType: input.organizationType, timing: input.timing }
+      : { ...common, role: input.role };
   const response = await fetch(`${API_BASE}/api/prelaunch/${requestType.toLowerCase()}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify(input),
+    body: JSON.stringify(body),
   });
   const payload = (await response.json().catch(() => ({}))) as { message?: string };
   if (!response.ok) throw new Error(payload.message || "We could not submit your request.");

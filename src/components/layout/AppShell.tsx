@@ -1,4 +1,4 @@
-import { Bell, ChevronDown, Menu, X } from "lucide-react";
+import { Bell, ChevronDown, CircleHelp, Menu, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { navigation } from "../../config/navigation";
 import { WorkspaceSearch } from "./WorkspaceSearch";
@@ -9,6 +9,7 @@ type AppShellProps = {
   onSignOut: () => void;
   activePage: string;
   onNavigate: (page: string) => void;
+  onOpenGettingStarted: () => void;
   userName: string;
   workspaceName: string;
   role: string;
@@ -32,6 +33,7 @@ export function AppShell({
   onSignOut,
   activePage,
   onNavigate,
+  onOpenGettingStarted,
   userName,
   workspaceName,
   role,
@@ -109,6 +111,9 @@ export function AppShell({
           <span>Workspace</span>
           <strong>{workspaceName}</strong>
           <small>Secure organization workspace</small>
+          <button type="button" className="sidebar-support" onClick={onOpenGettingStarted}>
+            <CircleHelp aria-hidden="true" /> Getting Started
+          </button>
           <a className="sidebar-support" href="mailto:support@polismartafrica.ai">
             Contact support
           </a>

@@ -20,6 +20,7 @@ import { CampaignGeographyPage } from "./pages/CampaignGeographyPage";
 import { PrivacyOperationsPage } from "./pages/PrivacyOperationsPage";
 import { TeamAdministrationPage } from "./pages/TeamAdministrationPage";
 import { AcceptTeamInvitationPage } from "./pages/AcceptTeamInvitationPage";
+import { GettingStartedPage } from "./pages/GettingStartedPage";
 import {
   disabledFeatures,
   loadFeatureAvailability,
@@ -45,7 +46,28 @@ const pageTitles: Record<string, string> = {
   "campaign-geography": "Campaign Geography",
   "privacy-operations": "Privacy Operations",
   team: "Team Administration",
+  "getting-started": "Getting Started",
 };
+
+function onboardingKey(user: SessionUser) {
+  return `polismart:getting-started:v1:${user.id}:${user.memberships[0]?.tenantId || "workspace"}`;
+}
+
+function hasSeenOnboarding(user: SessionUser) {
+  try {
+    return window.localStorage.getItem(onboardingKey(user)) === "seen";
+  } catch {
+    return true;
+  }
+}
+
+function markOnboardingSeen(user: SessionUser) {
+  try {
+    window.localStorage.setItem(onboardingKey(user), "seen");
+  } catch {
+    // Storage can be unavailable in privacy-focused browser modes; onboarding remains dismissible.
+  }
+}
 
 export default function App() {
   const currentUrl = new URL(window.location.href);
@@ -102,7 +124,9 @@ function WorkspaceApp() {
   useEffect(() => {
     Promise.allSettled([authApi.me(), loadFeatureAvailability()]).then(
       ([session, availability]) => {
-        setUser(session.status === "fulfilled" ? session.value.user : null);
+        const sessionUser = session.status === "fulfilled" ? session.value.user : null;
+        setUser(sessionUser);
+        if (sessionUser && !hasSeenOnboarding(sessionUser)) setPage("getting-started");
         setFeatures(availability.status === "fulfilled" ? availability.value : disabledFeatures);
         setLoading(false);
       },
@@ -125,6 +149,7 @@ function WorkspaceApp() {
         onContinue={async (email, password) => {
           const result = await authApi.login(email, password);
           setUser(result.user);
+          if (!hasSeenOnboarding(result.user)) setPage("getting-started");
         }}
       />
     );
@@ -143,11 +168,24 @@ function WorkspaceApp() {
       tenantId={membership?.tenantId || ""}
       features={features}
       onNavigate={setPage}
+      onOpenGettingStarted={() => setPage("getting-started")}
       onSignOut={() => {
         void authApi.logout().finally(() => setUser(null));
       }}
     >
-      {page === "dashboard" ? (
+      {page === "getting-started" ? (
+        <GettingStartedPage
+          user={user}
+          onNavigate={(destination) => {
+            markOnboardingSeen(user);
+            setPage(destination);
+          }}
+          onDismiss={() => {
+            markOnboardingSeen(user);
+            setPage("dashboard");
+          }}
+        />
+      ) : page === "dashboard" ? (
         <DashboardPage user={user} onCreateCampaign={() => setPage("campaigns")} />
       ) : page === "ai" ? (
         <AssistantPage user={user} onCreateCampaign={() => setPage("campaigns")} />

@@ -104,14 +104,15 @@ export function PrelaunchRequestPage({ requestType }: { requestType: PrelaunchRe
               <input id="email" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} required maxLength={254} autoComplete="email" />
               <label htmlFor="organization">Organization name</label>
               <input id="organization" value={form.organization} onChange={(e) => update("organization", e.target.value)} required minLength={2} maxLength={160} autoComplete="organization" />
-              <div className="prelaunch-form-grid">
-                <div><label htmlFor="country">Country</label><input id="country" value={form.country} onChange={(e) => update("country", e.target.value)} required minLength={2} maxLength={100} autoComplete="country-name" /></div>
-                <div><label htmlFor="role">Role / job title</label><input id="role" value={form.role} onChange={(e) => update("role", e.target.value)} required minLength={2} maxLength={120} autoComplete="organization-title" /></div>
-              </div>
+              <label htmlFor="country">Country</label>
+              <input id="country" value={form.country} onChange={(e) => update("country", e.target.value)} required minLength={2} maxLength={100} autoComplete="country-name" />
+              {!demo && <><label htmlFor="role">Role / job title</label><input id="role" value={form.role} onChange={(e) => update("role", e.target.value)} required minLength={2} maxLength={120} autoComplete="organization-title" /></>}
               {demo ? (
                 <>
                   <label htmlFor="organizationType">Organization type</label>
                   <select id="organizationType" value={form.organizationType} onChange={(e) => update("organizationType", e.target.value)} required><option value="">Select an organization type</option>{organizationTypes.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+                  <label htmlFor="interest">Primary area of interest</label>
+                  <select id="interest" value={form.interest} onChange={(e) => update("interest", e.target.value)} required><option value="">Select an area of interest</option>{interests.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
                   <label htmlFor="timing">Preferred demo timing</label>
                   <select id="timing" value={form.timing} onChange={(e) => update("timing", e.target.value)} required><option value="">Select preferred timing</option>{demoTimings.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
                 </>
@@ -121,7 +122,7 @@ export function PrelaunchRequestPage({ requestType }: { requestType: PrelaunchRe
               <label htmlFor="note">{demo ? "What would you like to see in the demo?" : "What would you like to use PoliSmart for?"} <span>(optional)</span></label>
               <textarea id="note" value={form.note} onChange={(e) => update("note", e.target.value)} maxLength={500} rows={4} />
               <p className="prelaunch-consent">
-                By submitting this form, you agree that SentinelAI LLC may use the information you provide to contact you about PoliSmart Africa AI, early access, demos, and launch updates. Do not submit sensitive personal information. Read our <a href="/privacy">Privacy Notice</a>.
+                By submitting this form, you agree that SentinelAI LLC may use the information you provide to contact you about PoliSmartAfrica AI, early access, demos, and launch updates. Do not submit sensitive personal information, including voter, supporter, donor, political-opinion, or payment data. Read our <a href="/privacy">Privacy Notice</a>.
               </p>
               {status === "error" && <p className="form-error" role="alert">{message}</p>}
               <button className="marketing-button marketing-button--gold" type="submit" disabled={status === "submitting"}>
@@ -131,6 +132,7 @@ export function PrelaunchRequestPage({ requestType }: { requestType: PrelaunchRe
           )}
         </section>
       </main>
+      <footer className="prelaunch-brand">PoliSmartAfrica AI — A platform of SentinelAI LLC.</footer>
     </div>
   );
 }

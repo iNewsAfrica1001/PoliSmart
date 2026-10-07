@@ -578,6 +578,25 @@ test("Stage 2 onboarding guides invited users without changing security boundari
   assert.doesNotMatch(operations, /SUPER_ADMINISTRATOR|Super Administrator/);
 });
 
+test("Phase 3 Getting Started is dismissible, reopenable, and driven by session capabilities", () => {
+  const app = fs.readFileSync(path.join(root, "src", "App.tsx"), "utf8");
+  const page = fs.readFileSync(path.join(root, "src", "pages", "GettingStartedPage.tsx"), "utf8");
+  const shell = fs.readFileSync(path.join(root, "src", "components", "layout", "AppShell.tsx"), "utf8");
+  assert.match(app, /hasSeenOnboarding/);
+  assert.match(app, /markOnboardingSeen/);
+  assert.match(shell, /Getting Started/);
+  assert.match(shell, /onOpenGettingStarted/);
+  assert.match(page, /canManageTeam/);
+  assert.match(page, /canViewCampaignGeography/);
+  assert.match(page, /canApproveKnowledge/);
+  assert.match(page, /canCreateEvents/);
+  assert.match(page, /canCreateVolunteers/);
+  assert.match(page, /Access checks remain enforced\s+by the server/);
+  assert.match(page, /Skip for now/);
+  assert.match(page, /PoliSmartAfrica AI — A platform of SentinelAI LLC/);
+  assert.doesNotMatch(page, /register|create account|upgrade plan/i);
+});
+
 test("Stage 3 administrator guide documents V1 operations without secret values", () => {
   const guide = fs.readFileSync(
     path.join(root, "docs", "POLISMART_ADMINISTRATOR_GUIDE.md"),

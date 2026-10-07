@@ -16,7 +16,12 @@ const validEarlyAccess = {
   note: "Grounded campaign research",
 };
 
-function appFor({ create = async (data) => ({ id: "lead-id", ...data }), limiter, notifications } = {}) {
+function appFor({
+  create = async (data) => ({ id: "lead-id", ...data }),
+  limiter,
+  notifications,
+  origins = [],
+} = {}) {
   const app = express();
   app.use(express.json());
   app.use(
@@ -24,6 +29,7 @@ function appFor({ create = async (data) => ({ id: "lead-id", ...data }), limiter
     createPrelaunchRouter({
       repository: { create },
       notifications,
+      origins,
       rateLimiter: limiter || ((_request, _response, next) => next()),
     }),
   );
@@ -44,29 +50,81 @@ test("public early-access and demo requests validate and persist only approved f
     notifications: { sendPrelaunchLeadNotification: async (lead) => notifications.push(lead) },
   });
 
-  const early = await request(app)
-    .post("/prelaunch/early_access")
-    .send({ ...validEarlyAccess, paymentCard: "ignored", sensitiveOpinion: "ignored" });
+  const early = await request(app).post("/prelaunch/early_access").send(validEarlyAccess);
   assert.equal(early.status, 202);
+  assert.equal(early.headers["cache-control"], "no-store");
   assert.match(early.body.message, /early access request has been received/i);
   assert.equal(created[0].requestType, "EARLY_ACCESS");
   assert.equal(created[0].email, "ada@example.test");
   assert.equal("paymentCard" in created[0], false);
-  assert.equal("sensitiveOpinion" in created[0], false);
 
   const demo = await request(app).post("/prelaunch/demo").send({
     name: "Kofi Organizer",
     email: "kofi@example.test",
     organization: "Public Policy Lab",
     country: "Ghana",
-    role: "Director",
+    interest: "AI_ASSISTANT",
     organizationType: "PUBLIC_POLICY_ORGANIZATION",
     timing: "WITHIN_2_WEEKS",
   });
   assert.equal(demo.status, 202);
   assert.match(demo.body.message, /demo request has been received/i);
   assert.equal(created[1].requestType, "DEMO");
+  assert.equal(created[1].interest, "AI_ASSISTANT");
+  assert.equal(created[1].role, "Not collected");
   assert.equal(notifications.length, 2);
+});
+
+test("demo capture has no account, tenant, campaign, or access-provisioning path", () => {
+  const route = readFileSync("server/routes/prelaunch.js", "utf8");
+  const repository = readFileSync("server/repositories/prelaunchLeadRepository.js", "utf8");
+  for (const source of [route, repository])
+    assert.doesNotMatch(
+      source,
+      /authUser\.(?:create|update)|organization\.(?:create|update)|membership\.(?:create|update)|campaign\.(?:create|update)/,
+    );
+});
+
+test("pre-launch capture rejects unsupported or sensitive fields instead of retaining them", async () => {
+  let persisted = false;
+  const app = appFor({ create: async () => { persisted = true; } });
+  const response = await request(app)
+    .post("/prelaunch/early_access")
+    .send({ ...validEarlyAccess, sensitiveOpinion: "private" });
+  assert.equal(response.status, 400);
+  assert.match(response.body.message, /unsupported fields/i);
+  assert.equal(persisted, false);
+});
+
+test("pre-launch browser submissions accept explicit first-party origins and reject spoofed origins", async () => {
+  const created = [];
+  const app = appFor({
+    create: async (data) => { created.push(data); return data; },
+    origins: ["https://polismartafrica.ai/", "https://www.polismartafrica.ai"],
+  });
+  for (const origin of ["https://polismartafrica.ai", "https://www.polismartafrica.ai"])
+    await request(app)
+      .post("/prelaunch/early_access")
+      .set("Origin", origin)
+      .send(validEarlyAccess)
+      .expect(202);
+  for (const origin of [
+    "https://evil.example",
+    "https://polismartafrica.ai.evil.example",
+    "https://www.polismartafrica.ai@evil.example",
+    "https://polismartafrica.ai/path",
+    "null",
+    "not-an-origin",
+    "http://polismartafrica.ai",
+  ])
+    await request(app)
+      .post("/prelaunch/early_access")
+      .set("Origin", origin)
+      .set("Forwarded", "host=www.polismartafrica.ai;proto=https")
+      .set("X-Forwarded-Host", "www.polismartafrica.ai")
+      .send(validEarlyAccess)
+      .expect(403);
+  assert.equal(created.length, 2);
 });
 
 test("pre-launch requests reject invalid email, excessive lengths, and unsupported choices", async () => {
