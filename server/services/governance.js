@@ -7,6 +7,10 @@ export const PROHIBITED_AI_CAPABILITIES = Object.freeze([
   "DECEPTIVE_POLITICAL_IMPERSONATION",
   "UNAUTHORIZED_AUTOMATED_PUBLISHING",
   "GEOGRAPHIC_POLITICAL_MICROTARGETING",
+  "DISCRIMINATORY_POLITICAL_EXCLUSION",
+  "SENSITIVE_TRAIT_INFERENCE",
+  "CANDIDATE_CHOICE_RECOMMENDATION",
+  "UNSUPPORTED_ELECTION_PREDICTION",
 ]);
 const RULES = [
   [
@@ -30,6 +34,22 @@ const RULES = [
   [
     "GEOGRAPHIC_POLITICAL_MICROTARGETING",
     /^(?=[\s\S]*(?:target|persuad|convinc|manipulat|optimi[sz]))(?=[\s\S]*(?:ward|lga|area council|state|zone|neighbou?rhood|geograph))(?=[\s\S]*(?:voter|electorate|vote))[\s\S]*$/i,
+  ],
+  [
+    "DISCRIMINATORY_POLITICAL_EXCLUSION",
+    /^(?=[\s\S]*(?:exclude|avoid|deny|ignore|deprioriti[sz]))(?=[\s\S]*(?:voter|electorate|community|group|ward|lga))(?=[\s\S]*(?:religion|ethnicity|race|disability|sexual orientation|tribe))[\s\S]*$/i,
+  ],
+  [
+    "SENSITIVE_TRAIT_INFERENCE",
+    /^(?=[\s\S]*(?:infer|guess|deduce|predict|estimate))(?=[\s\S]*(?:religion|ethnicity|race|health|sexual orientation|disability|tribe))(?=[\s\S]*(?:voter|person|individual|community|ward|lga))[\s\S]*$/i,
+  ],
+  [
+    "CANDIDATE_CHOICE_RECOMMENDATION",
+    /^(?=[\s\S]*(?:recommend|choose|support|vote|best))(?=[\s\S]*(?:candidate|party))(?=[\s\S]*(?:should|who|which|what|for))[\s\S]*$/i,
+  ],
+  [
+    "UNSUPPORTED_ELECTION_PREDICTION",
+    /(?:predict|guarantee|forecast).{0,35}(?:election|winner|vote share|result|outcome)/i,
   ],
 ];
 export function assessPoliticalSafety(input) {

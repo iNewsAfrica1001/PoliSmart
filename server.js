@@ -119,8 +119,10 @@ const publicIntelligenceRepository = createPublicIntelligenceRepository(prisma);
 const governanceRepository = createGovernanceRepository(prisma);
 const governanceService = createGovernanceService(governanceRepository);
 const aiProvider = createAiProvider(config);
+const campaignGeographyRepository = createCampaignGeographyRepository(prisma);
 const aiService = createAiAssistantService({
   repository: createAiRepository(prisma),
+  geographyRepository: campaignGeographyRepository,
   intelligenceRepository: publicIntelligenceRepository,
   provider: aiProvider,
   governance: governanceService,
@@ -266,9 +268,7 @@ app.use(
 app.use("/api/campaigns", createCampaignRouter(createCampaignRepository(prisma)));
 app.use(
   "/api/campaign-geography",
-  createCampaignGeographyRouter(
-    createCampaignGeographyService(createCampaignGeographyRepository(prisma)),
-  ),
+  createCampaignGeographyRouter(createCampaignGeographyService(campaignGeographyRepository)),
 );
 app.use(
   "/api/search",

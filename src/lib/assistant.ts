@@ -24,7 +24,24 @@ export type AssistantAnswer = {
   interpretation: string;
   citations: Citation[];
 };
+export type AssignedGeographicArea = {
+  id: string;
+  parentId: string | null;
+  countryCode: string;
+  name: string;
+  code: string | null;
+  level: { id: string; name: string; orderIndex: number };
+};
 export const assistantApi = {
+  geographyOptions: (tenantId: string, campaignId: string, parentId?: string) => {
+    const query = parentId ? `?parentId=${encodeURIComponent(parentId)}` : "";
+    return fetch(`${API_BASE}/api/ai/geography/${campaignId}/options${query}`, {
+      credentials: "include",
+      headers: { "X-Organization-Id": tenantId },
+    }).then((response) =>
+      parse<{ campaign: { country: string }; items: AssignedGeographicArea[] }>(response),
+    );
+  },
   chat: (
     tenantId: string,
     campaignId: string,

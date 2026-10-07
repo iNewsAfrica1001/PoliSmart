@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Bot, Send, ThumbsUp, TriangleAlert } from "lucide-react";
-import { assistantApi, type AssistantAnswer } from "../lib/assistant";
+import { assistantApi, type AssistantAnswer, type AssignedGeographicArea } from "../lib/assistant";
 import type { SessionUser } from "../lib/auth";
 import { operationsApi, type Campaign } from "../lib/operations";
-import { geographyApi, type GeographicArea } from "../lib/geography";
 
 export function AssistantPage({
   user,
@@ -15,8 +14,9 @@ export function AssistantPage({
   const tenantId = user.memberships[0]?.tenantId ?? "";
   const [campaignId, setCampaignId] = useState("");
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [geographyPath, setGeographyPath] = useState<GeographicArea[]>([]);
-  const [geographyOptions, setGeographyOptions] = useState<GeographicArea[][]>([]);
+  const [geographyPath, setGeographyPath] = useState<AssignedGeographicArea[]>([]);
+  const [geographyOptions, setGeographyOptions] = useState<AssignedGeographicArea[][]>([]);
+  const [campaignCountry, setCampaignCountry] = useState("");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<AssistantAnswer | null>(null);
   const [conversationId, setConversationId] = useState<string>();
@@ -30,6 +30,7 @@ export function AssistantPage({
   const [feedbackStatus, setFeedbackStatus] = useState("");
   const [reportOpen, setReportOpen] = useState(false);
   const feedbackInFlight = useRef(false);
+  const geographyRequest = useRef(0);
   useEffect(() => {
     operationsApi
       .campaigns(tenantId)
@@ -41,15 +42,28 @@ export function AssistantPage({
       .finally(() => setCampaignsLoaded(true));
   }, [tenantId]);
   useEffect(() => {
+    const requestId = ++geographyRequest.current;
     setGeographyPath([]);
     setGeographyOptions([]);
+    setCampaignCountry("");
+    setConversationId(undefined);
+    setAnswer(null);
     if (!campaignId) return;
-    geographyApi
-      .contextOptions(tenantId, campaignId)
-      .then(({ items }) => setGeographyOptions([items]))
-      .catch(() => setError("Unable to load active campaign geography."));
+    assistantApi
+      .geographyOptions(tenantId, campaignId)
+      .then(({ campaign, items }) => {
+        if (geographyRequest.current !== requestId) return;
+        setCampaignCountry(campaign.country);
+        setGeographyOptions([items]);
+      })
+      .catch(() => {
+        if (geographyRequest.current === requestId)
+          setError("Unable to load assigned campaign geography.");
+      });
   }, [tenantId, campaignId]);
   async function selectGeography(depth: number, id: string) {
+    const requestId = geographyRequest.current;
+    const requestedCampaignId = campaignId;
     const prior = geographyPath.slice(0, depth);
     if (!id) {
       setGeographyPath(prior);
@@ -61,7 +75,8 @@ export function AssistantPage({
     const path = [...prior, selected];
     setGeographyPath(path);
     try {
-      const { items } = await geographyApi.contextOptions(tenantId, campaignId, selected.id);
+      const { items } = await assistantApi.geographyOptions(tenantId, campaignId, selected.id);
+      if (geographyRequest.current !== requestId || requestedCampaignId !== campaignId) return;
       setGeographyOptions((current) => [...current.slice(0, depth + 1), items]);
     } catch {
       setError("Unable to load the next geographic level.");
@@ -140,7 +155,9 @@ export function AssistantPage({
           </span>
           <select value={campaignId} onChange={(event) => setCampaignId(event.target.value)}>
             {campaigns.map((campaign) => (
-              <option key={campaign.id} value={campaign.id}>{campaign.name}</option>
+              <option key={campaign.id} value={campaign.id}>
+                {campaign.name}
+              </option>
             ))}
           </select>
         </label>
@@ -159,13 +176,26 @@ export function AssistantPage({
                 >
                   <option value="">No selection</option>
                   {options.map((area) => (
-                    <option key={area.id} value={area.id}>{area.name}</option>
+                    <option key={area.id} value={area.id}>
+                      {area.name}
+                    </option>
                   ))}
                 </select>
               </label>
             ) : null,
           )}
         </fieldset>
+      )}
+      {campaignId && campaignCountry && (
+        <p className="campaign-context" role="status">
+          <strong>Campaign country:</strong> {campaignCountry} (set by the campaign)
+        </p>
+      )}
+      {campaignId && geographyOptions.length > 0 && geographyOptions[0].length === 0 && (
+        <div className="ops-empty" role="status">
+          <strong>No Campaign Geography assigned</strong>
+          <p>Geographic AI grounding remains unavailable until an active assignment exists.</p>
+        </div>
       )}
       <section className="assistant-guide" aria-label="How grounded answers work">
         <div>
